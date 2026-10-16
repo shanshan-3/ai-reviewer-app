@@ -1,0 +1,3 @@
+# Private independent preparation and module deletion
+
+Students and instructors own private preparation content and results, with no instructor publishing, shared classroom workflow, or access to another user's results, because the agreed scope supports independent review. After confirmation, deleting a module removes its original and extracted source, derived quizzes, flashcards, and study session results, then recalculates affected progress and streaks, rather than retaining results tied to the deleted module. This honors the user's deletion expectation at the cost of losing that practice history; unrelated topic-only content remains intact, as specified in the [roadmap](../../planning/ai-powered-reviewer-roadmap.md).

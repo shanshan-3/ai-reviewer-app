@@ -6,7 +6,9 @@
 
 Planning date: 2026-10-15.
 
-Source: [AI_Powered_Reviewer_Overview.md](../AI_Powered_Reviewer_Overview.md), with the decisions from Q1-Q13. The initial workspace contained only the overview. There is no application, package manifest, test suite, database migration, or deployment. The file layout and interfaces below are proposed.
+Setup reference: [Technology-stack installation guide](../docs/installation.md). Its commands describe future development setup; installation and compatibility have not been verified for this project.
+
+Source: [AI_Powered_Reviewer_Overview.md](../AI_Powered_Reviewer_Overview.md), with the decisions from Q1-Q26. See the [domain glossary](../GLOSSARY.md) and [private preparation decision](../docs/adr/0001-private-independent-preparation.md). The initial workspace contained only the overview. There is no application, package manifest, test suite, database migration, or deployment. The file layout and interfaces below are proposed.
 
 The goal is an installed Android review application for BSIT students and IT instructors at Pangasinan State University, Asingan Campus. Students and instructors prepare independently using school modules or IT topics. The app generates practice questions and explanations, provides flashcards, and tracks each user's progress. All operating services must remain free.
 
@@ -14,11 +16,11 @@ The goal is an installed Android review application for BSIT students and IT ins
 
 1. A student or instructor can install the Android APK, create an account, sign in, recover access, and return to their own saved material and history.
 2. A user can import a selectable-text PDF or `.docx` module, verify extracted text, and generate a quiz from the supported content or a selected IT topic.
-3. Both ordinary multiple-choice questions and code-snippet multiple-choice questions work without executing submitted code.
+3. Users choose conceptual or coding-syntax multiple choice, 5 or 10 questions (default 10), and an initial difficulty (default medium). Each new study session generates a fresh quiz; interrupted sessions resume their existing quiz. Saved-quiz retakes and mixed question types are excluded.
 4. Each accepted answer receives immediate corrective feedback. The app saves results, scores, and subject/topic diagnostics without counting duplicate submissions.
-5. Practice difficulty changes according to a documented performance rule. Recommendations identify weak topics from recorded answers, and the interface describes mastery as a practice estimate.
+5. Difficulty moves one level after two consecutive correct or incorrect answers. Topic practice estimates show percentage correct over the latest 20 first-submission answers, with a five-answer minimum and sample counts. Recommendations suggest weak topics; users choose what to study next.
 6. Flashcards support front/back review. The dashboard shows scores, study streaks, and subject/topic practice estimates. Users can view and download a performance report based on the same data.
-7. One user's documents, generated content, answers, and reports remain inaccessible to another user, including instructors.
+7. One user's documents, generated content, answers, and reports remain inaccessible to another user, including instructors. Confirmed module deletion removes its source and derived content/results, then recalculates affected progress and streaks; capacity limits block uploads without automatically deleting retained data.
 8. Physical Android testing verifies document import, code readability, interrupted sessions, authentication return links, report export, and service-error behavior.
 9. Before release, an instructor checks representative module questions for correct answers, support in the source material, and clear wording. A working app alone does not establish educational effectiveness or examination readiness.
 
@@ -27,20 +29,21 @@ The goal is an installed Android review application for BSIT students and IT ins
 | Category | Current position |
 |---|---|
 | Settled: verified facts | The overview defines six selected features, adaptation, recommendations, and a student review flow. No application exists in this workspace. Official service documentation was checked during planning; it does not establish live account availability or runtime behavior. |
-| Settled: user decisions | Students and instructors; independent preparation; Android only; free services only; React Native Reusables + NativeWind; users confirmed 18+; external module processing permitted; selectable-text PDF and `.docx`; code-based multiple choice. |
+| Settled: user decisions | Q1-Q26: private independent preparation, Android only, free services, selected stack, authorized modules, supported formats, quiz settings and source support, fresh sessions/resumption, adaptation, practice estimates, personal labels, study days, online study, registration, retention, recommendations, and deletion. See the decision details and behavior rules below. |
 | Questions | No further product question is required to draft this roadmap. Gemini-specific content-use approval remains conditional. Any scope change discovered during validation must be recorded here before dependent implementation. |
-| Still unclear | Representative module sizes/content, launch subjects and topic labels, expected active/concurrent users, free hosting suitability, authentication sender availability, actual provider/model quotas, account retention settings, and supported Android/Expo versions. Each needs a specific validation check. |
-| Excluded | Instructor publishing and shared quiz libraries; classes, assignments, grading, and access to other students' results; iOS, browser and desktop clients; OCR, scanned documents, `.doc`, PowerPoint and photo imports; typed code exercises and code execution; paid service upgrades; full offline synchronization; tickets and implementation in this planning task. |
+| Still unclear | Representative module sizes/content, expected active/concurrent users, free hosting suitability, authentication sender availability, actual provider/model quotas and provider retention controls, and supported Android/Expo versions. Each needs a specific validation check. Subject/topic labels are personal; an official curriculum catalog is not required. |
+| Excluded | Instructor publishing and shared quiz libraries; classes, assignments, grading, and access to other students' results; iOS, browser and desktop clients; OCR, scanned documents, `.doc`, PowerPoint and photo imports; typed code exercises and code execution; mixed question types; saved-quiz retakes; paid service upgrades; offline answering and synchronization; tickets and application implementation in this documentation task. |
 
 ## 2. Scope
 
 ### Included
 
 - Secure accounts and profiles for students and instructors, with entry screens suited to each role and private resources. Instructors use their accounts for personal preparation and cannot access students' accounts.
-- Importing authorized school modules as selectable-text PDF and `.docx`, with subject/topic labels and an extraction preview.
+- Importing authorized school modules as selectable-text PDF and `.docx`, with personal subject/topic labels that users create, choose, and reuse, and an extraction preview.
 - Configuring and generating IT quizzes from a module or selected topic. Label topic-only output as AI-generated general review; it cannot claim support from an uploaded module or the official curriculum.
 - Multiple choice for conceptual and coding-syntax questions, including snippets asking about syntax, errors, or output.
-- Immediate explanations, adaptive difficulty, diagnostic results, weak-topic recommendations, and saved practice history.
+- Immediate explanations, adaptive difficulty, diagnostic results, optional weak-topic recommendations, and saved practice history. Generation and answering require internet; interrupted sessions resume after reconnecting.
+- Fresh quizzes for new study sessions, source-supported module questions, and confirmed deletion of a module and its derived study content/results. Modules and history have no automatic expiry; at capacity, block new uploads and explain the limit.
 - Technical-term flashcards, student progress dashboard, study streaks, subject/topic practice estimates, and performance reports.
 - Viewing personal performance reports on the device and exporting them as PDFs. Exporting instructor quizzes is excluded.
 - Android APK delivery and checks of network behavior, devices, accounts, and services.
@@ -95,11 +98,20 @@ Package versions require compatibility testing before they are pinned. The syste
 | Intended users are 18+ | User-confirmed, Q9 A | Record as an eligibility constraint. Revisit the provider decision if the audience changes. |
 | Selectable-text PDF and `.docx` | User-confirmed, Q11 | Extract text without OCR. Reject image-only, corrupt, encrypted/unsupported documents with an actionable explanation. |
 | Coding questions use multiple choice | User-confirmed, Q13 A | Code snippets are displayed as text and checked against a saved answer key; no runtime or sandbox is needed. |
-| Email/password accounts and personal role selection | Assumption: implementation proposal | Roles control entry presentation only. They do not verify university membership or grant elevated access. Confirmation and password recovery require working email delivery. |
-| Internet required for authenticated study operations | Assumption: implementation proposal | Cloud generation and persistence require connectivity. Preserve retry/recovery behavior without promising full offline study. |
+| Email/password self-registration and personal role selection | User-confirmed, Q22 | Roles control entry presentation only. They do not verify university membership or grant elevated access. Confirmation and password recovery require working email delivery. |
+| Internet required for generation and answering | User-confirmed, Q21 | Resume interrupted sessions after reconnecting. No offline answer queue or synchronization. |
 | PDF performance reports | Assumption: implementation proposal | Provides a practical downloadable report on Android; validate export using Android's file/share flow. |
 | Explain answers from pre-generated, validated content | Delegated technical approach | Generate explanations with the questions so feedback does not require a new AI call for every answer. |
-| Simple performance-driven adaptation and recommendations | Assumption: implementation proposal | Use clear rules based on saved answers, with no additional AI agent or claim of a scientific mastery model. Evaluate the rules below as part of the agreed feature. |
+| Module-based answers and explanations need source support | User-confirmed, Q14 | Keep supporting excerpts/references. Return fewer questions when evidence is limited, or an insufficient-source state when none are usable. Topic-only general review remains available and separately labeled. |
+| Fresh quiz per new study session; resume interruptions | User-confirmed, Q15 | Preserve completed history and resume the same interrupted quiz. Do not offer saved-quiz retakes. |
+| Mastery is a practice estimate | User-confirmed, Q16 and Q18 | Percentage correct over the latest 20 first-submission answers per topic; require five answers and show the sample count. This does not establish exam readiness. |
+| Rule-based adaptive difficulty | User-confirmed, Q17 | Start at the selected level, default medium. Two consecutive correct answers move up one level; two consecutive incorrect answers move down. Reset the counter after a change and stay within easy/medium/hard. |
+| Personal subject/topic labels | User-confirmed, Q19 | Users create, choose, and reuse labels. No fixed official PSU curriculum catalog or coverage claim. |
+| Completed study activities determine study days | User-confirmed, Q20 | A completed quiz or viewing every card back in a set that day qualifies. Use the device timezone initially and preserve recorded completion dates. |
+| Retain data until user deletion; block uploads at capacity | User-confirmed, Q23 | No automatic expiry or deletion to recover space. Explain capacity limits to the user. |
+| Fixed quiz choices | User-confirmed, Q24 | Choose 5 or 10 questions, default 10; easy/medium/hard starting difficulty, default medium; conceptual or coding-syntax MCQ, default conceptual. No mixed question types. |
+| Recommendations remain suggestions | User-confirmed, Q25 | Users choose the next topic. Do not override selected material/topics or automatically generate the next quiz. |
+| Module deletion removes derived content and results | User-confirmed, Q26 | Confirm the loss, delete the original and extracted source, derived quizzes, flashcards, and study session results, then recalculate affected progress and streaks. |
 
 ### Verified technical evidence and constraints
 
@@ -116,7 +128,7 @@ Package versions require compatibility testing before they are pinned. The syste
 
 ### User flows
 
-Students install the APK, register or sign in, and open the dashboard. They select a saved personal module, import a supported file, or choose an IT topic, then configure a quiz. Each answer receives immediate feedback. After the quiz, students see their results and guidance on weak topics, and can review progress, flashcards, and their personal report.
+Students install the APK, self-register with email/password and a student or instructor role, sign in, and open their workspace. They select a saved personal module, import a supported file, or choose an IT topic, then configure a fresh quiz using the confirmed settings below. Each answer receives immediate feedback while online. After the quiz, users see results and suggested weak topics; they choose what to study next and can review progress, flashcards, and their personal report.
 
 Instructors install the same Android application and register or sign in with an instructor profile. In their personal preparation workspace, they import a module or select a topic to generate and inspect quizzes or flashcards. They can also practice the quizzes. They cannot publish or assign them, or access student histories.
 
@@ -124,21 +136,24 @@ For module imports, the server checks the selected file's type and size limit, s
 
 When the user submits a source and quiz options, create a generation record with a client request identifier. Extract or select relevant text within the configured limits, call the approved provider, and validate its response and source references before saving a complete quiz. Show whether the quiz is ready, the source is empty or insufficient, generation failed, or a quota was reached. Reopening a request returns its saved status. If a restart leaves the outcome uncertain, show a failure and require a deliberate retry. Provider execution cannot be guaranteed exactly once.
 
-For a quiz session, save the question sequence and answer key on the server. Send the current question without its answer, accept one answer per question in that attempt, then save the result and return the explanation. Select the next difficulty from the result. Finalize the attempt once and calculate its totals. Retrying a lost response must not count scores or streaks twice. After reconnecting, the user can resume a saved attempt even if the app was closed.
+For a study session, save the question sequence and answer key on the server. Send the current question without its answer, accept one answer per question in that session, then save the result and return the explanation. Select the next difficulty from the result. Finalize the session once and calculate its totals. Retrying a lost response must not count scores or streaks twice. After reconnecting, the user can resume the same interrupted quiz even if the app was closed; starting a new session generates a fresh quiz and preserves completed history.
 
-### Proposed behavior rules
+For module deletion, show a confirmation naming the module and warning that its generated quizzes, flashcards, and study session results will also be lost. Delete the original file, extracted source, and derived content/results, then recalculate affected progress and streaks. Keep unrelated topic-only content and other users' resources intact.
 
-- Start with a configurable quiz of 5-10 questions. Check generation sizes against the provider's input/output budget before setting UI limits.
-- Generate a limited question pool covering easy, medium, and hard levels for the chosen topic/module, within the tested token budget. Start at medium. Two consecutive correct answers move the user up one level; two consecutive incorrect answers move them down one level. Reset the counter after each change. If that level has no unused question, select the nearest available level and record the difficulty used. This avoids an AI request for each answer.
+### Behavior rules
+
+- Offer 5 or 10 questions (default 10), easy/medium/hard starting difficulty (default medium), and conceptual or coding-syntax multiple choice (default conceptual). A quiz uses one question type only. Test both count options and both types against the provider budget; feasibility failures require an explicit decision rather than silently changing these settings.
+- Generate a bounded question pool covering easy, medium, and hard levels for the chosen topic/module, within the tested token budget. Start at the user's selected level. Two consecutive correct answers move up one level; two consecutive incorrect answers move down one level. Reset the counter after each change and clamp to easy/medium/hard. If that level has no unused question, select the nearest available level and record the difficulty used. Preserve adaptation state on resume. This avoids an AI request for each answer.
 - Keep semantic question identifiers and the original answer key. When shuffling options, preserve the correct option's identifier. Check answers against that stored identifier without asking the AI to score them.
-- Show AI-authored explanations for incorrect answers and identify the correct option. Keep each module-based question's supporting excerpt and its PDF page or DOCX section/paragraph reference when available. Topic-only questions must not have invented module citations.
-- Generate front/back flashcards for technical terms from the same supported sources. Users flip and review cards. Spaced repetition and a separate scheduling algorithm are excluded from this version.
-- Show overall scores, accuracy by subject/topic, answer counts, and trends over time. Base the proposed practice estimate on the latest 20 first-submission answers per topic. Show insufficient data before five answers; once that threshold is met, recommend the weakest topics. Label limited history clearly and do not describe the estimate as validated examination readiness.
-- Count a study day when the user completes a practice session or explicitly completes a flashcard review. Save their selected IANA timezone, initially taken from the device, and count distinct calendar days rather than taps. Show the timezone used and preserve historical completion dates when it changes.
+- Show AI-authored explanations for incorrect answers and identify the correct option. Every module-based correct answer and explanation must be supported by the uploaded module. Keep supporting excerpts and PDF page or DOCX section/paragraph references when available. Generate fewer questions if support is limited, or show insufficient source if none are usable. Module-based coding questions require usable code in the source; do not silently switch types. Topic-only conceptual or coding review remains available for the selected IT topic, clearly labeled without invented module citations.
+- Generate front/back flashcards for technical terms from the same supported sources. A flashcard review qualifies for a study day only after the back of every card in the set has been viewed at least once that day. Empty sets and partial reviews do not qualify. Spaced repetition and a separate scheduling algorithm are excluded from this version.
+- Show overall scores, accuracy by subject/topic, answer counts, and trends over time. The practice estimate is percentage correct among the latest 20 first-submission answers per topic. Show insufficient data before five answers and the actual sample count thereafter. Use eligible estimates to suggest weak topics, without changing the user's topic/material or automatically generating a quiz. Subject mastery is a practice estimate, not validated examination readiness.
+- Count one study day per calendar date with a completed quiz or qualifying flashcard review. Opening the app and incomplete activity do not count. Use the device timezone initially, save the completion date, and preserve historical dates when the device timezone changes. No manual timezone setting is required.
 - Personal reports use the same saved data as the dashboard to summarize scores, activity, subject/topic estimates, strengths, weaknesses, and sample sizes. Reports must show when history is empty or too sparse for conclusions.
-- Require an IT topic within the input length limit and a subject label. Reject unsupported or insufficient context. Derive initial suggestions from authorized modules or a confirmed subject list; do not invent a PSU syllabus.
+- Require an IT topic within the input length limit and a subject label. Users create, choose, and reuse their own labels consistently. Reject unsupported or insufficient context; do not claim an official PSU syllabus or require a fixed curriculum catalog.
+- Keep modules and practice history until the user deletes them, without automatic expiry. At capacity, block new uploads and explain the limit. Confirmed module deletion removes original/extracted source and derived quizzes, flashcards, and study session results, then recalculates affected progress and streaks.
 
-The numeric defaults are proposed implementation assumptions. The user has not confirmed them as educational rules. Evaluate them with representative students and instructors, and update the plan if the results require material changes to behavior.
+These product rules were confirmed in Q14-Q26. They still need implementation and evaluation with representative students and instructors; confirmation does not establish educational validity. Record any agreed material change before changing the behavior.
 
 ### Architecture and proposed files
 
@@ -154,9 +169,9 @@ Use one repository with a mobile application, an Express server, and one Supabas
 
 Create these files only after implementation is authorized. A generic repository framework, provider plug-in system, message broker, vector database, and separate administrative app are outside the planned work.
 
-The backend uses authenticated requests and a consistent JSON format for success and error responses. It needs operations to import, check, and delete personal material; request and read generation results/status; start, read, and resume attempts; submit answers; read personal results, progress, and report data; and create, read, and review personal flashcards. Check ownership for every identifier. Configure the provider on the server, outside ordinary user controls.
+The backend uses authenticated requests and a consistent JSON format for success and error responses. It needs operations to import, check, and delete personal material; request and read generation results/status; start, read, and resume study sessions; submit answers; read personal results, progress, and report data; and create, read, and review personal flashcards. Check ownership for every identifier. Configure the provider on the server, outside ordinary user controls.
 
-Store profiles, materials and extracted sections, generation records, quizzes and questions, attempts and answers, and flashcard sets and review completions. Each resource needs an owner ID. Calculate subject/topic summaries from answers until performance measurements justify caching them. Save the provider/model, source identity, and generation settings with generated content. Deleting a source file must preserve historical scores. Retain only the private question evidence existing attempts need, and document the deletion policy before campus use.
+Store profiles, materials and extracted sections, generation records, quizzes and questions, study sessions and answers, and flashcard sets and review completions. Each resource needs an owner ID. Calculate subject/topic summaries from answers until performance measurements justify caching them. Save the provider/model, source identity, and generation settings with generated content so deletion can identify all dependencies. Module deletion removes its original/extracted source and derived study content/results, then recalculates affected estimates and streaks from remaining activity. Keep unrelated topic-only history intact. Do not retain deleted module evidence merely to preserve historical scores.
 
 Evaluate PDF.js for PDF extraction and Mammoth's raw-text API for `.docx` on the selected Node runtime. Use Phase 1 samples to set file-size, page-count, extracted-text, decompressed-DOCX, processing-time, and memory limits. Enforce those limits; if a library cannot, isolate extraction in a worker/process that can be terminated. Render no raw DOCX-generated HTML and fetch no links embedded in modules. [PDF.js](https://mozilla.github.io/pdf.js/getting_started/), [Mammoth raw text and security guidance](https://github.com/mwilliamson/mammoth.js).
 
@@ -171,7 +186,7 @@ Use Expo DocumentPicker for import and check that the selected file is readable 
 - Limit concurrent imports and generations per account, total provider usage, and retries. Save quota accounting so a restart cannot reset the limit. On a 429 response, show a retry state without creating an empty quiz, fabricating an explanation, or switching to a paid provider.
 - Handle corrupt, password-protected, and image-only files, along with extraction that loses code layout. Give explicit responses to cancelled imports, exhausted storage, expired sessions, provider refusals, invalid output, insufficient text, connectivity loss, duplicate answers, and server restarts.
 - Save data before acknowledging success. Retry cleanup of failed or orphaned uploads using paths restricted to the owner, and keep server files temporary. Quiz history, results, and documents need persistent storage.
-- Define retention and deletion for accounts, materials, and history before storing campus data. Verify that a free/manual process can restore database exports and private Storage object backups.
+- Implement the confirmed no-expiry and module-deletion policy before storing campus data. Document account/history deletion operations. Verify that a free/manual process can restore database exports and private Storage object backups without silently reintroducing deleted content or results.
 
 ### UX and validation approach
 
@@ -196,10 +211,10 @@ Prerequisites: Separate authorization for implementation or technical investigat
 - [ ] Measure PDF/DOCX extraction quality and resource use. Set supported limits and rejection messages, accounting for mixed image/text PDFs and code that depends on formatting.
 - [ ] Check the Groq account's no-training terms, retention controls, free production models, structured-output support, and quotas. Evaluate samples before pinning the model.
 - [ ] Ask an instructor to evaluate a small question/flashcard sample. Accepted answers must be correct and unambiguous, explanations supported, and source references valid. Reject or correct failed questions before passing the sample.
-- [ ] Establish expected active users, peak concurrent generation, quiz size, and normal module size for campus use. Compare these with measured provider and storage budgets.
+- [ ] Establish expected active users, peak concurrent generation, and normal module size for campus use. Test the confirmed 5/10-question settings and both separate question types against measured provider and storage budgets.
 - [ ] Identify a suitable free Express host or authorized existing school infrastructure, and a free SMTP provider or custom school sender. Document any missing evidence. Render Free remains excluded from production hosting.
 
-Acceptance checks: Both document formats produce text a user can review. The chosen UI components load on a physical Android device, and sample generation stays within the account's limits. Resolve all correctness errors in the accepted sample. Record the tested limits and sample size; the sample does not establish general accuracy.
+Acceptance checks: Both document formats produce text a user can review. The chosen UI components load on a physical Android device, and sample generation stays within the account's limits. Check module support for every accepted answer/explanation, fewer-question output for limited evidence, and insufficient-source output when none is usable. Resolve all correctness errors in the accepted sample. Record the tested limits and sample size; the sample does not establish general accuracy.
 
 Decision: Dependent work waits if extraction, UI compatibility, or primary-provider checks fail. Hosting, email, or capacity failures block campus release. Paid services, removed features, or a change to a prototype audience would require new decisions.
 
@@ -210,12 +225,12 @@ Outcome: Each user can access only their own workspace and supported school modu
 Prerequisites: The runtime and extraction setup tested in Phase 1, plus an isolated development configuration. Keep email limitations documented until a working sender is verified.
 
 - [ ] Create the proposed mobile/server/database structure, environment examples, schema migrations, and exact setup instructions. Keep the structure minimal.
-- [ ] Implement registration, confirmation, sign-in, session restoration, sign-out, and recovery with working Android return links. Add the student and instructor profile entry screens.
+- [ ] Implement email/password self-registration, confirmation, sign-in, session restoration, sign-out, and recovery with working Android return links. Let users select student or instructor entry screens without granting elevated access or claiming verified PSU membership.
 - [ ] Add owner-scoped database and private Storage policies. Test API identity and ownership checks with two unrelated accounts.
-- [ ] Implement PDF/`.docx` upload within the tested limits, extraction previews, subject/topic labels, ready/failed states, and private retrieval. Clean up failed or deleted files.
-- [ ] Implement the agreed retention and deletion behavior. Keep privileged credentials out of the application bundle and logs.
+- [ ] Implement PDF/`.docx` upload within the tested limits, extraction previews, reusable personal subject/topic labels, ready/failed states, and private retrieval. Clean up failed or deleted files.
+- [ ] Implement no automatic expiry, blocked uploads at capacity, and confirmed module deletion with dependency cleanup. Extend deletion coverage as derived content is introduced in later phases. Keep privileged credentials out of the application bundle and logs.
 
-Acceptance checks: Student A and Instructor B cannot access each other's documents by changing IDs or object paths. Reject corrupt, scanned, oversized, and unsupported files safely. Complete confirmation and recovery on Android, and verify that uploads survive an API restart and reauthentication.
+Acceptance checks: Student A and Instructor B cannot access each other's documents by changing IDs or object paths, regardless of self-selected role. Reject corrupt, scanned, oversized, and unsupported files safely. Complete confirmation and recovery on Android, and verify that uploads survive an API restart and reauthentication. Reuse a personal subject/topic label; at capacity, reject new uploads without deleting existing data. Verify the module-deletion warning and removal of original/extracted source.
 
 Release requirement: Verify custom email delivery and personal-data retention/deletion before onboarding campus users.
 
@@ -225,13 +240,13 @@ Outcome: Either role can generate a quiz from a module or topic, complete it wit
 
 Prerequisites: Private accounts and module imports, an approved model, and tested extraction limits.
 
-- [ ] Define the question schema, source references, public question payload, protected answer key, quiz configuration limits, and state transitions for generation and attempts.
-- [ ] Implement Groq requests and context selection within the tested limits. Add schema and content checks, saved generation status, duplicate-request protection, and handling for quotas, refusals, and timeouts.
-- [ ] Implement ordinary and code-snippet multiple choice, instructors' personal previews, answer submission, immediate explanations, final results, and attempt resumption.
+- [ ] Define the question schema, source references, public question payload, protected answer key, confirmed quiz choices/defaults, and state transitions for generation and study sessions.
+- [ ] Implement Groq requests and context selection within the tested limits. Add schema/content/source checks, fewer-question and insufficient-source outcomes, saved generation status, duplicate-request protection, and handling for quotas, refusals, and timeouts.
+- [ ] Implement separate conceptual and coding-syntax multiple-choice modes, instructors' personal previews, answer submission, immediate explanations, final results, fresh quizzes for new sessions, and resumption of interrupted sessions. Exclude mixed types and saved-quiz retakes.
 - [ ] Save answers and completion effects atomically. Make retries idempotent and exclude the answer key from question payloads sent before the student answers.
 - [ ] Test incorrect option mapping, duplicate submissions, incomplete output, invalid source references, expired identity, prompt injection, and unauthorized access.
 
-Acceptance checks: Complete a module quiz and a topic quiz on Android. Verify that answers and explanations match the saved keys and that repeated requests do not duplicate results. Network interruptions, provider 429 responses, and API restarts must leave a recoverable state with an accurate message. An instructor can prepare a personal quiz without publishing it.
+Acceptance checks: Complete module and topic quizzes on Android in each question mode. Verify defaults of 10 questions, medium difficulty, and conceptual MCQ, plus the 5-question and other difficulty choices. Reject unsupported module-based coding generation without silently switching types. Check fewer-question and insufficient-source states. Verify saved keys, source support, and duplicate-safe results. A new session generates a fresh quiz; reconnecting resumes the same interrupted quiz and adaptation state. Answering requires connectivity. Network interruptions, provider 429 responses, and API restarts leave a recoverable state with an accurate message. An instructor can prepare a personal quiz without publishing it.
 
 Decision: Revise or reject the generation approach if representative questions remain incorrect or the token budget cannot support the documented quiz size. Keep Gemini disabled until its separate content-use requirements are met.
 
@@ -239,14 +254,14 @@ Decision: Revise or reject the generation approach if representative questions r
 
 Outcome: Practice difficulty responds to performance, and flashcards support technical-term review.
 
-Prerequisites: Stable question/answer interfaces and saved attempts.
+Prerequisites: Stable question/answer interfaces and saved study sessions.
 
-- [ ] Implement the documented difficulty transitions and selection from the limited question pool, without making a provider request for each answer.
-- [ ] Generate and save personal technical-term flashcards from the approved sources, with output validation. Implement flipping cards and completing reviews.
-- [ ] Use saved answers to recommend weak topics. Explain the recommendations and show when history is insufficient.
+- [ ] Implement selected starting difficulty, two-answer consecutive transitions, counter resets, easy/medium/hard bounds, and nearest-available selection from the limited pool, without a provider request for each answer.
+- [ ] Generate and save personal technical-term flashcards from the approved sources, with output validation. Track each card-back view so only a full-set review within the same day qualifies as completed.
+- [ ] Use saved answers to suggest weak topics with sufficient history. Explain the recommendations while leaving topic/material selection and next-quiz generation to the user.
 - [ ] Test difficulty limits, mixed correct/incorrect sequences, exhausted question pools, restart/resume consistency, empty flashcard sets, and repeated review-completion requests.
 
-Acceptance checks: Controlled answer sequences change difficulty as documented, and resumed attempts preserve that state. Flashcards reveal the correct back text, and completing a review counts once. Reproduce recommendations from the saved answers.
+Acceptance checks: Controlled consecutive and alternating answer sequences verify transitions, counter resets, level bounds, and nearest-available fallback; resumed study sessions preserve that state. Flashcards reveal the correct back text; a full set reviewed that day qualifies once, while partial or empty reviews do not. Reproduce recommendations from saved answers and verify that they neither change the selected topic/material nor generate the next quiz automatically.
 
 Decision: If generating the question pool exceeds free limits, revise its size or selection strategy and test again. Adaptive difficulty stays in scope.
 
@@ -254,14 +269,14 @@ Decision: If generating the question pool exceeds free limits, revise its size o
 
 Outcome: Users can view consistent scores, streaks, practice estimates, and reports of strengths and weaknesses.
 
-Prerequisites: Correctly saved completed attempts and review events.
+Prerequisites: Correctly saved completed study sessions and review events.
 
-- [ ] Build the student dashboard and personal progress views. Show subject/topic scores, sample counts, trends, streaks, and explanations of mastery estimates.
+- [ ] Build the student dashboard and personal progress views. Show scores, trends, streaks, and topic practice estimates using percentage correct among the latest 20 first-submission answers, a five-answer minimum, and visible sample counts. Explain subject mastery as a practice estimate.
 - [ ] Implement the shared reporting query and Android PDF export. Escape untrusted text and test Android save/share behavior.
-- [ ] Test empty history, sparse samples, repeated completion, timezone boundaries/changes, and agreement between reports and the dashboard.
+- [ ] Test empty history, four/five-answer thresholds, the rolling 20-answer window, repeated completion, full/partial flashcard reviews, timezone boundaries/changes with preserved completion dates, and report/dashboard agreement. Verify that confirmed module deletion removes all derived content/results and recalculates progress and streaks without changing unrelated history.
 - [ ] Check large fonts, screen-reader announcements, touch targets, code readability, system-back navigation, and error states throughout the review flow.
 
-Acceptance checks: Report totals match the same user's dashboard for the same data range. Empty history produces no invented strengths claim. Streaks remain correct in midnight and duplicate-event tests. Export a PDF and check that it opens and is readable on Android.
+Acceptance checks: Report totals match the same user's dashboard for the same data range. Empty history produces no invented strengths claim; four answers show insufficient data, five show an estimate, and answers older than the latest 20 leave the calculation. Completed quizzes or full flashcard reviews qualify once per date; opening the app and incomplete activity do not. Streaks remain correct across midnight, device-timezone changes, duplicate events, and module deletion. Export a PDF and check that it opens and is readable on Android.
 
 Release requirement: Have instructors and users evaluate practice estimates and recommendations before making claims about learning benefits.
 
@@ -275,7 +290,7 @@ Prerequisites: Earlier acceptance checks, suitable free API hosting and SMTP, me
 - [ ] Build and install a signed APK on representative physical Android devices. Verify distribution eligibility, safe installation instructions, signing-key custody, and an update path.
 - [ ] Test both roles against live Supabase and Groq. Cover import, generation, answers, resumption, flashcards, dashboard, report export, sign-out, recovery, and denied access to other users' resources.
 - [ ] Test the measured concurrent generation load, cold starts, exhausted quotas/storage, host/database restart or pause recovery, and lost connectivity. Verify that scores are not duplicated and material remains private.
-- [ ] Export the database and private objects, then restore them into an isolated environment. Verify account/resource ownership after restoration, and record who handles backups and how often.
+- [ ] Export the database and private objects, then restore them into an isolated environment. Verify account/resource ownership and that recovery does not silently reintroduce deleted modules or derived results; record who handles backups and how often.
 - [ ] Evaluate quiz correctness and usability with representative students and instructors. Compare findings with the overview's intended outcomes and update the affected rules here.
 - [ ] Document operating limits, monitoring, provider/model maintenance, manual recovery, remaining defects, and the evidence supporting the release decision.
 
@@ -287,7 +302,7 @@ Release decision: If free infrastructure cannot support the intended workload or
 
 ### Ordering and independent work
 
-Phase 1 tests the runtime, extraction, provider, and capacity assumptions. Phase 2 needs the tested runtime/extraction setup. Phase 3 needs working ownership checks and defined source/quiz interfaces. Phase 4 depends on stable answer behavior; Phase 5 depends on the rules for completed attempts and reviews. Phase 6 requires all product acceptance checks and external service requirements to pass.
+Phase 1 tests the runtime, extraction, provider, and capacity assumptions. Phase 2 needs the tested runtime/extraction setup. Phase 3 needs working ownership checks and defined source/quiz interfaces. Phase 4 depends on stable answer behavior; Phase 5 depends on the rules for completed study sessions and reviews. Phase 6 requires all product acceptance checks and external service requirements to pass.
 
 Report layout and flashcard presentation can be developed independently once the Phase 2 ownership interface and Phase 3 question/report formats are fixed. Both use the same mobile navigation, Reusables components, NativeWind tokens, migrations, and API payloads, so assign ownership of those shared files before parallel work. This plan requests no parallel agent work or ticket creation.
 
@@ -302,7 +317,7 @@ Report layout and flashcard presentation can be developed independently once the
 | Hosting | A free host or existing authorized school server suitable for intended use, measured extraction/API behavior and restart recovery | Campus release; Render Free remains evaluation-only |
 | Account email | Authorized free sender, delivery quotas, confirmation/recovery on Android, and sender/return-link configuration | Real onboarding and recovery |
 | Capacity | Campus usage expectations compared with measured token/storage/email/host limits | Claiming suitability for campus rollout |
-| Retention and recovery | Documented account/material/history deletion semantics plus verified database and file restoration | Storing real campus data and release |
+| Retention and recovery | Implemented confirmed no-expiry/capacity/deletion rules, documented account/history deletion operations, and verified database/file restoration respecting deletions | Storing real campus data and release |
 | Android distribution | Actual target devices, signing custody, installation/update path, and current distribution requirements | APK release |
 | Educational quality | Instructor evaluation and student usability evidence against the overview; record sample and limitations | Release claims and acceptance |
 

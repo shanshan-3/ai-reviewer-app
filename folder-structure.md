@@ -66,15 +66,34 @@ ai-reviewer-app/
 │   ├── migrations/                # Tables, constraints, RLS, storage policies
 │   └── seed.sql                   # Synthetic development data
 │
+├── docs/
+│   ├── installation.md
+│   └── adr/
+│       └── 0001-private-independent-preparation.md
 ├── planning/
 │   └── ai-powered-reviewer-roadmap.md
 ├── AI_Powered_Reviewer_Overview.md
+├── GLOSSARY.md
 ├── folder-structure.md
 ├── README.md
 └── .gitignore
 ```
 
 Each application has its own dependencies and lockfile. A root package manifest, workspace manager, and shared package are unnecessary for the initial version. Create the folders as their features are implemented.
+
+## Documentation
+
+The following documents already exist. The application folders above remain proposed.
+
+| Document | Purpose |
+|---|---|
+| [Project overview](AI_Powered_Reviewer_Overview.md) | Original problem, intended users, and selected features |
+| [Roadmap](planning/ai-powered-reviewer-roadmap.md) | Confirmed scope, technology choices, behavior rules, implementation phases, and pending validation |
+| [Installation guide](docs/installation.md) | Windows/Android prerequisites, stack setup instructions, configuration, and pending verification |
+| [Glossary](GLOSSARY.md) | Shared meanings of module, quiz, study session, practice estimate, and other domain terms |
+| [Private preparation decision](docs/adr/0001-private-independent-preparation.md) | Why preparation stays private and how module deletion affects derived content and results |
+
+Keep architecture decision records in `docs/adr/` with sequential filenames. The overview, glossary, and roadmap stay in their current locations.
 
 ## Mobile application
 
