@@ -1,151 +1,115 @@
-# Installation and remaining setup
+# Installation
 
-For the current Windows checkout. Updated on 2026-10-17.
+Follow this guide after cloning the project. Open PowerShell in the repository root, the folder containing `mobile/` and `server/`. These instructions cover Windows and an Android phone or emulator.
 
-## Current status
+## 1. Install the prerequisites
 
-The mobile app uses Expo SDK 57 with JavaScript/JSX. Router, NativeWind, Reusables configuration, themes, and aliases are set up. Server dependencies are installed, but API code and service connections still need to be written. The Supabase folder is empty.
+- Install [Git for Windows](https://git-scm.com/downloads/win).
+- Install [Node.js](https://nodejs.org/en/download), which includes npm. The maintainer checked this workspace with Node.js `24.20.0` and npm `11.19.0`; use those as the tested reference.
+- For an initial phone preview, install [Expo Go for SDK 57](https://expo.dev/go?sdkVersion=57&platform=android&device=true). Follow the [Expo environment guide](https://docs.expo.dev/get-started/set-up-your-environment/) if using an emulator or development build.
 
-Mobile lint, JavaScript checks, Expo Doctor, and an Android bundle export passed. The server dependency check also passed. Android device testing is pending.
-
-See the [folder structure](../folder-structure.md) for file locations and the [roadmap](../planning/ai-powered-reviewer-roadmap.md) for implementation and release requirements.
-
-## 1. Restore dependencies
-
-Use these commands when restoring this checkout. Skip them if dependencies are already installed. Node.js and npm must be available. Use `npm.cmd` and `npx.cmd` in PowerShell to avoid script-policy errors.
-
-Mobile:
+Reopen PowerShell after installation and check:
 
 ```powershell
-Set-Location 'C:\Users\Administrator\Desktop\ai-reviewer-app\mobile'
-npm.cmd ci
+git --version
+node --version
+npm.cmd --version
 ```
 
-Server:
+## 2. Install dependencies
+
+From the repository root:
 
 ```powershell
-Set-Location 'C:\Users\Administrator\Desktop\ai-reviewer-app\server'
-npm.cmd ci
+npm.cmd ci --prefix mobile
+npm.cmd ci --prefix server
 ```
 
-Both folders already have manifests and lockfiles. Keep their dependencies separate and use the locked versions.
+Each application has its own manifest and lockfile. There is no root install command. Expo, NativeWind, and Reusables configuration is already in the repository; do not generate a new starter or repeat their initial setup.
 
-## 2. Finish service setup
+## 3. Add your local environment files
 
-Start here if dependencies are installed. Add the ignore rules in Section 3 before saving credentials.
-
-### Supabase
-
-1. Create a development project on the free plan in the [Supabase dashboard](https://supabase.com/dashboard). Check the account limits.
-2. Copy the project URL and publishable key into the environment files below. Keep secret or legacy `service_role` keys on the server.
-3. Implement the application schema and owner policies in `supabase/migrations/`. Enable Row Level Security and use a private Storage bucket with owner policies before uploading real modules.
-4. Configure email/password authentication, confirmation and recovery emails, and the app return URLs. Test return links in the installed Android build.
-
-The hosted setup does not require a local PostgreSQL installation. Schema and authentication implementation follow the roadmap.
-
-### Groq
-
-Create an API key using the [Groq quickstart](https://console.groq.com/docs/quickstart). Check the model free quotas, structured-output support, and retention settings, then record the tested model ID in the server environment.
-
-Use synthetic text for the first request. Follow the roadmap material-use requirements before sending school content. Keep Gemini disabled.
-
-## 3. Add environment files
-
-The environment files have not been created. The root `.gitignore` exists but is empty. Before adding real credentials, add these rules to it:
-
-```gitignore
-**/node_modules/
-**/.expo/
-**/.env
-**/.env.*
-!**/.env.example
-**/dist/
-**/build/
-*.jks
-*.keystore
-```
-
-Create the following `.env.example` files with placeholders, then copy each to `.env` locally. The application code must read these variable names when service connections are implemented.
-
-`mobile/.env.example`:
-
-```dotenv
-EXPO_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
-EXPO_PUBLIC_API_URL=http://YOUR_PC_LAN_IP:3000
-```
-
-`server/.env.example`:
-
-```dotenv
-PORT=3000
-SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
-SUPABASE_SECRET_KEY=YOUR_SERVER_ONLY_SECRET_KEY
-GROQ_API_KEY=YOUR_SERVER_ONLY_GROQ_KEY
-GROQ_MODEL=YOUR_TESTED_MODEL_ID
-```
-
-Public mobile variables are bundled into the app. Keep AI keys and privileged Supabase credentials on the server, and enforce ownership through API checks and database/Storage policies. See [Supabase API keys](https://supabase.com/docs/guides/api/api-keys).
-
-Commit placeholder examples and lockfiles. Keep credentials, uploaded modules, generated APKs, and signing keys out of Git. Restart Expo after changing public environment values.
-
-## 4. Run the app and API
-
-The API needs implementation before it can run. Its generated manifest points to a missing entry file, and its test script is a failing placeholder. Follow the roadmap and folder guide when writing the server.
-
-Once the API entry point and environment file exist, run from `server/`:
+On a fresh checkout, create local copies of the templates. Skip a copy if its destination already exists so you keep your local values:
 
 ```powershell
-node --env-file=.env --watch src/server.js
+Copy-Item -LiteralPath mobile/.env.example -Destination mobile/.env
+Copy-Item -LiteralPath server/.env.example -Destination server/.env
 ```
 
-Use a second terminal for Expo:
+Ask the maintainer privately for the authorized development values, then edit the local files:
+
+| File | Values |
+|---|---|
+| `mobile/.env` | `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `EXPO_PUBLIC_API_URL`. |
+| `server/.env` | `PORT`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `GROQ_API_KEY`, and `GROQ_MODEL`. |
+
+Set `PORT=3000` for the default local API. The starter currently reads only `PORT`; the service variables are for the integrations still to be implemented. Request privileged service keys only when your assigned work needs them.
+
+Keep placeholders in `.env.example`. Real values belong in ignored `.env` files. Groq keys and privileged Supabase keys must stay on the server and must never use an `EXPO_PUBLIC_` prefix.
+
+For an Android phone, set `EXPO_PUBLIC_API_URL` to your own PC LAN IPv4 address and API port, such as `http://192.168.1.20:3000`. Replace that example address with yours. You can find the active network adapter IPv4 address with:
 
 ```powershell
-# Run from mobile/
-npx.cmd expo start
+ipconfig
 ```
 
-For a physical Android device, set `EXPO_PUBLIC_API_URL` to the PC LAN IPv4 address and API port. Keep both devices on the same reachable network and allow the development connection through Windows Firewall. The server must listen on an interface the device can reach. `localhost` on the phone refers to the phone; the standard Android emulator reaches the PC through `10.0.2.2`.
+The standard Android emulator reaches the PC at `http://10.0.2.2:3000`. A phone or emulator uses its own `localhost`, so the PC API needs the appropriate address. The mobile API client has not been implemented yet; setting this variable alone does not connect the app.
 
-A Metro tunnel does not expose the Express API. Use HTTPS for a deployed API and verify network access in the installed build.
+## 4. Start Express and Expo
 
-After bundler configuration changes, clear the cache:
+Open two PowerShell terminals at the repository root.
+
+In the first terminal:
 
 ```powershell
-npx.cmd expo start --clear
+cd server
+npm.cmd run dev
 ```
 
-Use an [Expo development build](https://docs.expo.dev/develop/development-builds/introduction/) when the native configuration requires one.
+Open `http://localhost:3000/health` on your PC. The expected response is HTTP 200 with `{"status":"ok"}`. Use your configured port if it differs from 3000. This confirms that Express is running; it does not verify Supabase or Groq.
 
-## 5. Check the setup
-
-Run from `mobile/`:
+In the second terminal:
 
 ```powershell
+cd mobile
+npm.cmd start
+```
+
+For a phone preview, keep the PC and phone on the same reachable network and scan the terminal QR code with a compatible Expo Go app. For a configured Android emulator, start it and press `a` in the Expo terminal. The expected app screen is still a placeholder.
+
+Use a matching development build when the native configuration requires one. The [Expo environment guide](https://docs.expo.dev/get-started/set-up-your-environment/) explains that setup.
+
+## 5. Check the installation
+
+From `mobile/`, run:
+
+```powershell
+npm.cmd run lint
 npx.cmd expo install --check
 npx.cmd expo-doctor
-npm.cmd ls --depth=0
-npm.cmd ls react react-dom react-native-reanimated react-native-worklets expo-font
-npm.cmd run lint
 node node_modules/typescript/bin/tsc -p jsconfig.json --allowJs --checkJs --noEmit --jsx react-native --skipLibCheck --esModuleInterop --types nativewind/types --noImplicitAny false --noUncheckedSideEffectImports false
 ```
 
-The type check covers JavaScript/JSX under `src/`. It allows implicit argument types and the CSS import; Metro checks the import when bundling. TypeScript is currently available through the dependency tree rather than as a direct dependency.
-
-Run from `server/`:
+From `server/`, run:
 
 ```powershell
 npm.cmd ls --depth=0
 ```
 
-The Reusables diagnostic command is:
+The type check covers JavaScript/JSX under `src/` using the TypeScript package currently available in the dependency tree. It allows implicit argument types and the CSS import; Metro checks that import when bundling. The server has no automated test folder or test command; use the health response for its startup check.
 
-```powershell
-npx.cmd @react-native-reusables/cli@latest doctor
-```
+If you run Reusables doctor, CLI 0.7.1 reports missing layout, theme, and helper files because it expects TypeScript filenames. This project uses JavaScript/JSX, so use the checks above and verify the app on Android.
 
-CLI 0.7.1 reports missing layout, theme, and helper files because it expects TypeScript filenames. This project uses JavaScript/JSX. That diagnostic has not passed; the app passed the separate checks listed above.
+## Common setup problems
 
-Device rendering, portal behavior, authentication, private access, document extraction, AI requests, and PDF export still need runtime checks. Follow the roadmap before storing real campus data or releasing the app.
+| Problem | What to check |
+|---|---|
+| `EADDRINUSE` when starting Express | Check whether another terminal already runs the API. Stop that instance or choose a free port and update the mobile API URL to match. |
+| Expo reports an SDK mismatch | Use an Expo Go version or development build matching the project SDK 57. |
+| The phone cannot load the preview or reach the API | Check the PC address, shared network, and Windows Firewall permissions for development traffic. A Metro tunnel does not expose Express. |
+| Styling changes are not picked up | Stop Expo, then run `npx.cmd expo start --clear` from `mobile/`. |
+| An environment template or source file is missing | Confirm you have the branch and commits shared by the maintainer. |
+
+The [folder guide](../folder-structure.md) explains where files belong. The [roadmap](../planning/ai-powered-reviewer-roadmap.md) covers the planned features. Authentication, document imports, quizzes, flashcards, progress, and PDF reports are not implemented yet.
+
+This guide reflects the maintainer's local checkout. Fresh-clone installation on a collaborator's computer, live service connections, and Android device behavior remain unverified.

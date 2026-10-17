@@ -2,7 +2,9 @@
 
 The project has separate mobile and server applications. Each keeps its own dependencies and lockfile.
 
-The mobile starter is configured, and server dependencies are installed. API code and database migrations still need to be written. The Supabase folder is empty.
+The mobile starter is configured, and the Express starter runs a health endpoint. Application features, service connections, and database migrations still need to be written. The Supabase folder is empty.
+
+After cloning, contributors can follow the [installation guide](docs/installation.md) for prerequisites, dependencies, local environment files, startup, and Android preview. The [development page](docs/development.md) links to the setup and project guides.
 
 ## Current files
 
@@ -19,6 +21,7 @@ ai-reviewer-app/
 |   |   `-- lib/
 |   |       |-- theme.js            # Light/dark tokens and navigation themes
 |   |       `-- utils.js            # Class-name merging helper
+|   |-- .env.example
 |   |-- .gitignore
 |   |-- AGENTS.md
 |   |-- LICENSE
@@ -33,10 +36,15 @@ ai-reviewer-app/
 |   |-- package-lock.json
 |   `-- tailwind.config.js
 |-- server/
-|   |-- package.json                # ES modules and installed dependencies only
+|   |-- src/
+|   |   |-- app.js                  # Express app and health endpoint
+|   |   `-- server.js               # Validates the port and starts the listener
+|   |-- .env.example
+|   |-- package.json                # Dependencies and start/dev commands
 |   `-- package-lock.json
 |-- supabase/                       # Empty; no migrations or local configuration
 |-- docs/
+|   |-- development.md
 |   |-- installation.md
 |   `-- adr/
 |       `-- 0001-private-independent-preparation.md
@@ -52,14 +60,15 @@ ai-reviewer-app/
 
 | Folder | Purpose | Status |
 |---|---|---|
-| `mobile/` | The installed Android application. | Starter configured |
+| `mobile/` | The Android application code. | Starter configured |
 | `mobile/assets/` | Images, icons, and fonts used by the app. | Exists |
 | `mobile/src/` | Application source code. | Exists |
 | `mobile/src/app/` | Expo Router screens and navigation layouts. Keep helpers outside this folder. | Starter routes exist |
 | `mobile/src/lib/` | Shared helpers, theme values, and service clients. | Theme and helper exist; clients planned |
-| `server/` | The Express API for document processing, AI requests, and scoring. | Dependencies installed; API code planned |
+| `server/` | The Express API for document processing, AI requests, and scoring. | Health starter runs; feature APIs planned |
+| `server/src/` | Server application code. | App and listener exist |
 | `supabase/` | Database migrations, access policies, and development data. | Empty |
-| `docs/` | Setup instructions and technical decisions. | Exists |
+| `docs/` | Developer onboarding, setup instructions, and technical decisions. | Exists |
 | `docs/adr/` | Numbered records of architecture decisions and their reasons. | One decision recorded |
 | `planning/` | The agreed scope and implementation roadmap. | Exists |
 
@@ -86,11 +95,14 @@ Paths in this table are relative to `mobile/` unless stated otherwise.
 | `.gitignore` | Excludes mobile dependencies, caches, and generated files from Git. |
 | `AGENTS.md` | Gives coding agents instructions for this mobile project. |
 | `LICENSE` | Contains the mobile starter license. |
-| `server/package.json` (from the repository root) | Lists server dependencies and enables ES modules. Its entry file is missing, and its test script is a failing placeholder. |
+| `server/package.json` (from the repository root) | Lists server dependencies, enables ES modules, and defines start and development commands. |
 | `server/package-lock.json` (from the repository root) | Records the server dependency versions. |
+| `server/src/app.js` (from the repository root) | Configures Express and the health endpoint without opening a port. |
+| `server/src/server.js` (from the repository root) | Validates the port and starts the listener, reporting startup errors. |
+| `mobile/.env.example` and `server/.env.example` (from the repository root) | List required settings with placeholders. Local `.env` files are ignored and omitted from the tree. |
 | `.gitignore` (at the repository root) | Sets ignore rules that apply across the repository. |
 
-The mobile app starts through `expo-router/entry`. Lint, JavaScript checks, Expo Doctor, and an Android bundle export passed. Device rendering and portal behavior still need testing. The [installation guide](docs/installation.md) has restore commands, remaining setup steps, and the Reusables doctor limitation.
+The mobile app starts through `expo-router/entry`. Lint, JavaScript checks, Expo Doctor, and an Android bundle export passed. Device rendering and portal behavior still need testing. The server test folder and test command have been removed; the health endpoint remains available for a local startup check. The installation guide explains how contributors can repeat the setup checks.
 
 ## Planned structure
 
@@ -151,8 +163,6 @@ ai-reviewer-app/
 │   │   └── lib/
 │   │       ├── supabase.js        # Server database and storage access
 │   │       └── ai.js              # Requests to the approved AI provider
-│   ├── test/
-│   │   └── fixtures/              # Small synthetic test documents
 │   ├── package.json
 │   ├── package-lock.json
 │   └── .env.example
@@ -163,6 +173,7 @@ ai-reviewer-app/
 │   └── seed.sql                   # Synthetic development data
 │
 ├── docs/
+│   ├── development.md
 │   ├── installation.md
 │   └── adr/
 │       └── 0001-private-independent-preparation.md
@@ -198,7 +209,6 @@ These paths are relative to `mobile/src/`. None of these folders exists yet.
 
 | Folder | Purpose |
 |---|---|
-| `server/src/` | Server application code. |
 | `server/src/middleware/` | Shared request checks and error handling. |
 | `server/src/features/` | Groups API operations by feature. |
 | `server/src/features/materials/` | Validates imports and extracts PDF/DOCX text. |
@@ -207,8 +217,6 @@ These paths are relative to `mobile/src/`. None of these folders exists yet.
 | `server/src/features/progress/` | Calculates dashboard and report data. |
 | `server/src/lib/` | Shared database, storage, and AI clients. |
 | `mobile/test/` | Tests critical mobile screen behavior. |
-| `server/test/` | Tests API behavior, ownership, extraction, and scoring. |
-| `server/test/fixtures/` | Small synthetic documents for tests. |
 | `supabase/migrations/` | Versioned SQL for tables, constraints, and access policies. |
 
 ### Planned files
@@ -219,9 +227,6 @@ These paths are relative to `mobile/src/`. None of these folders exists yet.
 | `mobile/src/lib/api.js` | Sends authenticated requests to Express. |
 | `mobile/src/lib/supabase.js` | Creates the mobile Supabase client. |
 | `mobile/eas.json` | Defines Android build profiles. |
-| `mobile/.env.example` and `server/.env.example` | List required settings with placeholders, without real credentials. |
-| `server/src/app.js` | Configures Express and routes without opening a port. |
-| `server/src/server.js` | Starts the API listener. |
 | `server/src/middleware/auth.js` | Verifies identity on protected requests. |
 | `server/src/middleware/error-handler.js` | Returns consistent API errors. |
 | `server/src/lib/supabase.js` | Connects the server to the database and private Storage. |
@@ -238,7 +243,8 @@ Keep uploads in private Storage and real credentials out of Git. AI keys and pri
 |---|---|
 | [Project overview](AI_Powered_Reviewer_Overview.md) | Explains the problem, intended users, and selected features. |
 | [Roadmap](planning/ai-powered-reviewer-roadmap.md) | Records scope, implementation phases, and acceptance checks. |
-| [Installation guide](docs/installation.md) | Explains dependency restoration and remaining setup. |
+| [Installation guide](docs/installation.md) | Explains contributor setup after cloning, including dependencies, environment files, startup, Android preview, and troubleshooting. |
+| [Development page](docs/development.md) | Links developers to installation, folder, and roadmap documentation. |
 | [Glossary](GLOSSARY.md) | Defines the terms used throughout the project. |
 | [Private preparation decision](docs/adr/0001-private-independent-preparation.md) | Records privacy boundaries and module-deletion behavior. |
 | `folder-structure.md` | Explains where existing and planned files belong. |

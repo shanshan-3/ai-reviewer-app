@@ -2,13 +2,22 @@
 
 ## 1. Status, goal, and success criteria
 
-**Status: Partially blocked.** The product scope is agreed. Development requires separate authorization and the checks listed below. Before campus release, the team must verify free hosting, authentication emails, AI quotas, and the app's behavior with school modules. This plan does not authorize implementation or external account changes.
+Status: Local starters are running; product features and Phase 1 validation remain pending. The agreed scope is unchanged. Campus release still requires verified free hosting, authentication emails, AI quotas, and the app's behavior with school modules.
 
 Planning date: 2026-10-15.
 
-Setup reference: [Technology-stack installation guide](../docs/installation.md). Its commands describe future development setup; installation and compatibility have not been verified for this project.
+Status updated: 2026-10-17.
 
-Source: [AI_Powered_Reviewer_Overview.md](../AI_Powered_Reviewer_Overview.md), with the decisions from Q1-Q26. See the [domain glossary](../GLOSSARY.md) and [private preparation decision](../docs/adr/0001-private-independent-preparation.md). The initial workspace contained only the overview. There is no application, package manifest, test suite, database migration, or deployment. The file layout and interfaces below are proposed.
+Setup reference: the [installation guide](../docs/installation.md) explains contributor setup after cloning, including local configuration, startup, and checks. The [development page](../docs/development.md) links to the project guides. The [folder guide](../folder-structure.md) separates existing files from planned additions.
+
+Source: [AI_Powered_Reviewer_Overview.md](../AI_Powered_Reviewer_Overview.md), with the decisions from Q1-Q26. See the [domain glossary](../GLOSSARY.md) and [private preparation decision](../docs/adr/0001-private-independent-preparation.md). The remaining feature architecture and API interfaces below are proposed.
+
+### Completed starter setup
+
+- The mobile app has a JavaScript/JSX Expo SDK 57 starter with Router, NativeWind, Reusables configuration, light/dark themes, and aliases. The screen is still a placeholder; no Reusables UI components have been copied yet.
+- Express runs locally with `GET /health`, returning HTTP 200 and `{"status":"ok"}`. The server has start and watch commands. Its starter test folder and test command were removed at the user's request.
+- Mobile lint, JavaScript type checks, SDK compatibility, Expo Doctor (21/21), and an Android bundle export passed. The server dependency check and a fresh startup/health check also passed. These checks do not establish physical-device behavior or live service integration.
+- Both applications have manifests, lockfiles, environment examples, and local environment files. The root ignore rules protect local credentials and dependencies. Supabase and Groq clients, database migrations, authentication flows, and feature APIs are not implemented. Live services, extraction, device behavior, and deployment remain unverified.
 
 The goal is an installed Android review application for BSIT students and IT instructors at Pangasinan State University, Asingan Campus. Students and instructors prepare independently using school modules or IT topics. The app generates practice questions and explanations, provides flashcards, and tracks each user's progress. All operating services must remain free.
 
@@ -28,11 +37,11 @@ The goal is an installed Android review application for BSIT students and IT ins
 
 | Category | Current position |
 |---|---|
-| Settled: verified facts | The overview defines six selected features, adaptation, recommendations, and a student review flow. No application exists in this workspace. Official service documentation was checked during planning; it does not establish live account availability or runtime behavior. |
+| Settled: verified facts | The overview defines six selected features, adaptation, recommendations, and a student review flow. Mobile and Express starters now exist, and the local checks listed above passed. Official service documentation was checked during planning; live account availability, service behavior, and physical-device behavior remain unverified. |
 | Settled: user decisions | Q1-Q26: private independent preparation, Android only, free services, selected stack, authorized modules, supported formats, quiz settings and source support, fresh sessions/resumption, adaptation, practice estimates, personal labels, study days, online study, registration, retention, recommendations, and deletion. See the decision details and behavior rules below. |
 | Questions | No further product question is required to draft this roadmap. Gemini-specific content-use approval remains conditional. Any scope change discovered during validation must be recorded here before dependent implementation. |
-| Still unclear | Representative module sizes/content, expected active/concurrent users, free hosting suitability, authentication sender availability, actual provider/model quotas and provider retention controls, and supported Android/Expo versions. Each needs a specific validation check. Subject/topic labels are personal; an official curriculum catalog is not required. |
-| Excluded | Instructor publishing and shared quiz libraries; classes, assignments, grading, and access to other students' results; iOS, browser and desktop clients; OCR, scanned documents, `.doc`, PowerPoint and photo imports; typed code exercises and code execution; mixed question types; saved-quiz retakes; paid service upgrades; offline answering and synchronization; tickets and application implementation in this documentation task. |
+| Still unclear | Representative module sizes/content, expected active/concurrent users, free hosting suitability, authentication sender availability, actual provider/model quotas and provider retention controls, and supported physical Android devices. Expo SDK 57 is the local baseline; the full stack still needs device validation. Subject/topic labels are personal; an official curriculum catalog is not required. |
+| Excluded | Instructor publishing and shared quiz libraries; classes, assignments, grading, and access to other students' results; iOS, browser and desktop clients; OCR, scanned documents, `.doc`, PowerPoint and photo imports; typed code exercises and code execution; mixed question types; saved-quiz retakes; paid service upgrades; offline answering and synchronization; ticket creation. |
 
 ## 2. Scope
 
@@ -62,23 +71,23 @@ The app is intended for campus use. Free-tier evaluation must establish whether 
 
 | Part | Technology | Status |
 |---|---|---|
-| Android application | React Native + Expo | Selected |
-| Language | JavaScript / JSX | Selected |
-| UI components | React Native Reusables | Selected |
-| Styling | NativeWind | Selected |
-| Backend API | Node.js + Express | Selected |
+| Android application | React Native + Expo | SDK 57 starter configured; device validation pending |
+| Language | JavaScript / JSX | Used in the starters |
+| UI components | React Native Reusables | Configuration ready; components not yet added |
+| Styling | NativeWind | Version 4.2.7 configured; device rendering unverified |
+| Backend API | Node.js + Express | Local starter and health endpoint running |
 | Database | Supabase PostgreSQL | Selected |
 | Authentication | Supabase Auth | Selected |
 | Private module storage | Supabase Storage | Selected |
-| AI question generation | Groq API | Primary provider |
+| AI question generation | Groq API | Primary provider; SDK installed, integration pending |
 | Alternative AI | Gemini API | Conditional on approved data-use terms |
-| PDF text extraction | PDF.js | Proposed; requires validation |
-| Word `.docx` extraction | Mammoth | Proposed; requires validation |
-| Document selection | Expo DocumentPicker | Proposed |
-| PDF performance reports | Expo Print | Proposed |
+| PDF text extraction | PDF.js | Library installed; extraction approach still requires validation |
+| Word `.docx` extraction | Mammoth | Library installed; extraction approach still requires validation |
+| Document selection | Expo DocumentPicker | Installed; import behavior unverified |
+| PDF performance reports | Expo Print | Installed; report export unverified |
 | Backend hosting | Free hosting or existing school infrastructure | Undecided |
 
-Package versions require compatibility testing before they are pinned. The system currently consists of planning documents; the application has not been implemented.
+Current dependency versions are recorded in the application manifests and lockfiles. Local checks passed for the starter baseline. Physical-device compatibility and the planned feature integrations still need testing.
 
 ### Decision details
 
@@ -155,19 +164,19 @@ For module deletion, show a confirmation naming the module and warning that its 
 
 These product rules were confirmed in Q14-Q26. They still need implementation and evaluation with representative students and instructors; confirmation does not establish educational validity. Record any agreed material change before changing the behavior.
 
-### Architecture and proposed files
+### Architecture and remaining files
 
-Use one repository with a mobile application, an Express server, and one Supabase project. The workspace has no existing application code; reuse the selected libraries and platform functions.
+Use the existing repository with its mobile starter, Express starter, and planned Supabase integration. Reuse the configured libraries and platform functions. The folder guide records which files already exist; the table below describes the intended responsibilities as features are added.
 
-| Proposed area | Responsibility |
+| Area | Responsibility |
 |---|---|
 | `mobile/` | Expo application, role entry screens, import, quiz, flashcards, progress, reports; requested Reusables components and NativeWind theme |
 | `server/` | Auth verification, private-resource checks, extraction, AI generation, answer submission, result aggregation, limits, cleanup |
 | `supabase/migrations/` | Versioned SQL schema, owner policies, storage policies, uniqueness constraints, atomic answer/finalization operations |
-| `server/test/` and focused mobile tests | Answer/adaptation rules, extraction fixtures, authorization, duplicate submissions, and critical screen behaviors |
-| `README.md` and environment examples | Exact setup/run/verification commands discovered during implementation, configuration names, deployment and recovery steps; no secrets |
+| Feature verification | Answer/adaptation rules, extraction fixtures, authorization, duplicate submissions, and critical screen behaviors. No automated server test folder currently exists. |
+| Setup documentation and environment examples | Existing installation guides and placeholder examples cover the starters. Add feature-specific setup, deployment, and recovery instructions as those capabilities are implemented; keep secrets out of documentation. |
 
-Create these files only after implementation is authorized. A generic repository framework, provider plug-in system, message broker, vector database, and separate administrative app are outside the planned work.
+Add remaining files when their feature work needs them. A generic repository framework, provider plug-in system, message broker, vector database, and separate administrative app are outside the planned work.
 
 The backend uses authenticated requests and a consistent JSON format for success and error responses. It needs operations to import, check, and delete personal material; request and read generation results/status; start, read, and resume study sessions; submit answers; read personal results, progress, and report data; and create, read, and review personal flashcards. Check ownership for every identifier. Configure the provider on the server, outside ordinary user controls.
 
@@ -198,16 +207,16 @@ Automate checks for rejected extraction, private-resource authorization, generat
 
 ## 5. Phase-by-phase roadmap
 
-Every checkbox below is unfinished work. Release tasks remain provisional until their stated requirements are met.
+Every checkbox below covers unfinished work. Some setup within a task is complete, as noted, but no task has passed all its acceptance checks. Release tasks remain provisional until their stated requirements are met.
 
 ### Phase 1: Test module extraction, question generation, and free services
 
 Outcome: Document the tested technical limits using authorized samples. Keep the agreed audience and features.
 
-Prerequisites: Separate authorization for implementation or technical investigations, plus representative modules and permitted development accounts. Creating or configuring external accounts requires separate authorization.
+Prerequisites: Representative modules and permitted development accounts for the remaining checks. Local starter setup has already been carried out under the user's instructions. Further external account creation or changes need explicit instructions.
 
 - [ ] Obtain representative selectable-text PDFs and `.docx` modules. Include code snippets, tables, and a longer module, and record the subjects and permitted processing conditions.
-- [ ] Test the Expo/React Native/Reusables/NativeWind setup, JavaScript/JSX approach, Node runtime, build tools, and target Android devices together. Record and pin the versions that work.
+- [x] Verify the configured Expo SDK 57/React Native/Reusables/NativeWind setup on target Android devices. The JavaScript/JSX starter, Node runtime, dependency checks, and Android bundle export have passed locally; copied UI components and device behavior still need validation. Record the device results alongside the locked versions.
 - [ ] Measure PDF/DOCX extraction quality and resource use. Set supported limits and rejection messages, accounting for mixed image/text PDFs and code that depends on formatting.
 - [ ] Check the Groq account's no-training terms, retention controls, free production models, structured-output support, and quotas. Evaluate samples before pinning the model.
 - [ ] Ask an instructor to evaluate a small question/flashcard sample. Accepted answers must be correct and unambiguous, explanations supported, and source references valid. Reject or correct failed questions before passing the sample.
@@ -224,7 +233,7 @@ Outcome: Each user can access only their own workspace and supported school modu
 
 Prerequisites: The runtime and extraction setup tested in Phase 1, plus an isolated development configuration. Keep email limitations documented until a working sender is verified.
 
-- [ ] Create the proposed mobile/server/database structure, environment examples, schema migrations, and exact setup instructions. Keep the structure minimal.
+- [ ] Finish the feature and database structure, schema migrations, and their setup instructions. The mobile/server starters, environment examples, and starter installation guides already exist. Keep additions limited to the current feature work.
 - [ ] Implement email/password self-registration, confirmation, sign-in, session restoration, sign-out, and recovery with working Android return links. Let users select student or instructor entry screens without granting elevated access or claiming verified PSU membership.
 - [ ] Add owner-scoped database and private Storage policies. Test API identity and ownership checks with two unrelated accounts.
 - [ ] Implement PDF/`.docx` upload within the tested limits, extraction previews, reusable personal subject/topic labels, ready/failed states, and private retrieval. Clean up failed or deleted files.
@@ -311,7 +320,7 @@ Report layout and flashcard presentation can be developed independently once the
 | Gate | Evidence required | Blocks |
 |---|---|---|
 | Module extraction | Representative PDF/`.docx` samples, supported limits, code/table fidelity and memory/time measurements | Import and source-grounded generation |
-| Toolchain | One working Android build with the chosen Expo/Reusables/NativeWind versions and documented JS/JSX setup | Mobile implementation baseline |
+| Toolchain | Local SDK 57 starter checks and bundle export have passed. Still needed: an installed Android build with the chosen Reusables components, verified styling/portal behavior, and recorded device results | Mobile feature/device validation |
 | Primary AI | Actual free model availability/quotas, accepted retention settings, instructor-checked sample output | AI-dependent features |
 | Gemini alternative | Explicit acceptance of unpaid content-use terms for the actual materials and a separate quality/schema check | Gemini enablement only; Groq work continues |
 | Hosting | A free host or existing authorized school server suitable for intended use, measured extraction/API behavior and restart recovery | Campus release; Render Free remains evaluation-only |
@@ -321,6 +330,6 @@ Report layout and flashcard presentation can be developed independently once the
 | Android distribution | Actual target devices, signing custody, installation/update path, and current distribution requirements | APK release |
 | Educational quality | Instructor evaluation and student usability evidence against the overview; record sample and limitations | Release claims and acceptance |
 
-After separate implementation authorization, start Phase 1 with representative authorized PDF/`.docx` samples and permitted development accounts. Test extraction and generate one valid, instructor-checked quiz through the free Groq account. Verify toolchain compatibility and document the hosting/email gaps before scaffolding the rest of the application.
+Continue the remaining Phase 1 checks with representative authorized PDF/`.docx` samples and permitted development accounts. Test extraction and generate one valid, instructor-checked quiz through the free Groq account. Verify the UI on Android and document the hosting/email gaps before expanding beyond the starters.
 
-The plan covers all six selected overview features, adaptive difficulty, recommendations, both audiences, and every confirmed clarification in its scope, behavior, phases, and acceptance checks. Implementation, account provisioning, runtime tests, builds, deployment, and learning-outcome validation have not been performed during this planning task.
+The agreed scope and acceptance criteria remain in place. Completed starter work is recorded at the top of this document. Product features, migrations, live integrations, installed-device checks, deployment, and learning-outcome validation remain pending.
