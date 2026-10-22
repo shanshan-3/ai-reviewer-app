@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "",
+    "name": "RebyuIT",
     "slug": "RebyuIT",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,7 +14,8 @@
       "adaptiveIcon": {
         "backgroundColor": "#36454F",
         "foregroundImage": "./assets/logo/index-icon-white.png"
-      }
+      },
+      "package": "com.anonymous.RebyuIT"
     },
     "web": {
       "favicon": "./assets/logo/index-icon-white.png"
@@ -29,7 +30,7 @@
         {
           "backgroundColor": "#36454F",
           "image": "./assets/logo/index-icon-white.png",
-          "imageWidth": 400,
+          "imageWidth": 10,
           "resizeMode": "contain",
           "dark": {
             "backgroundColor": "#36454F",

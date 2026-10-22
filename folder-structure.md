@@ -4,6 +4,8 @@ The project has separate mobile and server applications. Each keeps its own depe
 
 The mobile starter is configured, and the Express starter runs a health endpoint. Application features, service connections, and database migrations still need to be written. The Supabase folder is empty.
 
+MVC with a service layer, grouped into folders by responsibility, is the selected design for future feature work. The controllers, services, and models described below are planned; the current starters do not implement them yet.
+
 After cloning, contributors can follow the [installation guide](docs/installation.md) for prerequisites, dependencies, local environment files, startup, and Android preview. The [development page](docs/development.md) links to the setup and project guides.
 
 ## Current files
@@ -46,6 +48,7 @@ ai-reviewer-app/
 |-- docs/
 |   |-- development.md
 |   |-- installation.md
+|   |-- RebyuIT_Android_Dev_Cleanup_Guide.md
 |   `-- adr/
 |       `-- 0001-private-independent-preparation.md
 |-- planning/
@@ -104,138 +107,244 @@ Paths in this table are relative to `mobile/` unless stated otherwise.
 
 The mobile app starts through `expo-router/entry`. Lint, JavaScript checks, Expo Doctor, and an Android bundle export passed. Device rendering and portal behavior still need testing. The server test folder and test command have been removed; the health endpoint remains available for a local startup check. The installation guide explains how contributors can repeat the setup checks.
 
+On 2026-10-22, `expo-dev-client ~57.0.20` was added to the mobile manifest and lockfile for SDK 57. The [installation guide](docs/installation.md) covers building the Android development app and starting Metro with `--dev-client`. Lint and JavaScript checks passed; Expo Doctor passed 20/21 checks, with the compatibility check flagging newer patches for `expo`, `expo-router`, and `expo-sharing`. No native build or device validation was performed for this installation.
+
+The [installation guide's Android workflow comparison](docs/installation.md#4-choose-how-to-run-the-android-app) explains Expo Go, the RebyuIT Dev APK, and release APKs. The Dev APK loads JavaScript edits through Metro and needs rebuilding after native changes. The [cleanup guide](docs/RebyuIT_Android_Dev_Cleanup_Guide.md) explains which local tools can be removed while keeping an installed development build usable over the network. EAS build profiles remain planned.
+
+On 2026-10-22, `lucide-react-native ^1.61.0` and Expo SDK 57-compatible `react-native-svg 15.15.4` were added to the mobile manifest and lockfile. Use direct named icon imports in screens and components; no icon wrapper or new folder was added. The current screens are unchanged, and Android icon rendering remains unverified.
+
 ## Planned structure
 
-This target includes both existing files and future additions. The tables below identify the planned folders and files. Create them when their features are implemented.
+This target includes existing setup files and proposed additions for the full system. Only paths listed under Current files above are part of the documented starter; the rest are planned. Create files when their features are implemented, rather than scaffolding empty folders. Local credentials, installed dependencies, caches, and build output are omitted.
+
+The mobile app keeps screen implementations directly in Expo Router's `src/app/` directory. Shared components, session state, and API request helpers live outside it. There is no separate mobile `screens/` or `features/` layer in this plan. The server groups files by responsibility under `server/src/`: `config/`, `routes/`, `controllers/`, `services/`, `models/`, and `middleware/`, with supporting validation and shared helpers.
 
 ```text
 ai-reviewer-app/
-├── mobile/
-│   ├── assets/                     # App images, fonts, icons
-│   ├── src/
-│   │   ├── app/                    # Expo Router screens and layouts only
-│   │   │   ├── _layout.jsx
-│   │   │   ├── index.jsx
-│   │   │   ├── (auth)/             # Sign-in, registration, recovery routes
-│   │   │   └── (main)/             # Authenticated application routes
-│   │   ├── features/
-│   │   │   ├── auth/
-│   │   │   ├── materials/
-│   │   │   ├── quizzes/
-│   │   │   ├── flashcards/
-│   │   │   ├── progress/
-│   │   │   └── reports/
-│   │   ├── components/
-│   │   │   └── ui/                # React Native Reusables components
-│   │   ├── providers/
-│   │   │   └── session-provider.jsx
-│   │   └── lib/
-│   │       ├── theme.js           # Existing light/dark tokens and navigation themes
-│   │       ├── utils.js           # Existing class-name merging helper
-│   │       ├── api.js             # Authenticated requests to Express
-│   │       └── supabase.js        # Mobile Supabase client
-│   ├── test/
-│   ├── global.css
-│   ├── app.json
-│   ├── babel.config.js
-│   ├── tailwind.config.js
-│   ├── jsconfig.json
-│   ├── eslint.config.js
-│   ├── metro.config.js
-│   ├── components.json
-│   ├── eas.json
-│   ├── package.json
-│   ├── package-lock.json
-│   └── .env.example
-│
-├── server/
-│   ├── src/
-│   │   ├── app.js                 # Configure Express and mount routes
-│   │   ├── server.js              # Start the HTTP listener
-│   │   ├── middleware/
-│   │   │   ├── auth.js
-│   │   │   └── error-handler.js
-│   │   ├── features/
-│   │   │   ├── materials/         # Import and extract PDF/DOCX content
-│   │   │   ├── quizzes/           # Generate, answer, score, adapt
-│   │   │   ├── flashcards/
-│   │   │   └── progress/          # Dashboard and personal report data
-│   │   └── lib/
-│   │       ├── supabase.js        # Server database and storage access
-│   │       └── ai.js              # Requests to the approved AI provider
-│   ├── package.json
-│   ├── package-lock.json
-│   └── .env.example
-│
-├── supabase/
-│   ├── config.toml
-│   ├── migrations/                # Tables, constraints, RLS, storage policies
-│   └── seed.sql                   # Synthetic development data
-│
-├── docs/
-│   ├── development.md
-│   ├── installation.md
-│   └── adr/
-│       └── 0001-private-independent-preparation.md
-├── planning/
-│   └── ai-powered-reviewer-roadmap.md
-├── AI_Powered_Reviewer_Overview.md
-├── GLOSSARY.md
-├── folder-structure.md
-├── README.md
-└── .gitignore
+|-- mobile/
+|   |-- assets/
+|   |   |-- images/                         # App images and logo
+|   |   |-- icons/                          # Launcher and splash assets
+|   |   `-- fonts/                          # Custom fonts, if used
+|   |-- src/
+|   |   |-- app/
+|   |   |   |-- _layout.jsx                 # Root navigation, theme, providers
+|   |   |   |-- index.jsx                   # Restore session and redirect
+|   |   |   |-- +not-found.jsx              # Unknown route
+|   |   |   |-- (auth)/
+|   |   |   |   |-- _layout.jsx             # Authentication navigation
+|   |   |   |   |-- login.jsx
+|   |   |   |   |-- register.jsx            # Account and personal role selection
+|   |   |   |   |-- verify-email.jsx
+|   |   |   |   |-- forgot-password.jsx
+|   |   |   |   |-- reset-password.jsx
+|   |   |   |   `-- callback.jsx            # Confirmation/recovery return links
+|   |   |   `-- (main)/
+|   |   |       |-- _layout.jsx             # Signed-in stack and session checks
+|   |   |       |-- (tabs)/
+|   |   |       |   |-- _layout.jsx         # Four bottom tabs
+|   |   |       |   |-- dashboard.jsx
+|   |   |       |   |-- quizzes.jsx         # History and interrupted sessions
+|   |   |       |   |-- flashcards.jsx      # Saved flashcard sets
+|   |   |       |   `-- profile.jsx         # Account details and sign-out
+|   |   |       |-- materials/
+|   |   |       |   |-- index.jsx           # Personal module library
+|   |   |       |   |-- import.jsx          # Pick/upload PDF or DOCX
+|   |   |       |   `-- [materialId].jsx    # Status, text preview, labels, deletion
+|   |   |       |-- quizzes/
+|   |   |       |   |-- create.jsx          # Source, type, count, difficulty
+|   |   |       |   `-- [sessionId]/
+|   |   |       |       |-- index.jsx       # Generation, answering, feedback, resume
+|   |   |       |       `-- results.jsx     # Score, explanations, diagnostics
+|   |   |       |-- flashcards/
+|   |   |       |   |-- create.jsx          # Module/topic selection and generation
+|   |   |       |   `-- [setId].jsx         # Front/back review and completion
+|   |   |       `-- reports/
+|   |   |           `-- index.jsx           # Personal report and PDF export
+|   |   |-- components/
+|   |   |   |-- ui/                         # Reusables components, added as needed
+|   |   |   |-- screen-state.jsx            # Shared loading, empty, error display
+|   |   |   |-- material-card.jsx
+|   |   |   |-- source-picker.jsx           # Saved module or IT topic
+|   |   |   |-- label-picker.jsx            # Personal subject/topic labels
+|   |   |   |-- question-card.jsx           # Question, options, readable code
+|   |   |   |-- answer-feedback.jsx
+|   |   |   |-- flashcard.jsx
+|   |   |   |-- progress-summary.jsx
+|   |   |   `-- topic-estimate.jsx          # Practice estimate and sample count
+|   |   |-- providers/
+|   |   |   `-- session-provider.jsx        # Auth session and profile
+|   |   `-- lib/
+|   |       |-- theme.js                    # Existing theme/navigation tokens
+|   |       |-- utils.js                    # Existing class-name helper
+|   |       |-- supabase.js                 # Public mobile Supabase client
+|   |       |-- api.js                      # Authenticated API requests/errors
+|   |       |-- auth.js                     # Auth actions and return-link handling
+|   |       |-- materials.js                # Import, status, retrieval, deletion
+|   |       |-- quizzes.js                  # Generate, resume, answer, results
+|   |       |-- flashcards.js               # Generate, list, review
+|   |       |-- progress.js                 # Dashboard/report data requests
+|   |       |-- report-pdf.js               # Escaped report HTML, print/share
+|   |       `-- study-date.js               # Device timezone and local study date
+|   |-- test/
+|   |   |-- auth-flow.test.jsx
+|   |   |-- material-import.test.jsx
+|   |   |-- quiz-session.test.jsx
+|   |   |-- flashcard-review.test.jsx
+|   |   `-- report-pdf.test.js
+|   |-- .env.example                        # Public URL/key placeholders
+|   |-- .gitignore
+|   |-- AGENTS.md
+|   |-- LICENSE
+|   |-- app.json
+|   |-- babel.config.js
+|   |-- components.json
+|   |-- eas.json                            # Android build profiles
+|   |-- eslint.config.js
+|   |-- global.css
+|   |-- jsconfig.json
+|   |-- metro.config.js
+|   |-- package.json
+|   |-- package-lock.json
+|   `-- tailwind.config.js
+|-- server/
+|   |-- src/
+|   |   |-- app.js                          # Express setup, health, feature routes
+|   |   |-- server.js                       # Validate configuration/start listener
+|   |   |-- config/
+|   |   |   |-- env.js                      # Validated server settings/limits
+|   |   |   |-- supabase.js                 # Server database/private Storage client
+|   |   |   `-- ai.js                       # Groq client and bounded requests
+|   |   |-- controllers/
+|   |   |   |-- profileController.js        # Profile requests and responses
+|   |   |   |-- labelController.js          # Label requests and responses
+|   |   |   |-- materialController.js       # Import and material responses
+|   |   |   |-- quizController.js           # Quiz and answer request/response
+|   |   |   |-- flashcardController.js      # Flashcard requests and responses
+|   |   |   `-- progressController.js       # Progress and report responses
+|   |   |-- middleware/
+|   |   |   |-- authMiddleware.js           # Verify Supabase access tokens
+|   |   |   `-- errorMiddleware.js          # Consistent safe error responses
+|   |   |-- models/
+|   |   |   |-- profileModel.js             # Owner-scoped profile reads/writes
+|   |   |   |-- labelModel.js               # Owner-scoped label reads/writes
+|   |   |   |-- materialModel.js            # Material records and private files
+|   |   |   |-- quizModel.js                # Quiz data and atomic answer saves
+|   |   |   |-- flashcardModel.js           # Sets, cards, and review records
+|   |   |   `-- progressModel.js            # Owner-scoped answer/study queries
+|   |   |-- routes/
+|   |   |   |-- profileRoutes.js            # Read/update own profile
+|   |   |   |-- labelRoutes.js              # List/create personal subject/topics
+|   |   |   |-- materialRoutes.js           # Upload, status, preview, delete
+|   |   |   |-- quizRoutes.js               # Generate, resume, answer, results
+|   |   |   |-- flashcardRoutes.js          # Generate, retrieve, record review
+|   |   |   `-- progressRoutes.js           # Dashboard and personal report data
+|   |   |-- services/
+|   |   |   |-- profileService.js           # Profile validation and ownership
+|   |   |   |-- labelService.js             # Personal label rules and ownership
+|   |   |   |-- materialService.js          # Ownership, storage, import lifecycle
+|   |   |   |-- materialExtraction.js       # PDF.js/Mammoth extraction
+|   |   |   |-- materialDeletion.js         # Source/derived-data cleanup
+|   |   |   |-- quizService.js              # Generation, scoring, session rules
+|   |   |   |-- quizGeneration.js           # Context selection and Groq requests
+|   |   |   |-- quizPrompts.js              # Conceptual/coding question prompts
+|   |   |   |-- quizAdaptation.js           # Difficulty transitions/selection
+|   |   |   |-- flashcardService.js         # Generation and review completion
+|   |   |   |-- flashcardPrompts.js         # Flashcard generation prompts
+|   |   |   |-- progressService.js          # Shared dashboard/report aggregation
+|   |   |   |-- progressEstimates.js        # Latest-20 answers, minimum five
+|   |   |   |-- studyStreaks.js             # Qualifying recorded study dates
+|   |   |   `-- topicRecommendations.js     # Suggested weak topics
+|   |   |-- validation/
+|   |   |   |-- materialValidation.js       # File/type/size and label validation
+|   |   |   |-- quizValidation.js           # Settings, output, source checks
+|   |   |   `-- flashcardValidation.js      # Settings, card/source checks
+|   |   `-- lib/
+|   |       |-- usage.js                    # Persistent usage/concurrency limits
+|   |       `-- errors.js                   # Shared application error definitions
+|   |-- .env.example                        # Server-only credential placeholders
+|   |-- package.json
+|   `-- package-lock.json
+|-- supabase/
+|   |-- config.toml                         # Local Supabase configuration
+|   |-- migrations/
+|   |   |-- 0001_profiles_and_labels.sql
+|   |   |-- 0002_materials_and_sections.sql
+|   |   |-- 0003_generations_and_usage.sql
+|   |   |-- 0004_quizzes_and_questions.sql
+|   |   |-- 0005_study_sessions_and_answers.sql
+|   |   |-- 0006_flashcards_and_reviews.sql
+|   |   |-- 0007_private_storage.sql
+|   |   |-- 0008_atomic_study_operations.sql
+|   |   `-- 0009_material_deletion.sql
+|   `-- seed.sql                            # Synthetic development data
+|-- docs/
+|   |-- development.md                      # Contributor guide links
+|   |-- RebyuIT_Android_Dev_Cleanup_Guide.md # Optional local Android tool cleanup
+|   |-- installation.md                     # Clone, configure, run
+|   |-- api.md                              # Requests, responses, auth, errors
+|   |-- database.md                         # Tables, relationships, ownership
+|   |-- validation.md                       # Checks and recorded evidence
+|   |-- deployment.md                       # API, Supabase, APK setup
+|   |-- operations.md                       # Quotas, cleanup, backup/recovery
+|   `-- adr/
+|       `-- 0001-private-independent-preparation.md
+|-- planning/
+|   `-- ai-powered-reviewer-roadmap.md
+|-- AI_Powered_Reviewer_Overview.md
+|-- GLOSSARY.md
+|-- folder-structure.md
+|-- README.md
+`-- .gitignore
 ```
 
-### Planned mobile folders
+### Mobile organization and navigation
 
-These paths are relative to `mobile/src/`. None of these folders exists yet.
+- Write each screen in its route file under `mobile/src/app/`. Keep filenames lowercase or kebab-case; bracketed names such as `[sessionId]` identify dynamic routes. Keep non-route code outside `app/`.
+- Use Dashboard, Quizzes, Flashcards, and Profile as the four tabs. Dashboard opens the module library and personal reports. Recommendations stay on Dashboard; the user chooses the next topic.
+- Keep module details, quiz answering, flashcard review, and reports outside `(tabs)` so these flows can hide the bottom navigation. Quiz setup generates a fresh quiz; history resumes interrupted sessions or opens completed results, without saved-quiz retakes.
+- Restore the session before choosing login or Dashboard. Confirmation and recovery callbacks must work without an existing session; finish password recovery before redirecting to Dashboard. Both roles share routes and private resources, with role-appropriate presentation.
+- Keep reusable UI in `components/`, shared session state in `providers/`, and service requests/helpers in `lib/`. Add Reusables component files only as needed. The configured `@/hooks` alias does not require an empty hooks folder.
+- Loading, empty, error, answer feedback, and deletion confirmation are screen states or components. They do not each need a separate route. Confirm module deletion with a warning about losing its derived content and results.
 
-| Folder | Purpose |
-|---|---|
-| `app/(auth)/` | Sign-in, registration, and account-recovery routes. |
-| `app/(main)/` | Routes for signed-in users. |
-| `features/` | Groups application code by feature. |
-| `features/auth/` | Account forms and session-related behavior. |
-| `features/materials/` | Module selection, uploads, extracted-text previews, and personal labels. |
-| `features/quizzes/` | Quiz settings, questions, feedback, and results. |
-| `features/flashcards/` | Flashcard sets and front/back review. |
-| `features/progress/` | Scores, streaks, topic estimates, and recommendations. |
-| `features/reports/` | Personal reports and PDF export. |
-| `components/` | Reusable interface components. |
-| `components/ui/` | Copied React Native Reusables components. |
-| `providers/` | Shared application context, such as the signed-in session. |
+The asset subfolders are a proposed organization. Existing assets currently remain directly under `mobile/assets/`; update image imports and `app.json` references together if assets are moved. Create `fonts/` only if custom fonts are used.
 
-### Planned server and database folders
+### MVC responsibilities and request flow
 
-| Folder | Purpose |
-|---|---|
-| `server/src/middleware/` | Shared request checks and error handling. |
-| `server/src/features/` | Groups API operations by feature. |
-| `server/src/features/materials/` | Validates imports and extracts PDF/DOCX text. |
-| `server/src/features/quizzes/` | Generates questions, checks answers, scores sessions, and adjusts difficulty. |
-| `server/src/features/flashcards/` | Generates and saves personal flashcards. |
-| `server/src/features/progress/` | Calculates dashboard and report data. |
-| `server/src/lib/` | Shared database, storage, and AI clients. |
-| `mobile/test/` | Tests critical mobile screen behavior. |
-| `supabase/migrations/` | Versioned SQL for tables, constraints, and access policies. |
+| Part | Location | Responsibility |
+|---|---|---|
+| View | Mobile `src/app/` and `components/` | Display data and handle user interaction using React Native components. |
+| Routes | `server/src/routes/*Routes.js` | Connect HTTP methods and paths to authentication middleware and controller functions. |
+| Controller | `server/src/controllers/*Controller.js` | Read the authenticated identity and input, validate request shape, call the service, and send a safe response. |
+| Service | `server/src/services/*Service.js` | Apply business rules and ownership checks; coordinate extraction, AI generation, scoring, and progress calculations. |
+| Model | `server/src/models/*Model.js` | Use the server Supabase client for owner-scoped database/private Storage operations and atomic database functions. |
 
-### Planned files
+```text
+React Native screen -> mobile API helper -> Express route + auth middleware
+                    -> controller -> service -> model -> Supabase
+```
 
-| File | Purpose |
-|---|---|
-| `mobile/src/providers/session-provider.jsx` | Makes the current account session available to screens. |
-| `mobile/src/lib/api.js` | Sends authenticated requests to Express. |
-| `mobile/src/lib/supabase.js` | Creates the mobile Supabase client. |
-| `mobile/eas.json` | Defines Android build profiles. |
-| `server/src/middleware/auth.js` | Verifies identity on protected requests. |
-| `server/src/middleware/error-handler.js` | Returns consistent API errors. |
-| `server/src/lib/supabase.js` | Connects the server to the database and private Storage. |
-| `server/src/lib/ai.js` | Sends requests to the approved AI provider. |
-| `supabase/config.toml` | Configures the Supabase CLI when needed. |
-| `supabase/seed.sql` | Adds synthetic development data. |
-| `README.md` | Introduces the project and links to its guides. |
+The result returns through the same layers as a safe JSON response. This is an API-backed MVC design: React Native provides the view, so Express does not need a server-side `views/` folder. Mobile `lib/` files handle API requests and public Supabase authentication; they do not duplicate authoritative scoring or progress calculations.
 
-Keep uploads in private Storage and real credentials out of Git. AI keys and privileged Supabase credentials belong only on the server. Student and instructor accounts remain private; instructors cannot access student histories or publish shared quizzes.
+Group server files by layer and use camelCase names that identify their feature, such as `quizRoutes.js`, `quizController.js`, `quizService.js`, and `quizModel.js`. Keep server settings and clients in `config/`, request/output checks in `validation/`, and extraction, generation, prompts, and calculation helpers in `services/`. Shared usage limits and error definitions remain in `lib/`.
+
+Use plain JavaScript functions and add files with their implementation. Start with one authenticated own-profile read in Phase 2 before expanding the pattern. Services call helper functions and models as needed. Do not add generic base classes, repository wrappers, or empty forwarding functions.
+
+### Server and database safeguards
+
+Keep answer keys and scoring on the server. Store stable option identifiers, accept one answer per question/session, and use atomic database operations for answer saving and completion. Preserve quiz sequence and adaptation state when resuming. Dashboard and report data use the same progress calculations.
+
+The migration names describe the intended responsibilities and order; the exact SQL remains to be designed. Add owner policies and constraints with each table migration. Keep answer keys inaccessible through direct mobile database access. Private bucket policies belong with the Storage migration, and atomic scoring/finalization functions belong with study operations.
+
+Keep uploads in private Storage and real credentials out of Git. AI keys and privileged Supabase credentials belong only on the server. Students and instructors can access only their own resources; instructors cannot view student histories or publish shared quizzes. Confirmed module deletion removes its source, derived quizzes, flashcards, and study results, then recalculates affected progress and streaks while preserving unrelated history.
+
+### Verification and remaining decisions
+
+The mobile test files are planned additions, not installed test tooling or passing checks. Cover authentication return links, rejected imports, interrupted sessions, duplicate answer submissions, complete versus partial flashcard reviews, and safe report export.
+
+The previously removed server test folder and command remain omitted. Verify controller validation and safe responses, service business rules, and model persistence/ownership, including one complete route-to-database flow. Backend verification still needs extraction fixtures, two-account ownership checks, generation/source validation, answer-key integrity, difficulty transitions, duplicate-safe scoring, study dates/streaks, dashboard/report agreement, and deletion cleanup. Record commands and results in `docs/validation.md` when implemented.
+
+Hosting-specific files, extraction worker/process isolation, validated file limits, and the approved Groq model depend on Phase 1 findings. Gemini stays disabled pending separate approval. Live-service and physical Android checks remain necessary; this tree does not establish working integrations.
 
 ## Project documents
 

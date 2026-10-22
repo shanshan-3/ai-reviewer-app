@@ -6,15 +6,20 @@ Status: Local starters are running; product features and Phase 1 validation rema
 
 Planning date: 2026-10-15.
 
-Status updated: 2026-10-17.
+Status updated: 2026-10-22 (Expo development client installed and Android development build instructions added; MVC with a service layer grouped by responsibility remains selected; no new device validation).
 
 Setup reference: the [installation guide](../docs/installation.md) explains contributor setup after cloning, including local configuration, startup, and checks. The [development page](../docs/development.md) links to the project guides. The [folder guide](../folder-structure.md) separates existing files from planned additions.
 
-Source: [AI_Powered_Reviewer_Overview.md](../AI_Powered_Reviewer_Overview.md), with the decisions from Q1-Q26. See the [domain glossary](../GLOSSARY.md) and [private preparation decision](../docs/adr/0001-private-independent-preparation.md). The remaining feature architecture and API interfaces below are proposed.
+Android development uses the RebyuIT Dev APK, a project-specific development build that loads JavaScript through Metro. Expo Go is an optional preview limited to its bundled native libraries. JavaScript and styling edits do not require a new APK; native library, Expo SDK, and native configuration changes require rebuilding. The release APK for users is built separately and runs without Metro. See the [workflow comparison](../docs/installation.md#4-choose-how-to-run-the-android-app) and [Expo's explanation](https://docs.expo.dev/develop/development-builds/faq/).
+
+The [cleanup guide](../docs/RebyuIT_Android_Dev_Cleanup_Guide.md) covers removing local Android tools. A compatible Dev APK already installed on a phone can keep loading JavaScript over the network. Future native builds require restored local tools or configured EAS cloud builds; EAS profiles remain planned. These instructions add no build, installation, or device-validation evidence.
+
+Source: [AI_Powered_Reviewer_Overview.md](../AI_Powered_Reviewer_Overview.md), with the decisions from Q1-Q26 and the selected MVC design below. See the [domain glossary](../GLOSSARY.md) and [private preparation decision](../docs/adr/0001-private-independent-preparation.md). MVC with a service layer is agreed; feature implementation and API interfaces remain planned.
 
 ### Completed starter setup
 
 - The mobile app has a JavaScript/JSX Expo SDK 57 starter with Router, NativeWind, Reusables configuration, light/dark themes, and aliases. The screen is still a placeholder; no Reusables UI components have been copied yet.
+- `expo-dev-client ~57.0.20` is installed for SDK 57. The installation guide now covers the first Android development build and later Metro sessions. Native compilation, APK installation, and device behavior remain unverified. Lint and JavaScript type checks passed after installation; Expo Doctor passed 20/21 checks, with the compatibility check flagging newer patches for the existing `expo`, `expo-router`, and `expo-sharing` packages, which were left unchanged.
 - Express runs locally with `GET /health`, returning HTTP 200 and `{"status":"ok"}`. The server has start and watch commands. Its starter test folder and test command were removed at the user's request.
 - Mobile lint, JavaScript type checks, SDK compatibility, Expo Doctor (21/21), and an Android bundle export passed. The server dependency check and a fresh startup/health check also passed. These checks do not establish physical-device behavior or live service integration.
 - Both applications have manifests, lockfiles, environment examples, and local environment files. The root ignore rules protect local credentials and dependencies. Supabase and Groq clients, database migrations, authentication flows, and feature APIs are not implemented. Live services, extraction, device behavior, and deployment remain unverified.
@@ -38,7 +43,7 @@ The goal is an installed Android review application for BSIT students and IT ins
 | Category | Current position |
 |---|---|
 | Settled: verified facts | The overview defines six selected features, adaptation, recommendations, and a student review flow. Mobile and Express starters now exist, and the local checks listed above passed. Official service documentation was checked during planning; live account availability, service behavior, and physical-device behavior remain unverified. |
-| Settled: user decisions | Q1-Q26: private independent preparation, Android only, free services, selected stack, authorized modules, supported formats, quiz settings and source support, fresh sessions/resumption, adaptation, practice estimates, personal labels, study days, online study, registration, retention, recommendations, and deletion. See the decision details and behavior rules below. |
+| Settled: user decisions | Q1-Q26: private independent preparation, Android only, free services, selected stack, authorized modules, supported formats, quiz settings and source support, fresh sessions/resumption, adaptation, practice estimates, personal labels, study days, online study, registration, retention, recommendations, and deletion. MVC with a service layer, grouped by responsibility, was selected on 2026-10-21. See the decision details and behavior rules below. |
 | Questions | No further product question is required to draft this roadmap. Gemini-specific content-use approval remains conditional. Any scope change discovered during validation must be recorded here before dependent implementation. |
 | Still unclear | Representative module sizes/content, expected active/concurrent users, free hosting suitability, authentication sender availability, actual provider/model quotas and provider retention controls, and supported physical Android devices. Expo SDK 57 is the local baseline; the full stack still needs device validation. Subject/topic labels are personal; an official curriculum catalog is not required. |
 | Excluded | Instructor publishing and shared quiz libraries; classes, assignments, grading, and access to other students' results; iOS, browser and desktop clients; OCR, scanned documents, `.doc`, PowerPoint and photo imports; typed code exercises and code execution; mixed question types; saved-quiz retakes; paid service upgrades; offline answering and synchronization; ticket creation. |
@@ -75,7 +80,9 @@ The app is intended for campus use. Free-tier evaluation must establish whether 
 | Language | JavaScript / JSX | Used in the starters |
 | UI components | React Native Reusables | Configuration ready; components not yet added |
 | Styling | NativeWind | Version 4.2.7 configured; device rendering unverified |
+| Interface icons | Lucide React Native + react-native-svg | Installed on 2026-10-22; direct named imports selected; screen integration and Android rendering pending |
 | Backend API | Node.js + Express | Local starter and health endpoint running |
+| Application design | MVC with a service layer, grouped by responsibility | Selected; routes, controllers, services, and models folders not implemented |
 | Database | Supabase PostgreSQL | Selected |
 | Authentication | Supabase Auth | Selected |
 | Private module storage | Supabase Storage | Selected |
@@ -101,6 +108,7 @@ Current dependency versions are recorded in the application manifests and lockfi
 | React Native Reusables + NativeWind | User-confirmed, Q8 | Reuse editable component source and consistent styling. Paper and gluestack remain alternatives and will not be installed alongside Reusables. |
 | JavaScript ecosystem; JavaScript/JSX application code | Delegated, Q3 A | Keep the proposed language choice. Test the Reusables/template setup in Phase 1. If generated component templates require a language change, document that decision explicitly. |
 | Node.js + Express API | Delegated, Q3 A | Keep extraction, secrets, question generation, and authoritative scoring on the server. |
+| MVC with a service layer, grouped by responsibility | User-confirmed, 2026-10-21 | React Native screens provide the view; Express uses separate routes, controllers, services, and models folders. Controllers handle HTTP, services apply business rules, and models access Supabase. Keep one Express application and add files as features are implemented. |
 | Supabase PostgreSQL, Auth, and private Storage | Delegated, Q3 A | Reuse managed accounts and persistent storage. Use SQL migrations and Supabase clients; no ORM or second database is currently justified. |
 | Free services only | User-confirmed, Q4 A | No automatic paid upgrade or paid fallback when quotas are reached. Verify availability and capacity before release. |
 | Groq primary; Gemini conditional alternative | User-confirmed, Q10 clarification | The user permits external processing of school modules. Gemini needs separate acceptance of its content-use terms. Switching providers must be explicit. |
@@ -168,6 +176,25 @@ These product rules were confirmed in Q14-Q26. They still need implementation an
 
 Use the existing repository with its mobile starter, Express starter, and planned Supabase integration. Reuse the configured libraries and platform functions. The folder guide records which files already exist; the table below describes the intended responsibilities as features are added.
 
+Use MVC with a service layer, grouping server files by responsibility under `server/src/`: `config/`, `routes/`, `controllers/`, `services/`, `models/`, and `middleware/`. Use camelCase names that identify the feature, such as `quizRoutes.js`, `quizController.js`, `quizService.js`, and `quizModel.js`. The folder guide lists the planned files for profiles, labels, materials, quizzes, flashcards, and progress.
+
+| Part | Responsibility |
+|---|---|
+| View | React Native screens directly in `mobile/src/app/`, with shared UI in `components/`. Mobile `lib/` helpers call the API and handle public Supabase authentication. |
+| Routes | Files in `routes/` bind HTTP methods and paths to authentication middleware and controller functions. |
+| Controller | Files in `controllers/` read the authenticated identity and input, validate request shape, call the service, and send a safe response. |
+| Service | Files in `services/` apply business rules and ownership checks; coordinate extraction, AI generation, scoring, adaptation, and progress calculations. |
+| Model | Files in `models/` perform owner-scoped database/private Storage operations through the server Supabase client, including atomic database functions. |
+
+```text
+React Native screen -> mobile API helper -> Express route + auth middleware
+                    -> controller -> service -> model -> Supabase
+```
+
+Return the result through those layers as safe JSON. Express serves the API; no server-rendered `views/` folder or separate mobile controller/model hierarchy is needed. Keep settings and server clients in `config/`, request/output checks in `validation/`, and extraction, generation, prompts, and calculation helpers in `services/`. Shared usage limits and error definitions remain in `lib/`. Keep business rules out of controllers and database access out of mobile screens and server controllers; mobile Supabase use is limited to public authentication/session handling.
+
+Use plain JavaScript functions and add files only when they contain implementation. Begin Phase 2 with one authenticated own-profile read through all layers before expanding the pattern. In Phase 3, trace an answer submission from its quiz screen through the controller, scoring service, and model's atomic database operation, returning feedback without exposing unanswered keys. No generic base classes, repository wrappers, empty forwarding functions, or new architecture dependency is required.
+
 | Area | Responsibility |
 |---|---|
 | `mobile/` | Expo application, role entry screens, import, quiz, flashcards, progress, reports; requested Reusables components and NativeWind theme |
@@ -203,17 +230,21 @@ Use the selected components with a central theme and a readable content hierarch
 
 Check font scaling, screen-reader labels and answer announcements, and touch-target sizes on Android. Code must retain indentation and remain readable when scrolled horizontally. Test keyboard avoidance, system back behavior, and loading, error, and empty states. Selected answers must be identifiable without color alone. Shuffling options must not move controls while the user is reading.
 
-Automate checks for rejected extraction, private-resource authorization, generation validation, answer-key integrity, difficulty transitions, dates and streaks, duplicate-safe scoring, and report/dashboard consistency. Run integration checks against an isolated Supabase environment, followed by live provider tests and physical-device checks. Mocks, builds, and screenshots alone cannot verify the live services.
+Verify controller input validation and safe responses, service business rules, and model persistence/ownership, including one complete route-to-database flow. Automate checks for rejected extraction, private-resource authorization, generation validation, answer-key integrity, difficulty transitions, dates and streaks, duplicate-safe scoring, and report/dashboard consistency. Run integration checks against an isolated Supabase environment, followed by live provider tests and physical-device checks. Mocks, builds, and screenshots alone cannot verify the live services.
 
 ## 5. Phase-by-phase roadmap
 
-Every checkbox below covers unfinished work. Some setup within a task is complete, as noted, but no task has passed all its acceptance checks. Release tasks remain provisional until their stated requirements are met.
+Checked items below record completed setup or login UI substeps. The original phase tasks remain unchecked because their full acceptance checks have not passed. No full phase is complete. Release tasks remain provisional until their stated requirements are met.
 
 ### Phase 1: Test module extraction, question generation, and free services
 
 Outcome: Document the tested technical limits using authorized samples. Keep the agreed audience and features.
 
 Prerequisites: Representative modules and permitted development accounts for the remaining checks. Local starter setup has already been carried out under the user's instructions. Further external account creation or changes need explicit instructions.
+
+- [x] Configure the mobile/server starters, manifests, lockfiles, environment examples, and contributor installation instructions. This completes local setup only.
+- [x] Add the Expo SDK 57 development-client dependency and document Android build/start commands. Native build and installation remain unverified.
+- [x] Install Lucide React Native with Expo-compatible SVG support and use direct named imports in the login screen. Android rendering remains unverified.
 
 - [ ] Obtain representative selectable-text PDFs and `.docx` modules. Include code snippets, tables, and a longer module, and record the subjects and permitted processing conditions.
 - [x] Verify the configured Expo SDK 57/React Native/Reusables/NativeWind setup on target Android devices. The JavaScript/JSX starter, Node runtime, dependency checks, and Android bundle export have passed locally; copied UI components and device behavior still need validation. Record the device results alongside the locked versions.
@@ -233,7 +264,9 @@ Outcome: Each user can access only their own workspace and supported school modu
 
 Prerequisites: The runtime and extraction setup tested in Phase 1, plus an isolated development configuration. Keep email limitations documented until a working sender is verified.
 
-- [ ] Finish the feature and database structure, schema migrations, and their setup instructions. The mobile/server starters, environment examples, and starter installation guides already exist. Keep additions limited to the current feature work.
+- [x] Build the initial login UI with input validation, mail/lock icons, password visibility, local Remember me selection, and recovery/registration text. Lint and JavaScript type checking passed; authentication, persistence, recovery, registration navigation, and device validation remain pending.
+
+- [ ] Implement the server structure using separate config, routes, controllers, services, models, and middleware folders, schema migrations, and their setup instructions. The mobile/server starters, environment examples, and starter installation guides already exist. Validate one authenticated own-profile read through route, controller, service, and model before expanding; keep additions limited to the current feature work.
 - [ ] Implement email/password self-registration, confirmation, sign-in, session restoration, sign-out, and recovery with working Android return links. Let users select student or instructor entry screens without granting elevated access or claiming verified PSU membership.
 - [ ] Add owner-scoped database and private Storage policies. Test API identity and ownership checks with two unrelated accounts.
 - [ ] Implement PDF/`.docx` upload within the tested limits, extraction previews, reusable personal subject/topic labels, ready/failed states, and private retrieval. Clean up failed or deleted files.
@@ -252,7 +285,7 @@ Prerequisites: Private accounts and module imports, an approved model, and teste
 - [ ] Define the question schema, source references, public question payload, protected answer key, confirmed quiz choices/defaults, and state transitions for generation and study sessions.
 - [ ] Implement Groq requests and context selection within the tested limits. Add schema/content/source checks, fewer-question and insufficient-source outcomes, saved generation status, duplicate-request protection, and handling for quotas, refusals, and timeouts.
 - [ ] Implement separate conceptual and coding-syntax multiple-choice modes, instructors' personal previews, answer submission, immediate explanations, final results, fresh quizzes for new sessions, and resumption of interrupted sessions. Exclude mixed types and saved-quiz retakes.
-- [ ] Save answers and completion effects atomically. Make retries idempotent and exclude the answer key from question payloads sent before the student answers.
+- [ ] Route answer submissions through the quiz controller, scoring service, and model's atomic database operations. Save answers and completion effects atomically, make retries idempotent, and exclude the answer key from question payloads sent before the student answers.
 - [ ] Test incorrect option mapping, duplicate submissions, incomplete output, invalid source references, expired identity, prompt injection, and unauthorized access.
 
 Acceptance checks: Complete module and topic quizzes on Android in each question mode. Verify defaults of 10 questions, medium difficulty, and conceptual MCQ, plus the 5-question and other difficulty choices. Reject unsupported module-based coding generation without silently switching types. Check fewer-question and insufficient-source states. Verify saved keys, source support, and duplicate-safe results. A new session generates a fresh quiz; reconnecting resumes the same interrupted quiz and adaptation state. Answering requires connectivity. Network interruptions, provider 429 responses, and API restarts leave a recoverable state with an accurate message. An instructor can prepare a personal quiz without publishing it.
