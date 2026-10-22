@@ -5,7 +5,6 @@ import { Stack } from 'expo-router';
 import { ThemeProvider } from 'expo-router/react-navigation';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
-
 import { NAV_THEME } from '@/lib/theme';
 
 export default function RootLayout() {
@@ -18,5 +17,6 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }} />
       <PortalHost />
     </ThemeProvider>
+    
   );
 }

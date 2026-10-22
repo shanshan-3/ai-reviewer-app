@@ -1,31 +1,42 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "",
+    "slug": "RebyuIT",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "automatic",
+    "icon": "./assets/logo/splash-logo-white.png",
+    "userInterfaceStyle": "light",
     "scheme": "ai-reviewer",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#36454F",
+        "foregroundImage": "./assets/logo/index-icon-white.png"
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/logo/index-icon-white.png"
     },
     "plugins": [
       "expo-router",
       "expo-status-bar",
       "expo-sharing",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#36454F",
+          "image": "./assets/logo/index-icon-white.png",
+          "imageWidth": 400,
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#36454F",
+            "image": "./assets/logo/index-icon.png"
+          }
+        }
+      ]
     ]
   }
 }
