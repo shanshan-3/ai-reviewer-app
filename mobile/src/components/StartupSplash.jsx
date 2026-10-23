@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   AccessibilityInfo,
   Animated,
+  Easing,
   StyleSheet,
   View,
 } from 'react-native';
@@ -15,7 +16,7 @@ export default function StartupSplash({ children }) {
   const [imageState, setImageState] = useState('loading');
   const [reduceMotion, setReduceMotion] = useState(/** @type {boolean | null} */ (null));
   const [opacity] = useState(() => new Animated.Value(1));
-  const [translateY] = useState(() => new Animated.Value(0));
+  const [scale] = useState(() => new Animated.Value(0.8));
 
   useEffect(() => {
     let cancelled = false;
@@ -56,10 +57,16 @@ export default function StartupSplash({ children }) {
       }
 
       animation = Animated.sequence([
-        Animated.timing(translateY, { toValue: -12, duration: 250, useNativeDriver: true }),
-        Animated.timing(translateY, { toValue: 3, duration: 200, useNativeDriver: true }),
-        Animated.timing(translateY, { toValue: 0, duration: 150, useNativeDriver: true }),
-        Animated.delay(2100),
+        Animated.timing(scale, {
+          toValue: 1.1, duration: 350, easing: Easing.out(Easing.quad), useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: 0.97, duration: 200, easing: Easing.inOut(Easing.quad), useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: 1, duration: 150, easing: Easing.inOut(Easing.quad), useNativeDriver: true,
+        }),
+        Animated.delay(2000),
         Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
       ]);
       animation.start(({ finished }) => {
@@ -72,7 +79,7 @@ export default function StartupSplash({ children }) {
       cancelled = true;
       animation?.stop();
     };
-  }, [complete, imageState, laidOut, opacity, reduceMotion, translateY]);
+  }, [complete, imageState, laidOut, opacity, reduceMotion, scale]);
 
   return (
     <View style={styles.container}>
@@ -96,7 +103,7 @@ export default function StartupSplash({ children }) {
           <StatusBar style="dark" />
           <Animated.Image
             source={require('../../assets/logo/index-logo.png')}
-            style={[styles.logo, { transform: [{ translateY }] }]}
+            style={[styles.logo, { transform: [{ scale }] }]}
             resizeMode="contain"
             fadeDuration={0}
             onLoad={() => setImageState('ready')}
@@ -112,7 +119,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   overlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F8FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
