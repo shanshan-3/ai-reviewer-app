@@ -31,11 +31,7 @@
           "backgroundColor": "#36454F",
           "image": "./assets/logo/index-icon-white.png",
           "imageWidth": 10,
-          "resizeMode": "contain",
-          "dark": {
-            "backgroundColor": "#36454F",
-            "image": "./assets/logo/index-icon.png"
-          }
+          "resizeMode": "contain"
         }
       ]
     ]

@@ -5,7 +5,6 @@ import { Stack } from 'expo-router';
 import { ThemeProvider } from 'expo-router/react-navigation';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'nativewind';
 import StartupSplash from '@/components/StartupSplash';
 import { NAV_THEME } from '@/lib/theme';
 
@@ -14,11 +13,9 @@ SplashScreen.preventAutoHideAsync().catch((error) => {
 });
 
 export default function RootLayout() {
-  const { colorScheme } = useColorScheme();
-  const scheme = colorScheme === 'dark' ? 'dark' : 'light';
   return (
-    <ThemeProvider value={NAV_THEME[scheme]}>
-      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+    <ThemeProvider value={NAV_THEME}>
+      <StatusBar style="dark" />
       <StartupSplash>
         <Stack screenOptions={{ headerShown: false }} />
         <PortalHost />

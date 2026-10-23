@@ -13,3 +13,13 @@ export function validateLogin(email, password) {
 
   return errors;
 }
+
+export function validateRegister(fullName, email, password) {
+  const errors = validateLogin(email, password);
+
+  if (!fullName.trim()) {
+    errors.fullName = 'Enter your full name.';
+  }
+
+  return errors;
+}
