@@ -29,15 +29,18 @@ Each application has its own manifest and lockfile. There is no root install com
 
 `expo-dev-client ~57.0.20` is included in the mobile dependencies for SDK 57. Restoring dependencies installs the package, but you still need to build and install the Android app once before using the development client.
 
-`lucide-react-native` and the Expo SDK-compatible `react-native-svg` are included in the mobile dependencies; `npm.cmd ci --prefix mobile` installs both. Use direct named imports from `lucide-react-native` and pass `size`, `color`, and `strokeWidth` props as needed. Use an explicit color from the current theme.
+The app uses one fixed color palette with a `#F8F8FF` screen background. It does not switch appearance with the device theme. Shared colors live in `src/lib/theme.js` and `global.css`.
+
+`lucide-react-native` and the Expo SDK-compatible `react-native-svg` are included in the mobile dependencies; `npm.cmd ci --prefix mobile` installs both. Use direct named imports from `lucide-react-native` and pass `size`, `color`, and `strokeWidth` props as needed. Use an explicit color from the shared palette.
 
 ```jsx
 import { BookOpen } from 'lucide-react-native';
+import { THEME } from '@/lib/theme';
 
-<BookOpen size={24} color={theme.foreground} strokeWidth={2} />
+<BookOpen size={24} color={THEME.foreground} strokeWidth={2} />
 ```
 
-The example assumes `theme` is the active theme object from `src/lib/theme.js`. No shared icon wrapper is required. Icons have not been added to screens yet. Rebuild an existing development app after adding the native SVG dependency, following section 4. See the [Lucide React Native guide](https://lucide.dev/guide/react-native/getting-started) and [Expo SDK 57 SVG reference](https://docs.expo.dev/versions/v57.0.0/sdk/svg/).
+`THEME` is the shared color object from `src/lib/theme.js`. No shared icon wrapper is required. The login screen already uses Lucide icons. Rebuild an existing development app after adding the native SVG dependency, following section 4. See the [Lucide React Native guide](https://lucide.dev/guide/react-native/getting-started) and [Expo SDK 57 SVG reference](https://docs.expo.dev/versions/v57.0.0/sdk/svg/).
 
 ## 3. Add your local environment files
 
