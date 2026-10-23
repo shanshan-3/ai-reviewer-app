@@ -7,17 +7,17 @@ import {
     ScrollView,
     Text,
     TextInput,
+    useWindowDimensions,
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useColorScheme } from "nativewind";
 import { Check, Eye, EyeOff, Lock, Mail } from "lucide-react-native";
-import { THEME } from "@/lib/theme";
+import { THEME as theme } from "@/lib/theme";
 import { validateLogin } from "@/lib/auth";
+import { router } from "expo-router";
 
 export default function LoginPage() {
-    const { colorScheme } = useColorScheme();
-    const theme = THEME[colorScheme === "dark" ? "dark" : "light"];
+    const { fontScale } = useWindowDimensions();
     const passwordInput = useRef(/** @type {TextInput | null} */(null));
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -47,10 +47,11 @@ export default function LoginPage() {
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
             >
                 <ScrollView
+                    className="flex-1"
                     contentContainerStyle={{
                         flexGrow: 1,
-                        justifyContent: "center",
                         padding: 24,
+                        paddingTop: 48,
                     }}
                     keyboardShouldPersistTaps="handled"
                 >
@@ -58,12 +59,16 @@ export default function LoginPage() {
 
                         <Text
                             accessibilityRole="header"
-                            className="text-3xl font-bold text-foreground"
+                            style={{ minHeight: 72 * fontScale }}
+                            className="text-3xl font-bold leading-9 text-foreground"
                         >
                             Welcome back
                         </Text>
-                        <Text className="mt-2 text-base leading-6 text-muted-foreground">
-                            Sign in to continue to your workspace and pick up where you left off.
+                        <Text
+                            style={{ minHeight: 72 * fontScale }}
+                            className="mt-2 text-base leading-6 text-muted-foreground"
+                        >
+                            Sign in to access your study materials, continue your quizzes, and review key concepts whenever you’re ready to study.
                         </Text>
 
                         <View className="mt-8 gap-2">
@@ -182,13 +187,13 @@ export default function LoginPage() {
                             ) : null}
                         </View>
 
-                        <View className="mt-3 flex-row flex-wrap items-center justify-between gap-x-3">
+                        <View className="mt-3 flex-row flex-wrap items-center justify-between gap-x-3 gap-y-2">
                             <Pressable
                                 accessibilityRole="checkbox"
                                 accessibilityLabel="Remember me"
                                 accessibilityState={{ checked: rememberMe }}
                                 onPress={() => setRememberMe(!rememberMe)}
-                                className="min-h-12 flex-row items-center gap-2 rounded-lg border-2 border-transparent px-1 active:opacity-70 focus:border-foreground"
+                                className="min-h-12 max-w-full flex-row items-center gap-2 rounded-lg border-2 border-transparent px-1 active:opacity-70 focus:border-foreground"
                             >
                                 <View
                                     accessibilityElementsHidden
@@ -199,13 +204,14 @@ export default function LoginPage() {
                                         <Check size={14} color={theme.primaryForeground} />
                                     ) : null}
                                 </View>
-                                <Text className="text-sm text-foreground">
+                                <Text className="shrink text-sm text-foreground">
                                     Remember me
                                 </Text>
                             </Pressable>
                             <Pressable
-                                accessibilityRole="button"
-                                className="min-h-12 justify-center rounded-lg border-2 border-transparent px-1 active:opacity-70 focus:border-foreground"
+                                accessibilityRole="link"
+                                onPress={() => router.push("/(auth)/forgot-password")}
+                                className="min-h-12 max-w-full justify-center rounded-lg border-2 border-transparent px-1 active:opacity-70 focus:border-foreground"
                             >
                                 <Text className="text-sm font-medium text-foreground underline">
                                     Forgot password?
@@ -213,10 +219,12 @@ export default function LoginPage() {
                             </Pressable>
                         </View>
 
+                    </View>
+                    <View className="mt-auto w-full max-w-sm self-center pt-4">
                         <Pressable
                             accessibilityRole="button"
                             onPress={handleSubmit}
-                            className="mt-4 min-h-14 items-center justify-center rounded-lg border-2 border-primary bg-primary px-4 py-3 active:opacity-80 focus:border-muted-foreground"
+                            className="min-h-14 items-center justify-center rounded-lg border-2 border-primary bg-[#001428] px-4 py-3 active:opacity-80 focus:border-muted-foreground"
                         >
                             <Text className="text-base font-semibold text-primary-foreground">
                                 Sign in
@@ -230,12 +238,19 @@ export default function LoginPage() {
                                 {message}
                             </Text>
                         ) : null}
-                        <Text className="mt-6 text-center text-sm text-muted-foreground">
-                            Need an account?{" "}
-                            <Text className="font-semibold text-foreground underline">
-                                Create a new one
+
+                        <Pressable
+                            accessibilityRole="link"
+                            onPress={() => router.push("/(auth)/register")}
+                            className="mt-6 min-h-12 items-center justify-center rounded-lg border-2 border-transparent px-1 active:opacity-70 focus:border-foreground"
+                        >
+                            <Text className="text-center text-sm text-muted-foreground">
+                                Need an account?{" "}
+                                <Text className="font-semibold text-foreground underline">
+                                    Create a new one
+                                </Text>
                             </Text>
-                        </Text>
+                        </Pressable>
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
