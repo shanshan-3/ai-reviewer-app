@@ -11,9 +11,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Eye, EyeOff, Lock, Mail, User, MoveLeft } from "lucide-react-native";
-import { THEME as theme } from "@/lib/theme";
+import { Lock, Mail, User, MoveLeft } from "lucide-react-native";
 import { validateRegister } from "@/lib/auth";
+import FormField from "@/components/FormField";
+import PasswordStrength from "@/components/PasswordStrength";
+import RoleSelector from "@/components/RoleSelector";
+import AuthButton from "@/components/AuthButton";
 
 export default function RegisterPage() {
     const { fontScale } = useWindowDimensions();
@@ -24,11 +27,11 @@ export default function RegisterPage() {
     const passwordSection = useRef(/** @type {View | null} */(null));
     const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
     const [passwordFocused, setPasswordFocused] = useState(false);
+    const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-    const PasswordVisibilityIcon = showPassword ? EyeOff : Eye;
-    const [fullName, setFullName] = useState("");
+    const [role, setRole] = useState("student");
     const [submitted, setSubmitted] = useState(false);
     const [message, setMessage] = useState("");
     const errors = submitted ? validateRegister(fullName, email, password) : {};
@@ -36,7 +39,8 @@ export default function RegisterPage() {
     const scrollToFocusedInput = useCallback(() => {
         const input = TextInput.State.currentlyFocusedInput();
         if (
-            input && Keyboard.isVisible() &&
+            input &&
+            Keyboard.isVisible() &&
             [fullNameInput.current, emailInput.current, passwordInput.current].some(field => field === input)
         ) {
             const target = input === passwordInput.current ? passwordSection.current : input;
@@ -94,7 +98,7 @@ export default function RegisterPage() {
                     keyboardShouldPersistTaps="handled"
                 >
                     <View className="w-full max-w-sm self-center">
-                        
+
                         <Pressable
                             accessibilityRole="button"
                             accessibilityLabel="Go back"
@@ -115,203 +119,95 @@ export default function RegisterPage() {
                         <Text
                             className="font-poppins mt-3 text-base leading-6 text-muted-foreground"
                         >
-                            Sign up to start your workspace, invite teammates, and get your first projects moving.
+                            Set up your profile to start reviewing, practicing, and tracking your progress.
                         </Text>
 
-                        <View className="mt-6 gap-2">
-                            <Text
-                                nativeID="full-name-label"
-                                className="font-poppins-medium text-base text-foreground"
-                            >
-                                Full Name
-                            </Text>
-                            <View className="relative">
-                                <TextInput
-                                    ref={fullNameInput}
-                                    onFocus={handleInputFocus}
-                                    accessibilityLabel={
-                                        errors.fullName ? `Full Name. ${errors.fullName}` : "Full Name"
-                                    }
-                                    accessibilityLabelledBy="full-name-label"
-                                    autoCapitalize="words"
-                                    autoComplete="name"
-                                    autoCorrect={false}
-                                    keyboardType="default"
-                                    returnKeyType="next"
-                                    submitBehavior="submit"
-                                    onSubmitEditing={() => emailInput.current?.focus()}
-                                    placeholder="Enter your full name"
-                                    placeholderTextColor={theme.mutedForeground}
-                                    selectionColor={theme.foreground}
-                                    className="font-poppins min-h-14 rounded-lg border border-muted-foreground py-3 pl-12 pr-4 text-base text-foreground focus:border-foreground"
-                                    value={fullName}
-                                    onChangeText={(value) => {
-                                        setFullName(value);
-                                        setMessage("");
-                                    }}
-                                />
-                                <View
-                                    pointerEvents="none"
-                                    accessibilityElementsHidden
-                                    importantForAccessibility="no-hide-descendants"
-                                    className="absolute bottom-0 left-4 top-0 justify-center"
-                                >
-                                    <User size={20} color={theme.mutedForeground} />
-                                </View>
-                            </View>
-                            {errors.fullName ? (
-                                <Text
-                                    accessibilityLiveRegion="polite"
-                                    className="font-poppins text-sm text-foreground"
-                                >
-                                    {errors.fullName}
-                                </Text>
-                            ) : null}
+                        <FormField
+                            ref={fullNameInput}
+                            containerClassName="mt-6"
+                            label="Full Name"
+                            labelId="full-name-label"
+                            icon={User}
+                            error={errors.fullName}
+                            onFocus={handleInputFocus}
+                            autoCapitalize="words"
+                            autoComplete="name"
+                            autoCorrect={false}
+                            returnKeyType="next"
+                            submitBehavior="submit"
+                            onSubmitEditing={() => emailInput.current?.focus()}
+                            placeholder="Enter your full name"
+                            value={fullName}
+                            onChangeText={(value) => {
+                                setFullName(value);
+                                setMessage("");
+                            }}
+                        />
+
+                        <View className="mt-5">
+                            <RoleSelector value={role} onChange={setRole} />
                         </View>
 
-                        <View className="mt-5 gap-2">
-                            <Text
-                                nativeID="email-label"
-                                className="font-poppins-medium text-base text-foreground"
-                            >
-                                Email
-                            </Text>
-                            <View className="relative">
-                                <TextInput
-                                    ref={emailInput}
-                                    onFocus={handleInputFocus}
-                                    accessibilityLabel={
-                                        errors.email ? `Email. ${errors.email}` : "Email"
-                                    }
-                                    accessibilityLabelledBy="email-label"
-                                    autoCapitalize="none"
-                                    autoComplete="email"
-                                    autoCorrect={false}
-                                    keyboardType="email-address"
-                                    returnKeyType="next"
-                                    submitBehavior="submit"
-                                    onSubmitEditing={() => passwordInput.current?.focus()}
-                                    placeholder="Enter your email"
-                                    placeholderTextColor={theme.mutedForeground}
-                                    selectionColor={theme.foreground}
-                                    className="font-poppins min-h-14 rounded-lg border border-muted-foreground py-3 pl-12 pr-4 text-base text-foreground focus:border-foreground"
-                                    value={email}
-                                    onChangeText={(value) => {
-                                        setEmail(value);
-                                        setMessage("");
-                                    }}
-                                />
-                                <View
-                                    pointerEvents="none"
-                                    accessibilityElementsHidden
-                                    importantForAccessibility="no-hide-descendants"
-                                    className="absolute bottom-0 left-4 top-0 justify-center"
-                                >
-                                    <Mail size={20} color={theme.mutedForeground} />
-                                </View>
-                            </View>
-                            {errors.email ? (
-                                <Text
-                                    accessibilityLiveRegion="polite"
-                                    className="font-poppins text-sm text-foreground"
-                                >
-                                    {errors.email}
-                                </Text>
-                            ) : null}
-                        </View>
+                        <FormField
+                            ref={emailInput}
+                            containerClassName="mt-5"
+                            label="Email"
+                            labelId="email-label"
+                            icon={Mail}
+                            error={errors.email}
+                            onFocus={handleInputFocus}
+                            autoCapitalize="none"
+                            autoComplete="email"
+                            autoCorrect={false}
+                            keyboardType="email-address"
+                            returnKeyType="next"
+                            submitBehavior="submit"
+                            onSubmitEditing={() => passwordInput.current?.focus()}
+                            placeholder="Enter your email"
+                            value={email}
+                            onChangeText={(value) => {
+                                setEmail(value);
+                                setMessage("");
+                            }}
+                        />
 
                         <View
                             ref={passwordSection}
                             collapsable={false}
                             onLayout={scrollToFocusedInput}
-                            className="mt-5 gap-2"
                         >
-                            <Text
-                                nativeID="password-label"
-                                className="font-poppins-medium text-base text-foreground"
-                            >
-                                Password
-                            </Text>
-                            <View className="relative">
-                                <TextInput
-                                    ref={passwordInput}
-                                    onFocus={handleInputFocus}
-                                    onBlur={() => setPasswordFocused(false)}
-                                    accessibilityLabel={
-                                        errors.password
-                                            ? `Password. ${errors.password}`
-                                            : "Password"
-                                    }
-                                    accessibilityLabelledBy="password-label"
-                                    autoCapitalize="none"
-                                    autoComplete="new-password"
-                                    autoCorrect={false}
-                                    secureTextEntry={!showPassword}
-                                    returnKeyType="done"
-                                    onSubmitEditing={handleSubmit}
-                                    placeholder="Enter your password"
-                                    placeholderTextColor={theme.mutedForeground}
-                                    selectionColor={theme.foreground}
-                                    className="font-poppins min-h-14 rounded-lg border border-muted-foreground py-3 pl-12 pr-14 text-base text-foreground focus:border-foreground"
-                                    value={password}
-                                    onChangeText={(value) => {
-                                        setPassword(value);
-                                        setMessage("");
-                                    }}
-                                />
-                                <View
-                                    pointerEvents="none"
-                                    accessibilityElementsHidden
-                                    importantForAccessibility="no-hide-descendants"
-                                    className="absolute bottom-0 left-4 top-0 justify-center"
-                                >
-                                    <Lock size={20} color={theme.mutedForeground} />
-                                </View>
-                                <Pressable
-                                    accessibilityRole="button"
-                                    accessibilityLabel={
-                                        showPassword ? "Hide password" : "Show password"
-                                    }
-                                    onPress={() => setShowPassword(!showPassword)}
-                                    className="absolute bottom-0 right-1 top-0 min-h-12 min-w-12 items-center justify-center rounded-lg border-2 border-transparent active:bg-secondary focus:border-foreground"
-                                >
-                                    <PasswordVisibilityIcon
-                                        size={20}
-                                        color={theme.foreground}
-                                        accessible={false}
-                                        accessibilityElementsHidden
-                                        importantForAccessibility="no-hide-descendants"
-                                    />
-                                </Pressable>
-                            </View>
-                            {errors.password ? (
-                                <Text
-                                    accessibilityLiveRegion="polite"
-                                    className="font-poppins text-sm text-foreground"
-                                >
-                                    {errors.password}
-                                </Text>
-                            ) : null}
+                            <FormField
+                                ref={passwordInput}
+                                containerClassName="mt-5"
+                                label="Password"
+                                labelId="password-label"
+                                icon={Lock}
+                                error={errors.password}
+                                isPassword
+                                showPassword={showPassword}
+                                onTogglePassword={() => setShowPassword(!showPassword)}
+                                onFocus={handleInputFocus}
+                                onBlur={() => setPasswordFocused(false)}
+                                autoCapitalize="none"
+                                autoComplete="new-password"
+                                autoCorrect={false}
+                                returnKeyType="done"
+                                onSubmitEditing={handleSubmit}
+                                placeholder="Enter your password"
+                                value={password}
+                                onChangeText={(value) => {
+                                    setPassword(value);
+                                    setMessage("");
+                                }}
+                            />
+                            <PasswordStrength password={password} />
                         </View>
                     </View>
-                    <View className="mt-auto w-full max-w-sm self-center pt-4">
-                        <Pressable
-                            accessibilityRole="button"
-                            onPress={handleSubmit}
-                            className="min-h-14 items-center justify-center rounded-lg border-2 border-primary bg-[#001428] px-4 py-3 active:opacity-80 focus:border-muted-foreground"
-                        >
-                            <Text className="font-poppins-semibold text-base text-primary-foreground">
-                                Create account
-                            </Text>
-                        </Pressable>
-                        {message ? (
-                            <Text
-                                accessibilityLiveRegion="polite"
-                                className="font-poppins mt-4 text-base text-foreground"
-                            >
-                                {message}
-                            </Text>
-                        ) : null}
+                    <AuthButton
+                        submitLabel="Create account"
+                        onSubmit={handleSubmit}
+                        message={message}
+                    >
                         <Pressable
                             accessibilityRole="button"
                             accessibilityLabel="Already have an account? Sign in"
@@ -325,7 +221,7 @@ export default function RegisterPage() {
                                 </Text>
                             </Text>
                         </Pressable>
-                    </View>
+                    </AuthButton>
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
