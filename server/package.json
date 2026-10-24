@@ -5,7 +5,9 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node --env-file=.env src/server.js",
-    "dev": "node --env-file=.env --watch src/server.js"
+    "dev": "node --env-file=.env --watch src/server.js",
+    "benchmark:extraction": "node scripts/extraction/benchmark.mjs",
+    "check:extraction": "node scripts/extraction/check.mjs"
   },
   "keywords": [],
   "author": "",

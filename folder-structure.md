@@ -21,7 +21,7 @@ ai-reviewer-app/
 |   |   |   |-- _layout.jsx          # Navigation theme, status bar, stack, portal host
 |   |   |   `-- index.jsx            # Starter screen
 |   |   `-- lib/
-|   |       |-- theme.js            # Light/dark tokens and navigation themes
+|   |       |-- theme.js            # Fixed colors and navigation theme
 |   |       `-- utils.js            # Class-name merging helper
 |   |-- .env.example
 |   |-- .gitignore
@@ -83,10 +83,10 @@ Paths in this table are relative to `mobile/` unless stated otherwise.
 |---|---|
 | `src/app/_layout.jsx` | Sets the navigation theme, status bar, screen stack, and portal host. |
 | `src/app/index.jsx` | The current starter screen. |
-| `src/lib/theme.js` | Defines light/dark colors and navigation themes. |
+| `src/lib/theme.js` | Defines the fixed color palette and navigation theme. |
 | `src/lib/utils.js` | Combines style class names and resolves conflicts. |
 | `app.json` | Sets the app name, icons, appearance, link scheme, and Expo plugins. |
-| `global.css` | Contains Tailwind directives and light/dark CSS variables. |
+| `global.css` | Contains Tailwind directives and fixed color variables. |
 | `tailwind.config.js` | Sets scanned source paths, theme colors, rounded corners, and animations. |
 | `babel.config.js` | Configures JavaScript and NativeWind transformation. |
 | `metro.config.js` | Configures the bundler and connects the global stylesheet. |

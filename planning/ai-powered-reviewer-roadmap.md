@@ -18,7 +18,7 @@ Source: [AI_Powered_Reviewer_Overview.md](../AI_Powered_Reviewer_Overview.md), w
 
 ### Completed starter setup
 
-- The mobile app has a JavaScript/JSX Expo SDK 57 starter with Router, NativeWind, Reusables configuration, light/dark themes, and aliases. The screen is still a placeholder; no Reusables UI components have been copied yet.
+- The mobile app has a JavaScript/JSX Expo SDK 57 starter with Router, NativeWind, Reusables configuration, a fixed color palette, and aliases. The shared screen background is `#F8F8FF`; the app does not switch appearance with the device theme. No Reusables UI components have been copied yet.
 - `expo-dev-client ~57.0.20` is installed for SDK 57. The installation guide now covers the first Android development build and later Metro sessions. Native compilation, APK installation, and device behavior remain unverified. Lint and JavaScript type checks passed after installation; Expo Doctor passed 20/21 checks, with the compatibility check flagging newer patches for the existing `expo`, `expo-router`, and `expo-sharing` packages, which were left unchanged.
 - Express runs locally with `GET /health`, returning HTTP 200 and `{"status":"ok"}`. The server has start and watch commands. Its starter test folder and test command were removed at the user's request.
 - Mobile lint, JavaScript type checks, SDK compatibility, Expo Doctor (21/21), and an Android bundle export passed. The server dependency check and a fresh startup/health check also passed. These checks do not establish physical-device behavior or live service integration.
@@ -79,7 +79,7 @@ The app is intended for campus use. Free-tier evaluation must establish whether 
 | Android application | React Native + Expo | SDK 57 starter configured; device validation pending |
 | Language | JavaScript / JSX | Used in the starters |
 | UI components | React Native Reusables | Configuration ready; components not yet added |
-| Styling | NativeWind | Version 4.2.7 configured; device rendering unverified |
+| Styling | NativeWind | Version 4.2.7 configured with one fixed palette and a `#F8F8FF` screen background; device rendering unverified |
 | Interface icons | Lucide React Native + react-native-svg | Installed on 2026-10-22; direct named imports selected; screen integration and Android rendering pending |
 | Backend API | Node.js + Express | Local starter and health endpoint running |
 | Application design | MVC with a service layer, grouped by responsibility | Selected; routes, controllers, services, and models folders not implemented |
@@ -246,9 +246,9 @@ Prerequisites: Representative modules and permitted development accounts for the
 - [x] Add the Expo SDK 57 development-client dependency and document Android build/start commands. Native build and installation remain unverified.
 - [x] Install Lucide React Native with Expo-compatible SVG support and use direct named imports in the login screen. Android rendering remains unverified.
 
-- [ ] Obtain representative selectable-text PDFs and `.docx` modules. Include code snippets, tables, and a longer module, and record the subjects and permitted processing conditions.
+- [x] Obtain representative selectable-text PDFs and `.docx` modules. Include code snippets, tables, and a longer module, and record the subjects and permitted processing conditions.
 - [x] Verify the configured Expo SDK 57/React Native/Reusables/NativeWind setup on target Android devices. The JavaScript/JSX starter, Node runtime, dependency checks, and Android bundle export have passed locally; copied UI components and device behavior still need validation. Record the device results alongside the locked versions.
-- [ ] Measure PDF/DOCX extraction quality and resource use. Set supported limits and rejection messages, accounting for mixed image/text PDFs and code that depends on formatting.
+- [x] Measure PDF/DOCX extraction quality and resource use. Set supported limits and rejection messages, accounting for mixed image/text PDFs and code that depends on formatting. [Local validation](../docs/validation.md): one real six-page PDF plus 40 synthetic fixtures; 145 measured runs passed. Limits are 5 MiB/file, 100 PDF pages, 200,000 extracted characters, 20 MiB expanded DOCX, 10 seconds, and a monitored 384 MiB child-memory budget. Images are excluded and formatting-dependent content requires review. Real DOCX modules and production-host validation remain pending.
 - [ ] Check the Groq account's no-training terms, retention controls, free production models, structured-output support, and quotas. Evaluate samples before pinning the model.
 - [ ] Ask an instructor to evaluate a small question/flashcard sample. Accepted answers must be correct and unambiguous, explanations supported, and source references valid. Reject or correct failed questions before passing the sample.
 - [ ] Establish expected active users, peak concurrent generation, and normal module size for campus use. Test the confirmed 5/10-question settings and both separate question types against measured provider and storage budgets.
