@@ -1,8 +1,7 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
     Keyboard,
     KeyboardAvoidingView,
-    Platform,
     Pressable,
     ScrollView,
     Text,
@@ -18,8 +17,13 @@ import { validateRegister } from "@/lib/auth";
 
 export default function RegisterPage() {
     const { fontScale } = useWindowDimensions();
+    const scrollView = useRef(/** @type {ScrollView | null} */(null));
+    const fullNameInput = useRef(/** @type {TextInput | null} */(null));
     const emailInput = useRef(/** @type {TextInput | null} */(null));
     const passwordInput = useRef(/** @type {TextInput | null} */(null));
+    const passwordSection = useRef(/** @type {View | null} */(null));
+    const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
+    const [passwordFocused, setPasswordFocused] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -28,6 +32,36 @@ export default function RegisterPage() {
     const [submitted, setSubmitted] = useState(false);
     const [message, setMessage] = useState("");
     const errors = submitted ? validateRegister(fullName, email, password) : {};
+
+    const scrollToFocusedInput = useCallback(() => {
+        const input = TextInput.State.currentlyFocusedInput();
+        if (
+            input && Keyboard.isVisible() &&
+            [fullNameInput.current, emailInput.current, passwordInput.current].some(field => field === input)
+        ) {
+            const target = input === passwordInput.current ? passwordSection.current : input;
+            if (target) {
+                scrollView.current?.scrollResponderScrollNativeHandleToKeyboard(target, 24, true);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        const shown = Keyboard.addListener("keyboardDidShow", () => {
+            setKeyboardVisible(true);
+            scrollToFocusedInput();
+        });
+        const hidden = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
+        return () => {
+            shown.remove();
+            hidden.remove();
+        };
+    }, [scrollToFocusedInput]);
+
+    function handleInputFocus() {
+        setPasswordFocused(TextInput.State.currentlyFocusedInput() === passwordInput.current);
+        scrollToFocusedInput();
+    }
 
     function handleSubmit() {
         setSubmitted(true);
@@ -44,10 +78,14 @@ export default function RegisterPage() {
         <SafeAreaView className="flex-1 bg-background">
             <KeyboardAvoidingView
                 className="flex-1"
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                behavior="padding"
             >
                 <ScrollView
+                    ref={scrollView}
                     className="flex-1"
+                    scrollEnabled={!(passwordFocused && keyboardVisible)}
+                    onLayout={scrollToFocusedInput}
+                    onContentSizeChange={scrollToFocusedInput}
                     contentContainerStyle={{
                         flexGrow: 1,
                         padding: 24,
@@ -80,6 +118,8 @@ export default function RegisterPage() {
                             </Text>
                             <View className="relative">
                                 <TextInput
+                                    ref={fullNameInput}
+                                    onFocus={handleInputFocus}
                                     accessibilityLabel={
                                         errors.fullName ? `Full Name. ${errors.fullName}` : "Full Name"
                                     }
@@ -130,6 +170,7 @@ export default function RegisterPage() {
                             <View className="relative">
                                 <TextInput
                                     ref={emailInput}
+                                    onFocus={handleInputFocus}
                                     accessibilityLabel={
                                         errors.email ? `Email. ${errors.email}` : "Email"
                                     }
@@ -170,7 +211,12 @@ export default function RegisterPage() {
                             ) : null}
                         </View>
 
-                        <View className="mt-5 gap-2">
+                        <View
+                            ref={passwordSection}
+                            collapsable={false}
+                            onLayout={scrollToFocusedInput}
+                            className="mt-5 gap-2"
+                        >
                             <Text
                                 nativeID="password-label"
                                 className="text-base font-medium text-foreground"
@@ -180,6 +226,8 @@ export default function RegisterPage() {
                             <View className="relative">
                                 <TextInput
                                     ref={passwordInput}
+                                    onFocus={handleInputFocus}
+                                    onBlur={() => setPasswordFocused(false)}
                                     accessibilityLabel={
                                         errors.password
                                             ? `Password. ${errors.password}`
