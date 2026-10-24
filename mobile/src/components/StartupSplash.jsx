@@ -56,18 +56,22 @@ export default function StartupSplash({ children }) {
         return;
       }
 
+      scale.setValue(0.8);
+      opacity.setValue(1);
+
       animation = Animated.sequence([
-        Animated.timing(scale, {
-          toValue: 1.1, duration: 350, easing: Easing.out(Easing.quad), useNativeDriver: true,
+        Animated.spring(scale, {
+          toValue: 1,
+          bounciness: 11,
+          speed: 10,
+          useNativeDriver: true,
         }),
-        Animated.timing(scale, {
-          toValue: 0.97, duration: 200, easing: Easing.inOut(Easing.quad), useNativeDriver: true,
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 300,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
         }),
-        Animated.timing(scale, {
-          toValue: 1, duration: 150, easing: Easing.inOut(Easing.quad), useNativeDriver: true,
-        }),
-        Animated.delay(2000),
-        Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
       ]);
       animation.start(({ finished }) => {
         if (finished && !cancelled) setComplete(true);
