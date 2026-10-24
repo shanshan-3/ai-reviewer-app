@@ -98,13 +98,13 @@ export default function RegisterPage() {
                         <Text
                             accessibilityRole="header"
                             style={{ minHeight: 72 * fontScale }}
-                            className="text-3xl font-bold leading-9 text-foreground"
+                            className="font-poppins-bold text-3xl leading-9 text-foreground"
                         >
                             Create your account
                         </Text>
                         <Text
                             style={{ minHeight: 72 * fontScale }}
-                            className="mt-2 text-base leading-6 text-muted-foreground"
+                            className="font-poppins mt-2 text-base leading-6 text-muted-foreground"
                         >
                             Create an account to organize your study materials, practice with quizzes and flashcards, and review at your own pace.
                         </Text>
@@ -112,7 +112,7 @@ export default function RegisterPage() {
                         <View className="mt-8 gap-2">
                             <Text
                                 nativeID="full-name-label"
-                                className="text-base font-medium text-foreground"
+                                className="font-poppins-medium text-base text-foreground"
                             >
                                 Full Name
                             </Text>
@@ -134,7 +134,7 @@ export default function RegisterPage() {
                                     placeholder="Enter your full name"
                                     placeholderTextColor={theme.mutedForeground}
                                     selectionColor={theme.foreground}
-                                    className="min-h-14 rounded-lg border border-muted-foreground py-3 pl-12 pr-4 text-base text-foreground focus:border-foreground"
+                                    className="font-poppins min-h-14 rounded-lg border border-muted-foreground py-3 pl-12 pr-4 text-base text-foreground focus:border-foreground"
                                     value={fullName}
                                     onChangeText={(value) => {
                                         setFullName(value);
@@ -153,7 +153,7 @@ export default function RegisterPage() {
                             {errors.fullName ? (
                                 <Text
                                     accessibilityLiveRegion="polite"
-                                    className="text-sm text-foreground"
+                                    className="font-poppins text-sm text-foreground"
                                 >
                                     {errors.fullName}
                                 </Text>
@@ -163,7 +163,7 @@ export default function RegisterPage() {
                         <View className="mt-5 gap-2">
                             <Text
                                 nativeID="email-label"
-                                className="text-base font-medium text-foreground"
+                                className="font-poppins-medium text-base text-foreground"
                             >
                                 Email
                             </Text>
@@ -185,7 +185,7 @@ export default function RegisterPage() {
                                     placeholder="Enter your email"
                                     placeholderTextColor={theme.mutedForeground}
                                     selectionColor={theme.foreground}
-                                    className="min-h-14 rounded-lg border border-muted-foreground py-3 pl-12 pr-4 text-base text-foreground focus:border-foreground"
+                                    className="font-poppins min-h-14 rounded-lg border border-muted-foreground py-3 pl-12 pr-4 text-base text-foreground focus:border-foreground"
                                     value={email}
                                     onChangeText={(value) => {
                                         setEmail(value);
@@ -204,7 +204,7 @@ export default function RegisterPage() {
                             {errors.email ? (
                                 <Text
                                     accessibilityLiveRegion="polite"
-                                    className="text-sm text-foreground"
+                                    className="font-poppins text-sm text-foreground"
                                 >
                                     {errors.email}
                                 </Text>
@@ -219,7 +219,7 @@ export default function RegisterPage() {
                         >
                             <Text
                                 nativeID="password-label"
-                                className="text-base font-medium text-foreground"
+                                className="font-poppins-medium text-base text-foreground"
                             >
                                 Password
                             </Text>
@@ -243,7 +243,7 @@ export default function RegisterPage() {
                                     placeholder="Enter your password"
                                     placeholderTextColor={theme.mutedForeground}
                                     selectionColor={theme.foreground}
-                                    className="min-h-14 rounded-lg border border-muted-foreground py-3 pl-12 pr-14 text-base text-foreground focus:border-foreground"
+                                    className="font-poppins min-h-14 rounded-lg border border-muted-foreground py-3 pl-12 pr-14 text-base text-foreground focus:border-foreground"
                                     value={password}
                                     onChangeText={(value) => {
                                         setPassword(value);
@@ -278,7 +278,7 @@ export default function RegisterPage() {
                             {errors.password ? (
                                 <Text
                                     accessibilityLiveRegion="polite"
-                                    className="text-sm text-foreground"
+                                    className="font-poppins text-sm text-foreground"
                                 >
                                     {errors.password}
                                 </Text>
@@ -291,14 +291,14 @@ export default function RegisterPage() {
                             onPress={handleSubmit}
                             className="min-h-14 items-center justify-center rounded-lg border-2 border-primary bg-[#001428] px-4 py-3 active:opacity-80 focus:border-muted-foreground"
                         >
-                            <Text className="text-base font-semibold text-primary-foreground">
+                            <Text className="font-poppins-semibold text-base text-primary-foreground">
                                 Create account
                             </Text>
                         </Pressable>
                         {message ? (
                             <Text
                                 accessibilityLiveRegion="polite"
-                                className="mt-4 text-base text-foreground"
+                                className="font-poppins mt-4 text-base text-foreground"
                             >
                                 {message}
                             </Text>
@@ -309,9 +309,9 @@ export default function RegisterPage() {
                             onPress={() => router.navigate("/(auth)/login")}
                             className="mt-6 min-h-12 items-center justify-center rounded-lg border-2 border-transparent px-1 active:opacity-70 focus:border-foreground"
                         >
-                            <Text className="text-center text-sm text-muted-foreground">
+                            <Text className="font-poppins text-center text-sm text-muted-foreground">
                                 Already have an account?{" "}
-                                <Text className="font-semibold text-foreground underline">
+                                <Text className="font-poppins-semibold text-foreground underline">
                                     Sign in
                                 </Text>
                             </Text>

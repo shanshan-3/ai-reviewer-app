@@ -102,7 +102,7 @@ export default function StartupSplash({ children }) {
         >
           <StatusBar style="dark" />
           <Animated.Image
-            source={require('../../assets/logo/index-logo.png')}
+            source={require('../../assets/logo/logo-with-name-transparent.png')}
             style={[styles.logo, { transform: [{ scale }] }]}
             resizeMode="contain"
             fadeDuration={0}

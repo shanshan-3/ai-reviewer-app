@@ -4,7 +4,7 @@
     "slug": "RebyuIT",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo/splash-logo-white.png",
+    "icon": "./assets/logo/logo-with-name-white-background.png",
     "userInterfaceStyle": "light",
     "scheme": "ai-reviewer",
     "ios": {
@@ -13,12 +13,12 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#36454F",
-        "foregroundImage": "./assets/logo/index-icon-white.png"
+        "foregroundImage": "./assets/logo/logo-symbol-white-background-1024.png"
       },
       "package": "com.anonymous.RebyuIT"
     },
     "web": {
-      "favicon": "./assets/logo/index-icon-white.png"
+      "favicon": "./assets/logo/logo-symbol-white-background-1024.png"
     },
     "plugins": [
       "expo-router",
@@ -29,7 +29,7 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#36454F",
-          "image": "./assets/logo/index-icon-white.png",
+          "image": "./assets/logo/logo-symbol-white-background-1024.png",
           "imageWidth": 10,
           "resizeMode": "contain"
         }
