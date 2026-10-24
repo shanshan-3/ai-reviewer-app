@@ -8,7 +8,6 @@ import {
     ScrollView,
     Text,
     TextInput,
-    useWindowDimensions,
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,7 +17,6 @@ import { validateLogin } from "@/lib/auth";
 import { router } from "expo-router";
 
 export default function LoginPage() {
-    const { fontScale } = useWindowDimensions();
     const passwordInput = useRef(/** @type {TextInput | null} */(null));
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -52,7 +50,7 @@ export default function LoginPage() {
                     contentContainerStyle={{
                         flexGrow: 1,
                         padding: 24,
-                        paddingTop: 48,
+                        paddingTop: 32,
                     }}
                     keyboardShouldPersistTaps="handled"
                 >
@@ -65,19 +63,17 @@ export default function LoginPage() {
                         />
                         <Text
                             accessibilityRole="header"
-                            style={{ minHeight: 72 * fontScale }}
                             className="font-poppins-bold text-3xl leading-9 text-foreground"
                         >
                             Welcome back
                         </Text>
                         <Text
-                            style={{ minHeight: 72 * fontScale }}
-                            className="font-poppins mt-2 text-base leading-6 text-muted-foreground"
+                            className="font-poppins mt-3 text-base leading-6 text-muted-foreground"
                         >
-                            Sign in to access your study materials, continue your quizzes, and review key concepts whenever you’re ready to study.
+                            Sign in to continue to your workspace and pick up where you left off.
                         </Text>
 
-                        <View className="mt-8 gap-2">
+                        <View className="mt-6 gap-2">
                             <Text
                                 nativeID="email-label"
                                 className="font-poppins-medium text-base text-foreground"

@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Eye, EyeOff, Lock, Mail, User } from "lucide-react-native";
+import { Eye, EyeOff, Lock, Mail, User, MoveLeft } from "lucide-react-native";
 import { THEME as theme } from "@/lib/theme";
 import { validateRegister } from "@/lib/auth";
 
@@ -89,27 +89,36 @@ export default function RegisterPage() {
                     contentContainerStyle={{
                         flexGrow: 1,
                         padding: 24,
-                        paddingTop: 48,
+                        paddingTop: 32,
                     }}
                     keyboardShouldPersistTaps="handled"
                 >
                     <View className="w-full max-w-sm self-center">
+                        
+                        <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Go back"
+                            onPress={() => router.back()}
+                        >
+                            <MoveLeft
+                                style={{ minHeight: 24 * fontScale, minWidth: 24 * fontScale }}
+                                size={24}
+                            />
+                        </Pressable>
 
                         <Text
                             accessibilityRole="header"
-                            style={{ minHeight: 72 * fontScale }}
-                            className="font-poppins-bold text-3xl leading-9 text-foreground"
+                            className="font-poppins-bold mt-4 text-3xl leading-9 text-foreground"
                         >
                             Create your account
                         </Text>
                         <Text
-                            style={{ minHeight: 72 * fontScale }}
-                            className="font-poppins mt-2 text-base leading-6 text-muted-foreground"
+                            className="font-poppins mt-3 text-base leading-6 text-muted-foreground"
                         >
-                            Create an account to organize your study materials, practice with quizzes and flashcards, and review at your own pace.
+                            Sign up to start your workspace, invite teammates, and get your first projects moving.
                         </Text>
 
-                        <View className="mt-8 gap-2">
+                        <View className="mt-6 gap-2">
                             <Text
                                 nativeID="full-name-label"
                                 className="font-poppins-medium text-base text-foreground"
