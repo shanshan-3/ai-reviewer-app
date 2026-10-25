@@ -1,7 +1,6 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     Keyboard,
-    KeyboardAvoidingView,
     Image,
     Pressable,
     ScrollView,
@@ -25,7 +24,18 @@ export default function LoginPage() {
     const [rememberMe, setRememberMe] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [message, setMessage] = useState("");
+    const [inputFocused, setInputFocused] = useState(false);
+    const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
     const errors = submitted ? validateLogin(email, password) : {};
+
+    useEffect(() => {
+        const shown = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
+        const hidden = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
+        return () => {
+            shown.remove();
+            hidden.remove();
+        };
+    }, []);
 
     function handleSubmit() {
         setSubmitted(true);
@@ -40,9 +50,10 @@ export default function LoginPage() {
 
     return (
         <SafeAreaView className="flex-1 bg-background">
-            <KeyboardAvoidingView className="flex-1" behavior="padding">
+            <View className="flex-1">
                 <ScrollView
                     className="flex-1"
+                    scrollEnabled={!(inputFocused && keyboardVisible)}
                     contentContainerStyle={{
                         flexGrow: 1,
                         padding: 24,
@@ -75,6 +86,8 @@ export default function LoginPage() {
                             labelId="email-label"
                             icon={IconMail}
                             error={errors.email}
+                            onFocus={() => setInputFocused(true)}
+                            onBlur={() => setInputFocused(false)}
                             autoCapitalize="none"
                             autoComplete="email"
                             autoCorrect={false}
@@ -97,6 +110,8 @@ export default function LoginPage() {
                             labelId="password-label"
                             icon={IconLock}
                             error={errors.password}
+                            onFocus={() => setInputFocused(true)}
+                            onBlur={() => setInputFocused(false)}
                             isPassword
                             showPassword={showPassword}
                             onTogglePassword={() => setShowPassword(!showPassword)}
@@ -136,7 +151,7 @@ export default function LoginPage() {
                             </Pressable>
                             <Pressable
                                 accessibilityRole="link"
-                                onPress={() => router.push("/(auth)/forgot-password")}
+                                onPress={() => router.push("/(auth)/verify-email")}
                                 className="min-h-12 max-w-full justify-center rounded-lg border-2 border-transparent px-1 active:opacity-70 focus:border-foreground"
                             >
                                 <Text className="font-geist-medium text-sm text-foreground underline">
@@ -165,7 +180,7 @@ export default function LoginPage() {
                         </Pressable>
                     </AuthButton>
                 </ScrollView>
-            </KeyboardAvoidingView>
+            </View>
         </SafeAreaView>
     );
 }

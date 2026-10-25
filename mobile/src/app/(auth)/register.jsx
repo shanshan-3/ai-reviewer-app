@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
     Keyboard,
-    KeyboardAvoidingView,
     Pressable,
     ScrollView,
     Text,
@@ -25,7 +24,7 @@ export default function RegisterPage() {
     const passwordInput = useRef(/** @type {TextInput | null} */(null));
     const passwordSection = useRef(/** @type {View | null} */(null));
     const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
-    const [passwordFocused, setPasswordFocused] = useState(false);
+    const [inputFocused, setInputFocused] = useState(false);
     const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -61,7 +60,7 @@ export default function RegisterPage() {
     }, [scrollToFocusedInput]);
 
     function handleInputFocus() {
-        setPasswordFocused(TextInput.State.currentlyFocusedInput() === passwordInput.current);
+        setInputFocused(true);
         scrollToFocusedInput();
     }
 
@@ -78,14 +77,11 @@ export default function RegisterPage() {
 
     return (
         <SafeAreaView className="flex-1 bg-background">
-            <KeyboardAvoidingView
-                className="flex-1"
-                behavior="padding"
-            >
+            <View className="flex-1">
                 <ScrollView
                     ref={scrollView}
                     className="flex-1"
-                    scrollEnabled={!(passwordFocused && keyboardVisible)}
+                    scrollEnabled={!(inputFocused && keyboardVisible)}
                     onLayout={scrollToFocusedInput}
                     onContentSizeChange={scrollToFocusedInput}
                     contentContainerStyle={{
@@ -128,6 +124,7 @@ export default function RegisterPage() {
                             icon={IconUser}
                             error={errors.fullName}
                             onFocus={handleInputFocus}
+                            onBlur={() => setInputFocused(false)}
                             autoCapitalize="words"
                             autoComplete="name"
                             autoCorrect={false}
@@ -150,6 +147,7 @@ export default function RegisterPage() {
                             icon={IconMail}
                             error={errors.email}
                             onFocus={handleInputFocus}
+                            onBlur={() => setInputFocused(false)}
                             autoCapitalize="none"
                             autoComplete="email"
                             autoCorrect={false}
@@ -181,7 +179,7 @@ export default function RegisterPage() {
                                 showPassword={showPassword}
                                 onTogglePassword={() => setShowPassword(!showPassword)}
                                 onFocus={handleInputFocus}
-                                onBlur={() => setPasswordFocused(false)}
+                                onBlur={() => setInputFocused(false)}
                                 autoCapitalize="none"
                                 autoComplete="new-password"
                                 autoCorrect={false}
@@ -217,7 +215,7 @@ export default function RegisterPage() {
                         </Pressable>
                     </AuthButton>
                 </ScrollView>
-            </KeyboardAvoidingView>
+            </View>
         </SafeAreaView>
     );
 }

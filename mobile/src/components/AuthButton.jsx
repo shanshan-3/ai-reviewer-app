@@ -5,7 +5,7 @@ import { Pressable, Text, View } from "react-native";
  *   submitLabel: string,
  *   onSubmit: () => void,
  *   message: string,
- *   children: import('react').ReactNode,
+ *   children?: import('react').ReactNode,
  * }} props
  */
 export default function AuthButton({ submitLabel, onSubmit, message, children }) {
