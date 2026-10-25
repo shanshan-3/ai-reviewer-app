@@ -7,10 +7,10 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        poppins: ['Poppins-Regular'],
-        'poppins-medium': ['Poppins-Medium'],
-        'poppins-semibold': ['Poppins-SemiBold'],
-        'poppins-bold': ['Poppins-Bold'],
+        geist: ['Geist-Regular'],
+        'geist-medium': ['Geist-Medium'],
+        'geist-semibold': ['Geist-SemiBold'],
+        'geist-bold': ['Geist-Bold'],
       },
       colors: {
         border: 'hsl(var(--border))',

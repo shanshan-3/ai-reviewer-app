@@ -16,14 +16,14 @@ export default function AuthButton({ submitLabel, onSubmit, message, children })
         onPress={onSubmit}
         className="min-h-14 items-center justify-center rounded-lg border-2 border-primary bg-[#001428] px-4 py-3 active:opacity-80 focus:border-muted-foreground"
       >
-        <Text className="font-poppins-semibold text-base text-primary-foreground">
+        <Text className="font-geist-semibold text-base text-primary-foreground">
           {submitLabel}
         </Text>
       </Pressable>
       {message ? (
         <Text
           accessibilityLiveRegion="polite"
-          className="font-poppins mt-4 text-base text-foreground"
+          className="font-geist mt-4 text-base text-foreground"
         >
           {message}
         </Text>

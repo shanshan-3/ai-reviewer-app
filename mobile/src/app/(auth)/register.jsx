@@ -11,11 +11,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Lock, Mail, User, MoveLeft } from "lucide-react-native";
+import { IconLock, IconMail, IconUser, IconArrowLeft } from "@tabler/icons-react-native";
 import { validateRegister } from "@/lib/auth";
 import FormField from "@/components/FormField";
 import PasswordStrength from "@/components/PasswordStrength";
-import RoleSelector from "@/components/RoleSelector";
 import AuthButton from "@/components/AuthButton";
 
 export default function RegisterPage() {
@@ -31,7 +30,6 @@ export default function RegisterPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-    const [role, setRole] = useState("student");
     const [submitted, setSubmitted] = useState(false);
     const [message, setMessage] = useState("");
     const errors = submitted ? validateRegister(fullName, email, password) : {};
@@ -104,7 +102,7 @@ export default function RegisterPage() {
                             accessibilityLabel="Go back"
                             onPress={() => router.back()}
                         >
-                            <MoveLeft
+                            <IconArrowLeft
                                 style={{ minHeight: 24 * fontScale, minWidth: 24 * fontScale }}
                                 size={24}
                             />
@@ -112,12 +110,12 @@ export default function RegisterPage() {
 
                         <Text
                             accessibilityRole="header"
-                            className="font-poppins-bold mt-4 text-3xl leading-9 text-foreground"
+                            className="font-geist-bold mt-4 text-3xl leading-9 text-foreground"
                         >
                             Create your account
                         </Text>
                         <Text
-                            className="font-poppins mt-3 text-base leading-6 text-muted-foreground"
+                            className="font-geist mt-3 text-base leading-6 text-muted-foreground"
                         >
                             Set up your profile to start reviewing, practicing, and tracking your progress.
                         </Text>
@@ -127,7 +125,7 @@ export default function RegisterPage() {
                             containerClassName="mt-6"
                             label="Full Name"
                             labelId="full-name-label"
-                            icon={User}
+                            icon={IconUser}
                             error={errors.fullName}
                             onFocus={handleInputFocus}
                             autoCapitalize="words"
@@ -144,16 +142,12 @@ export default function RegisterPage() {
                             }}
                         />
 
-                        <View className="mt-5">
-                            <RoleSelector value={role} onChange={setRole} />
-                        </View>
-
                         <FormField
                             ref={emailInput}
                             containerClassName="mt-5"
                             label="Email"
                             labelId="email-label"
-                            icon={Mail}
+                            icon={IconMail}
                             error={errors.email}
                             onFocus={handleInputFocus}
                             autoCapitalize="none"
@@ -181,7 +175,7 @@ export default function RegisterPage() {
                                 containerClassName="mt-5"
                                 label="Password"
                                 labelId="password-label"
-                                icon={Lock}
+                                icon={IconLock}
                                 error={errors.password}
                                 isPassword
                                 showPassword={showPassword}
@@ -214,9 +208,9 @@ export default function RegisterPage() {
                             onPress={() => router.navigate("/(auth)/login")}
                             className="mt-6 min-h-12 items-center justify-center rounded-lg border-2 border-transparent px-1 active:opacity-70 focus:border-foreground"
                         >
-                            <Text className="font-poppins text-center text-sm text-muted-foreground">
+                            <Text className="font-geist text-center text-sm text-muted-foreground">
                                 Already have an account?{" "}
-                                <Text className="font-poppins-semibold text-foreground underline">
+                                <Text className="font-geist-semibold text-foreground underline">
                                     Sign in
                                 </Text>
                             </Text>

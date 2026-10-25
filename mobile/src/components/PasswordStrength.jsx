@@ -42,7 +42,7 @@ export default function PasswordStrength({ password }) {
       </View>
       <Text
         accessibilityLiveRegion="polite"
-        className="font-poppins text-xs"
+        className="font-geist text-xs"
         style={{ color: level.color }}
       >
         {level.label}

@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
-import { Eye, EyeOff } from "lucide-react-native";
+import { IconEye, IconEyeOff } from "@tabler/icons-react-native";
 import { THEME as theme } from "@/lib/theme";
 
 /**
@@ -34,13 +34,13 @@ const FormField = forwardRef(function FormField(
   },
   ref,
 ) {
-  const PasswordVisibilityIcon = showPassword ? EyeOff : Eye;
+  const PasswordVisibilityIcon = showPassword ? IconEyeOff : IconEye;
 
   return (
     <View className={`gap-2 ${containerClassName}`}>
       <Text
         nativeID={labelId}
-        className="font-poppins-medium text-base text-foreground"
+        className="font-geist-medium text-base text-foreground"
       >
         {label}
       </Text>
@@ -52,7 +52,7 @@ const FormField = forwardRef(function FormField(
           accessibilityLabelledBy={labelId}
           placeholderTextColor={theme.mutedForeground}
           selectionColor={theme.foreground}
-          className={`font-poppins min-h-14 rounded-lg border py-3 text-base text-foreground focus:border-foreground ${
+          className={`font-geist min-h-14 rounded-lg border py-3 text-base text-foreground focus:border-foreground ${
             error ? "border-destructive" : "border-muted-foreground"
           } ${Icon ? "pl-12" : "pl-4"} ${isPassword ? "pr-14" : "pr-4"}`}
           secureTextEntry={isPassword && !showPassword}
@@ -88,7 +88,7 @@ const FormField = forwardRef(function FormField(
       {error ? (
         <Text
           accessibilityLiveRegion="polite"
-          className="font-poppins text-sm text-destructive"
+          className="font-geist text-sm text-destructive"
         >
           {error}
         </Text>

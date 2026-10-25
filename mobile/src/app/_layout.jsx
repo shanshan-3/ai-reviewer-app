@@ -16,14 +16,14 @@ SplashScreen.preventAutoHideAsync().catch((error) => {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    'Poppins-Regular': require('../../assets/fonts/Poppins-Regular.ttf'),
-    'Poppins-Medium': require('../../assets/fonts/Poppins-Medium.ttf'),
-    'Poppins-SemiBold': require('../../assets/fonts/Poppins-SemiBold.ttf'),
-    'Poppins-Bold': require('../../assets/fonts/Poppins-Bold.ttf'),
+    'Geist-Regular': require('../../assets/fonts/Geist-Regular.ttf'),
+    'Geist-Medium': require('../../assets/fonts/Geist-Medium.ttf'),
+    'Geist-SemiBold': require('../../assets/fonts/Geist-SemiBold.ttf'),
+    'Geist-Bold': require('../../assets/fonts/Geist-Bold.ttf'),
   });
 
   useEffect(() => {
-    if (fontError) console.warn('Could not load Poppins. Using system fonts.', fontError);
+    if (fontError) console.warn('Could not load Geist. Using system fonts.', fontError);
   }, [fontError]);
 
   if (!fontsLoaded && !fontError) return null;

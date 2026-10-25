@@ -9,7 +9,7 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Check, Lock, Mail } from "lucide-react-native";
+import { IconCheck, IconLock, IconMail } from "@tabler/icons-react-native";
 import { THEME as theme } from "@/lib/theme";
 import { validateLogin } from "@/lib/auth";
 import { router } from "expo-router";
@@ -59,12 +59,12 @@ export default function LoginPage() {
                         />
                         <Text
                             accessibilityRole="header"
-                            className="font-poppins-bold text-3xl leading-9 text-foreground"
+                            className="font-geist-bold text-3xl leading-9 text-foreground"
                         >
                             Welcome back
                         </Text>
                         <Text
-                            className="font-poppins mt-3 text-base leading-6 text-muted-foreground"
+                            className="font-geist mt-3 text-base leading-6 text-muted-foreground"
                         >
                             Sign in to continue to your workspace and pick up where you left off.
                         </Text>
@@ -73,7 +73,7 @@ export default function LoginPage() {
                             containerClassName="mt-6"
                             label="Email address"
                             labelId="email-label"
-                            icon={Mail}
+                            icon={IconMail}
                             error={errors.email}
                             autoCapitalize="none"
                             autoComplete="email"
@@ -95,7 +95,7 @@ export default function LoginPage() {
                             containerClassName="mt-5"
                             label="Password"
                             labelId="password-label"
-                            icon={Lock}
+                            icon={IconLock}
                             error={errors.password}
                             isPassword
                             showPassword={showPassword}
@@ -127,10 +127,10 @@ export default function LoginPage() {
                                     className={`h-5 w-5 items-center justify-center rounded border ${rememberMe ? "border-primary bg-primary" : "border-muted-foreground"}`}
                                 >
                                     {rememberMe ? (
-                                        <Check size={14} color={theme.primaryForeground} />
+                                        <IconCheck size={14} color={theme.primaryForeground} />
                                     ) : null}
                                 </View>
-                                <Text className="font-poppins shrink text-sm text-foreground">
+                                <Text className="font-geist shrink text-sm text-foreground">
                                     Remember me
                                 </Text>
                             </Pressable>
@@ -139,7 +139,7 @@ export default function LoginPage() {
                                 onPress={() => router.push("/(auth)/forgot-password")}
                                 className="min-h-12 max-w-full justify-center rounded-lg border-2 border-transparent px-1 active:opacity-70 focus:border-foreground"
                             >
-                                <Text className="font-poppins-medium text-sm text-foreground underline">
+                                <Text className="font-geist-medium text-sm text-foreground underline">
                                     Forgot password?
                                 </Text>
                             </Pressable>
@@ -156,9 +156,9 @@ export default function LoginPage() {
                             onPress={() => router.push("/(auth)/register")}
                             className="mt-6 min-h-12 items-center justify-center rounded-lg border-2 border-transparent px-1 active:opacity-70 focus:border-foreground"
                         >
-                            <Text className="font-poppins text-center text-sm text-muted-foreground">
+                            <Text className="font-geist text-center text-sm text-muted-foreground">
                                 Need an account?{" "}
-                                <Text className="font-poppins-semibold text-foreground underline">
+                                <Text className="font-geist-semibold text-foreground underline">
                                     Create a new one
                                 </Text>
                             </Text>
