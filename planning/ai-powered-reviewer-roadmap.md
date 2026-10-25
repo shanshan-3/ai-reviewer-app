@@ -52,7 +52,7 @@ The goal is an installed Android review application for BSIT students and IT ins
 
 ### Included
 
-- Secure accounts and profiles for students and instructors, with entry screens suited to each role and private resources. Instructors use their accounts for personal preparation and cannot access students' accounts.
+- Secure accounts and profiles for students and instructors, with one shared account type, registration flow, and private resources. Instructors use their accounts for personal preparation and cannot access students' accounts.
 - Importing authorized school modules as selectable-text PDF and `.docx`, with personal subject/topic labels that users create, choose, and reuse, and an extraction preview.
 - Configuring and generating IT quizzes from a module or selected topic. Label topic-only output as AI-generated general review; it cannot claim support from an uploaded module or the official curriculum.
 - Multiple choice for conceptual and coding-syntax questions, including snippets asking about syntax, errors, or output.
@@ -80,7 +80,7 @@ The app is intended for campus use. Free-tier evaluation must establish whether 
 | Language | JavaScript / JSX | Used in the starters |
 | UI components | React Native Reusables | Configuration ready; components not yet added |
 | Styling | NativeWind | Version 4.2.7 configured with one fixed palette and a `#F8F8FF` screen background; device rendering unverified |
-| Interface icons | Lucide React Native + react-native-svg | Installed on 2026-10-22; direct named imports selected; screen integration and Android rendering pending |
+| Interface icons | Tabler React Native + react-native-svg | Direct named outline icons integrated in the authentication screens; Android rendering unverified |
 | Backend API | Node.js + Express | Local starter and health endpoint running |
 | Application design | MVC with a service layer, grouped by responsibility | Selected; routes, controllers, services, and models folders not implemented |
 | Database | Supabase PostgreSQL | Selected |
@@ -101,7 +101,7 @@ Current dependency versions are recorded in the application manifests and lockfi
 | Decision | Basis | Rationale and consequence |
 |---|---|---|
 | Use the overview as the feature baseline | User-confirmed, Q2 and Q7 clarifications | Preserve the stated review features and intended campus audience. User count and service reliability requirements were not specified. |
-| Serve both students and instructors | User-confirmed, Q1 B | Provide separate entry experiences while reusing private preparation functions. |
+| Serve both students and instructors | User-confirmed, Q1 B; shared account type confirmed on 2026-10-25 | Use the same registration flow and private preparation functions for everyone. |
 | Independent preparation; no instructor-published library | User-confirmed, Q12 B | Instructors prepare their own quizzes; students generate theirs independently. |
 | Installed Android application only | User-confirmed, Q5 A and Q6 A | Replaces the initial browser-based React/Vite proposal. No web frontend is planned. |
 | React Native + Expo | Delegated, Q3 A; refined following platform decision | Use the React ecosystem for Android development and APK generation. |
@@ -115,7 +115,7 @@ Current dependency versions are recorded in the application manifests and lockfi
 | Intended users are 18+ | User-confirmed, Q9 A | Record as an eligibility constraint. Revisit the provider decision if the audience changes. |
 | Selectable-text PDF and `.docx` | User-confirmed, Q11 | Extract text without OCR. Reject image-only, corrupt, encrypted/unsupported documents with an actionable explanation. |
 | Coding questions use multiple choice | User-confirmed, Q13 A | Code snippets are displayed as text and checked against a saved answer key; no runtime or sandbox is needed. |
-| Email/password self-registration and personal role selection | User-confirmed, Q22 | Roles control entry presentation only. They do not verify university membership or grant elevated access. Confirmation and password recovery require working email delivery. |
+| Email/password self-registration with one shared account type | User-confirmed, Q22; role selection removed on 2026-10-25 | Registration collects full name, email, and password without a student/instructor role. It does not verify university membership. Confirmation and password recovery require working email delivery. |
 | Internet required for generation and answering | User-confirmed, Q21 | Resume interrupted sessions after reconnecting. No offline answer queue or synchronization. |
 | PDF performance reports | Assumption: implementation proposal | Provides a practical downloadable report on Android; validate export using Android's file/share flow. |
 | Explain answers from pre-generated, validated content | Delegated technical approach | Generate explanations with the questions so feedback does not require a new AI call for every answer. |
@@ -145,9 +145,9 @@ Current dependency versions are recorded in the application manifests and lockfi
 
 ### User flows
 
-Students install the APK, self-register with email/password and a student or instructor role, sign in, and open their workspace. They select a saved personal module, import a supported file, or choose an IT topic, then configure a fresh quiz using the confirmed settings below. Each answer receives immediate feedback while online. After the quiz, users see results and suggested weak topics; they choose what to study next and can review progress, flashcards, and their personal report.
+Students and instructors install the APK, self-register with full name, email, and password using one shared account type, sign in, and open their workspace. They select a saved personal module, import a supported file, or choose an IT topic, then configure a fresh quiz using the confirmed settings below. Each answer receives immediate feedback while online. After the quiz, users see results and suggested weak topics; they choose what to study next and can review progress, flashcards, and their personal report.
 
-Instructors install the same Android application and register or sign in with an instructor profile. In their personal preparation workspace, they import a module or select a topic to generate and inspect quizzes or flashcards. They can also practice the quizzes. They cannot publish or assign them, or access student histories.
+Instructors use the same registration and sign-in screens as students. In their personal preparation workspace, they import a module or select a topic to generate and inspect quizzes or flashcards. They can also practice the quizzes. They cannot publish or assign them, or access student histories.
 
 For module imports, the server checks the selected file's type and size limit, stores it privately, and extracts plain text. The user previews the text and its subject/topic. Mark the material ready only if it contains meaningful text; a `.docx` extension alone does not establish validity. Warn about image-dependent diagrams and formatting-dependent code, or exclude them from generated questions. Mixed PDFs must not appear to support OCR.
 
@@ -197,7 +197,7 @@ Use plain JavaScript functions and add files only when they contain implementati
 
 | Area | Responsibility |
 |---|---|
-| `mobile/` | Expo application, role entry screens, import, quiz, flashcards, progress, reports; requested Reusables components and NativeWind theme |
+| `mobile/` | Expo application, shared registration and sign-in screens, import, quiz, flashcards, progress, reports; requested Reusables components and NativeWind theme |
 | `server/` | Auth verification, private-resource checks, extraction, AI generation, answer submission, result aggregation, limits, cleanup |
 | `supabase/migrations/` | Versioned SQL schema, owner policies, storage policies, uniqueness constraints, atomic answer/finalization operations |
 | Feature verification | Answer/adaptation rules, extraction fixtures, authorization, duplicate submissions, and critical screen behaviors. No automated server test folder currently exists. |
@@ -216,7 +216,7 @@ Use Expo DocumentPicker for import and check that the selected file is readable 
 ### Permissions, trust boundaries, and failure handling
 
 - Verify Supabase tokens on protected API requests. Add database Row Level Security and private bucket policies, and check ownership explicitly when using a privileged server client. Keep administrative/service credentials and AI keys out of the APK.
-- An instructor account cannot access another user's materials or reports. Selecting a role grants no cross-user privileges. University-domain restrictions and institutional identity verification require a confirmed school identity process before either can be claimed.
+- Each account can access only its own materials and reports. Students and instructors use one shared account type without cross-user privileges. University-domain restrictions and institutional identity verification require a confirmed school identity process before either can be claimed.
 - Treat uploaded text, including instructions inside modules, as untrusted data. Separate it from system instructions and give generation no tool, network, or arbitrary-code privileges. Check source pointers against submitted excerpts and reject malformed or unverifiable output. An instructor must still evaluate whether the answers are correct.
 - Send only the selected topic/material text and necessary anonymous generation options to the model. Exclude account identifiers and identifiable performance records. Keep raw module text and tokens out of server logs.
 - Limit concurrent imports and generations per account, total provider usage, and retries. Save quota accounting so a restart cannot reset the limit. On a 429 response, show a retry state without creating an empty quiz, fabricating an explanation, or switching to a paid provider.
@@ -244,7 +244,7 @@ Prerequisites: Representative modules and permitted development accounts for the
 
 - [x] Configure the mobile/server starters, manifests, lockfiles, environment examples, and contributor installation instructions. This completes local setup only.
 - [x] Add the Expo SDK 57 development-client dependency and document Android build/start commands. Native build and installation remain unverified.
-- [x] Install Lucide React Native with Expo-compatible SVG support and use direct named imports in the login screen. Android rendering remains unverified.
+- [x] Install Tabler React Native with Expo-compatible SVG support and use direct named imports in the authentication screens. Android rendering remains unverified.
 
 - [x] Obtain representative selectable-text PDFs and `.docx` modules. Include code snippets, tables, and a longer module, and record the subjects and permitted processing conditions.
 - [x] Verify the configured Expo SDK 57/React Native/Reusables/NativeWind setup on target Android devices. The JavaScript/JSX starter, Node runtime, dependency checks, and Android bundle export have passed locally; copied UI components and device behavior still need validation. Record the device results alongside the locked versions.
@@ -267,18 +267,18 @@ Prerequisites: The runtime and extraction setup tested in Phase 1, plus an isola
 - [x] Build the initial login UI with input validation, mail/lock icons, password visibility, local Remember me selection, and recovery/registration text. Lint and JavaScript type checking passed; authentication, persistence, recovery, registration navigation, and device validation remain pending.
 
 - [ ] Implement the server structure using separate config, routes, controllers, services, models, and middleware folders, schema migrations, and their setup instructions. The mobile/server starters, environment examples, and starter installation guides already exist. Validate one authenticated own-profile read through route, controller, service, and model before expanding; keep additions limited to the current feature work.
-- [ ] Implement email/password self-registration, confirmation, sign-in, session restoration, sign-out, and recovery with working Android return links. Let users select student or instructor entry screens without granting elevated access or claiming verified PSU membership.
+- [ ] Implement email/password self-registration, confirmation, sign-in, session restoration, sign-out, and recovery with working Android return links. Use one shared account type and registration flow without a student/instructor selection or claiming verified PSU membership.
 - [ ] Add owner-scoped database and private Storage policies. Test API identity and ownership checks with two unrelated accounts.
 - [ ] Implement PDF/`.docx` upload within the tested limits, extraction previews, reusable personal subject/topic labels, ready/failed states, and private retrieval. Clean up failed or deleted files.
 - [ ] Implement no automatic expiry, blocked uploads at capacity, and confirmed module deletion with dependency cleanup. Extend deletion coverage as derived content is introduced in later phases. Keep privileged credentials out of the application bundle and logs.
 
-Acceptance checks: Student A and Instructor B cannot access each other's documents by changing IDs or object paths, regardless of self-selected role. Reject corrupt, scanned, oversized, and unsupported files safely. Complete confirmation and recovery on Android, and verify that uploads survive an API restart and reauthentication. Reuse a personal subject/topic label; at capacity, reject new uploads without deleting existing data. Verify the module-deletion warning and removal of original/extracted source.
+Acceptance checks: User A and User B cannot access each other's documents by changing IDs or object paths. Reject corrupt, scanned, oversized, and unsupported files safely. Complete confirmation and recovery on Android, and verify that uploads survive an API restart and reauthentication. Reuse a personal subject/topic label; at capacity, reject new uploads without deleting existing data. Verify the module-deletion warning and removal of original/extracted source.
 
 Release requirement: Verify custom email delivery and personal-data retention/deletion before onboarding campus users.
 
 ### Phase 3: Generate, complete, and score a quiz
 
-Outcome: Either role can generate a quiz from a module or topic, complete it with immediate explanations, and save the scored session.
+Outcome: Any user can generate a quiz from a module or topic, complete it with immediate explanations, and save the scored session.
 
 Prerequisites: Private accounts and module imports, an approved model, and tested extraction limits.
 
@@ -330,7 +330,7 @@ Prerequisites: Earlier acceptance checks, suitable free API hosting and SMTP, me
 
 - [ ] Configure authorized free services and secrets, deploy the API and database policies, and test confirmation/recovery emails and Android links with the live services.
 - [ ] Build and install a signed APK on representative physical Android devices. Verify distribution eligibility, safe installation instructions, signing-key custody, and an update path.
-- [ ] Test both roles against live Supabase and Groq. Cover import, generation, answers, resumption, flashcards, dashboard, report export, sign-out, recovery, and denied access to other users' resources.
+- [ ] Test separate user accounts against live Supabase and Groq. Cover import, generation, answers, resumption, flashcards, dashboard, report export, sign-out, recovery, and denied access to other users' resources.
 - [ ] Test the measured concurrent generation load, cold starts, exhausted quotas/storage, host/database restart or pause recovery, and lost connectivity. Verify that scores are not duplicated and material remains private.
 - [ ] Export the database and private objects, then restore them into an isolated environment. Verify account/resource ownership and that recovery does not silently reintroduce deleted modules or derived results; record who handles backups and how often.
 - [ ] Evaluate quiz correctness and usability with representative students and instructors. Compare findings with the overview's intended outcomes and update the affected rules here.

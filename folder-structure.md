@@ -18,10 +18,10 @@ ai-reviewer-app/
 |   |-- assets/
 |   |   |-- fonts/
 |   |   |   |-- OFL.txt
-|   |   |   |-- Poppins-Bold.ttf
-|   |   |   |-- Poppins-Medium.ttf
-|   |   |   |-- Poppins-Regular.ttf
-|   |   |   `-- Poppins-SemiBold.ttf
+|   |   |   |-- Geist-Bold.ttf
+|   |   |   |-- Geist-Medium.ttf
+|   |   |   |-- Geist-Regular.ttf
+|   |   |   `-- Geist-SemiBold.ttf
 |   |   `-- logo/
 |   |       |-- logo-symbol-transparent.png
 |   |       |-- logo-symbol-white-background-1024.png
@@ -34,14 +34,13 @@ ai-reviewer-app/
 |   |   |   |-- (auth)/
 |   |   |   |   |-- forgot-password.jsx      # Empty recovery route placeholder
 |   |   |   |   |-- login.jsx                # Login UI; validation and local remember-me selection
-|   |   |   |   `-- register.jsx             # Registration UI; role and password feedback
+|   |   |   |   `-- register.jsx             # Registration UI; password feedback and validation
 |   |   |   |-- _layout.jsx                  # Navigation theme, status bar, fonts, splash
 |   |   |   `-- index.jsx                    # Starter redirect to login
 |   |   |-- components/
 |   |   |   |-- AuthButton.jsx               # Shared submit button, message, and footer content
 |   |   |   |-- FormField.jsx                # Labeled input with icons, error border, password toggle
 |   |   |   |-- PasswordStrength.jsx         # Visual 4-bar password complexity indicator
-|   |   |   |-- RoleSelector.jsx             # Segmented student/instructor role selection toggle
 |   |   |   `-- StartupSplash.jsx            # Animated splash coordinator and motion detection
 |   |   `-- lib/
 |   |       |-- auth.js                      # Login and registration validation rules
@@ -106,7 +105,7 @@ ai-reviewer-app/
 | `mobile/assets/` | Images, icons, and fonts used by the app. | Fonts and logo assets exist |
 | `mobile/src/` | Application source code. | Exists |
 | `mobile/src/app/` | Expo Router screens and navigation layouts. Keep helpers outside this folder. | Root layout, login redirect, and auth UI exist; recovery route is empty; main routes planned |
-| `mobile/src/components/` | Shared UI and screen components. | Auth button, form, role, password feedback, and splash components exist; Reusables UI planned |
+| `mobile/src/components/` | Shared UI and screen components. | Auth button, form, password feedback, and splash components exist; Reusables UI planned |
 | `mobile/src/lib/` | Shared mobile helpers, theme values, and client validators. | Auth validation, theme tokens, and utils exist; API clients planned |
 | `server/` | The Express API for document processing, AI requests, and scoring. | Health starter runs; extraction benchmark harness exists; feature APIs planned |
 | `server/scripts/` | Development, extraction benchmark, and diagnostic scripts. | Extraction harness and memory monitor exist |
@@ -125,12 +124,11 @@ Paths in this table are relative to `mobile/` unless stated otherwise.
 | `src/app/_layout.jsx` | Sets the navigation theme, status bar, screen stack, font loading, and portal host. |
 | `src/app/index.jsx` | Redirects initial entry to the login screen. |
 | `src/app/(auth)/login.jsx` | Login screen with email, password, and remember-me selection using FormField. |
-| `src/app/(auth)/register.jsx` | Registration screen with role selection, password strength feedback, and validation. |
+| `src/app/(auth)/register.jsx` | Shared registration screen with full name, email, password strength feedback, and validation. |
 | `src/app/(auth)/forgot-password.jsx` | Empty placeholder for the planned password recovery screen. |
 | `src/components/AuthButton.jsx` | Shared submit button with a status message and space for footer content. |
 | `src/components/FormField.jsx` | Reusable labeled input with leading icon, password toggle, red error borders, and error text. |
 | `src/components/PasswordStrength.jsx` | Visual 4-bar password complexity indicator for registration. |
-| `src/components/RoleSelector.jsx` | Segmented student/instructor role selection toggle. |
 | `src/components/StartupSplash.jsx` | Shows the animated logo during startup and respects reduced-motion settings. |
 | `src/lib/auth.js` | Client-side input validation functions for login and registration. |
 | `src/lib/theme.js` | Defines the fixed color palette, destructive tokens, and navigation theme. |
@@ -168,9 +166,9 @@ On 2026-10-22, `expo-dev-client ~57.0.20` was added to the mobile manifest and l
 
 The [installation guide's Android workflow comparison](docs/installation.md#4-choose-how-to-run-the-android-app) explains Expo Go, the RebyuIT Dev APK, and release APKs. The Dev APK loads JavaScript edits through Metro and needs rebuilding after native changes. Section 11 of the [command handbook](docs/commands.md#11-cache-cleaning-and-troubleshooting) explains cache management and troubleshooting. EAS build profiles remain planned.
 
-On 2026-10-22, `lucide-react-native ^1.61.0` and Expo SDK 57-compatible `react-native-svg 15.15.4` were added to the mobile manifest and lockfile. Use direct named icon imports in screens and components; no icon wrapper or new folder was added.
+The mobile interface uses `@tabler/icons-react-native` with Expo SDK 57-compatible `react-native-svg 15.15.4`. Use direct named outline icon imports in screens and components; no icon wrapper is required. Geist Sans is bundled locally in four weights under `mobile/assets/fonts/` and loaded by the root layout.
 
-The auth screens use `FormField.jsx` for labeled inputs, password visibility, and inline errors. `AuthButton.jsx` shares the submit button and status message. Registration uses `PasswordStrength.jsx` for password feedback and `RoleSelector.jsx` for a local Student or Instructor selection. These controls do not create an account or save a role. The remember-me selection is also local.
+The auth screens use `FormField.jsx` for labeled inputs, password visibility, and inline errors. `AuthButton.jsx` shares the submit button and status message. Registration uses `PasswordStrength.jsx` for password feedback and collects full name, email, and password for one shared account type. These controls do not create an account yet. The remember-me selection is also local.
 
 Empty server folders and `supabase/migrations/` exist in this checkout but are not tracked by Git. A fresh clone will contain them once files are committed inside them.
 
@@ -186,7 +184,7 @@ ai-reviewer-app/
 |   |-- assets/
 |   |   |-- images/                         # App images and logo
 |   |   |-- icons/                          # Launcher and splash assets
-|   |   `-- fonts/                          # Custom fonts (Poppins currently in assets/fonts/)
+|   |   `-- fonts/                          # Custom fonts (Geist Sans currently in assets/fonts/)
 |   |-- src/
 |   |   |-- app/
 |   |   |   |-- _layout.jsx                 # Root navigation, theme, providers
@@ -227,7 +225,6 @@ ai-reviewer-app/
 |   |   |   |-- AuthButton.jsx              # Existing submit button and status message
 |   |   |   |-- FormField.jsx               # Implemented
 |   |   |   |-- PasswordStrength.jsx        # Implemented
-|   |   |   |-- RoleSelector.jsx            # Implemented
 |   |   |   |-- StartupSplash.jsx           # Implemented
 |   |   |   |-- screen-state.jsx            # Shared loading, empty, error display
 |   |   |   |-- material-card.jsx
@@ -370,7 +367,7 @@ ai-reviewer-app/
 - Write each screen in its route file under `mobile/src/app/`. Keep filenames lowercase or kebab-case; bracketed names such as `[sessionId]` identify dynamic routes. Keep non-route code outside `app/`.
 - Use Dashboard, Quizzes, Flashcards, and Profile as the four tabs. Dashboard opens the module library and personal reports. Recommendations stay on Dashboard; the user chooses the next topic.
 - Keep module details, quiz answering, flashcard review, and reports outside `(tabs)` so these flows can hide the bottom navigation. Quiz setup generates a fresh quiz; history resumes interrupted sessions or opens completed results, without saved-quiz retakes.
-- Restore the session before choosing login or Dashboard. Confirmation and recovery callbacks must work without an existing session; finish password recovery before redirecting to Dashboard. Both roles use the same features, permissions, core UI, and routes. Each account's resources remain private.
+- Restore the session before choosing login or Dashboard. Confirmation and recovery callbacks must work without an existing session; finish password recovery before redirecting to Dashboard. Students and instructors use one shared account type with the same features, permissions, core UI, and routes. Each account's resources remain private.
 - Keep reusable UI in `components/`, custom hooks in `hooks/`, shared session state in `providers/`, and service requests/helpers in `lib/`. Add Reusables component files and custom hooks only as needed. The configured `@/hooks` alias does not require an empty hooks folder until hooks are written.
 - Loading, empty, error, answer feedback, and deletion confirmation are screen states or components. They do not each need a separate route. Confirm module deletion with a warning about losing its derived content and results.
 

@@ -31,7 +31,7 @@ RebyuIT has two applications: an Expo Android app in `mobile/` and an Express AP
 |---|---|---|
 | Mobile application | JavaScript/JSX, React 19.2.3, React Native 0.86.3, Expo ~57.0.30, Expo Router ~57.0.28 | Android is the agreed target. Entry redirects to the login screen. Login and registration perform local validation; service authentication is not connected. |
 | Styling and UI | CSS, NativeWind 4.2.7, Tailwind CSS 3.4.17, tailwindcss-animate, clsx, tailwind-merge, class-variance-authority | Metro and Babel already connect NativeWind to global.css. Reusables generator settings exist in components.json. |
-| Native UI libraries | Lucide icons, react-native-svg, Reanimated, Worklets, safe-area-context, screens, @rn-primitives/portal | Native dependencies are compiled into the development app. |
+| Native UI libraries | Tabler icons, react-native-svg, Reanimated, Worklets, safe-area-context, screens, @rn-primitives/portal | Native dependencies are compiled into the development app. |
 | Expo modules | constants, dev-client, document-picker, file-system, font, linking, print, sharing, splash-screen, status-bar, system-ui | Packages are declared; installing a library does not mean its feature is implemented. |
 | Mobile storage and service libraries | AsyncStorage, @supabase/supabase-js | Dependencies exist; persistent authentication and Supabase integration are pending. |
 | Backend | JavaScript ES modules, Node.js, Express ^5.3.0 | Only GET /health is implemented. The listener validates PORT and defaults to 3000. |

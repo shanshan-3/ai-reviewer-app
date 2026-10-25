@@ -31,16 +31,18 @@ Each application has its own manifest and lockfile. There is no root install com
 
 The app uses one fixed color palette with a `#F8F8FF` screen background. It does not switch appearance with the device theme. Shared colors live in `src/lib/theme.js` and `global.css`.
 
-`lucide-react-native` and the Expo SDK-compatible `react-native-svg` are included in the mobile dependencies; `npm.cmd ci --prefix mobile` installs both. Use direct named imports from `lucide-react-native` and pass `size`, `color`, and `strokeWidth` props as needed. Use an explicit color from the shared palette.
+`@tabler/icons-react-native` and the Expo SDK-compatible `react-native-svg` are included in the mobile dependencies; `npm.cmd ci --prefix mobile` installs both. Use direct named imports from `@tabler/icons-react-native` and pass `size`, `color`, and `strokeWidth` props as needed. Use outline icons and an explicit color from the shared palette.
 
 ```jsx
-import { BookOpen } from 'lucide-react-native';
+import { IconBook } from '@tabler/icons-react-native';
 import { THEME } from '@/lib/theme';
 
-<BookOpen size={24} color={THEME.foreground} strokeWidth={2} />
+<IconBook size={24} color={THEME.foreground} strokeWidth={2} />
 ```
 
-`THEME` is the shared color object from `src/lib/theme.js`. No shared icon wrapper is required. The login screen already uses Lucide icons. Rebuild an existing development app after adding the native SVG dependency, following section 4. See the [Lucide React Native guide](https://lucide.dev/guide/react-native/getting-started) and [Expo SDK 57 SVG reference](https://docs.expo.dev/versions/v57.0.0/sdk/svg/).
+`THEME` is the shared color object from `src/lib/theme.js`. No shared icon wrapper is required. The authentication screens use Tabler icons. Rebuild an existing development app after adding the native SVG dependency, following section 4. See the [Tabler React Native guide](https://github.com/tabler/tabler-icons/blob/main/packages/icons-react-native/README.md) and [Expo SDK 57 SVG reference](https://docs.expo.dev/versions/v57.0.0/sdk/svg/).
+
+Geist Sans v1.8.2 is bundled locally in `mobile/assets/fonts/` in Regular, Medium, SemiBold, and Bold weights, alongside its SIL Open Font License. The fonts come from the [official Geist release](https://github.com/vercel/geist-font/tree/v1.8.2/fonts/Geist/ttf). The root layout loads them with `expo-font` before rendering the interface. Use `font-geist`, `font-geist-medium`, `font-geist-semibold`, and `font-geist-bold` for text and inputs. No runtime font download is required.
 
 ## 3. Add your local environment files
 
