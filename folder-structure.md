@@ -2,7 +2,7 @@
 
 The project has separate mobile and server applications. Each keeps its own dependencies and lockfile.
 
-The mobile app has login and registration screens with local validation and shared form components. Sign-in, account creation, and session persistence are not connected yet. The password recovery route is an empty file. The Express starter has a health endpoint and empty MVC folders. Standalone scripts measure PDF and DOCX extraction; application APIs, service connections, and database migrations remain planned.
+The mobile app has login and registration screens with local validation and shared form components. Sign-in, account creation, and session persistence are not connected yet. Password recovery screens are planned. The Express starter has a health endpoint and empty MVC folders. Standalone scripts measure PDF and DOCX extraction; application APIs, service connections, and database migrations remain planned.
 
 The planned server uses MVC with a service layer, grouped by responsibility. Controllers, services, and models still need implementation.
 
@@ -10,7 +10,7 @@ Follow the [installation guide](docs/installation.md) to install dependencies, c
 
 ## Current files
 
-Checked on 2026-10-24. This tree leaves out installed dependencies, generated caches and bundles, Git metadata, and agent-tool settings.
+Checked on 2026-10-24, with authentication route entries updated on 2026-10-25. This tree leaves out installed dependencies, generated caches and bundles, Git metadata, and agent-tool settings.
 
 ```text
 ai-reviewer-app/
@@ -32,7 +32,6 @@ ai-reviewer-app/
 |   |-- src/
 |   |   |-- app/
 |   |   |   |-- (auth)/
-|   |   |   |   |-- forgot-password.jsx      # Empty recovery route placeholder
 |   |   |   |   |-- login.jsx                # Login UI; validation and local remember-me selection
 |   |   |   |   `-- register.jsx             # Registration UI; password feedback and validation
 |   |   |   |-- _layout.jsx                  # Navigation theme, status bar, fonts, splash
@@ -104,7 +103,7 @@ ai-reviewer-app/
 | `mobile/` | The Android application code. | Starter configured |
 | `mobile/assets/` | Images, icons, and fonts used by the app. | Fonts and logo assets exist |
 | `mobile/src/` | Application source code. | Exists |
-| `mobile/src/app/` | Expo Router screens and navigation layouts. Keep helpers outside this folder. | Root layout, login redirect, and auth UI exist; recovery route is empty; main routes planned |
+| `mobile/src/app/` | Expo Router screens and navigation layouts. Keep helpers outside this folder. | Root layout and login redirect exist; auth routes contain only login and registration; recovery and main routes planned |
 | `mobile/src/components/` | Shared UI and screen components. | Auth button, form, password feedback, and splash components exist; Reusables UI planned |
 | `mobile/src/lib/` | Shared mobile helpers, theme values, and client validators. | Auth validation, theme tokens, and utils exist; API clients planned |
 | `server/` | The Express API for document processing, AI requests, and scoring. | Health starter runs; extraction benchmark harness exists; feature APIs planned |
@@ -125,7 +124,6 @@ Paths in this table are relative to `mobile/` unless stated otherwise.
 | `src/app/index.jsx` | Redirects initial entry to the login screen. |
 | `src/app/(auth)/login.jsx` | Login screen with email, password, and remember-me selection using FormField. |
 | `src/app/(auth)/register.jsx` | Shared registration screen with full name, email, password strength feedback, and validation. |
-| `src/app/(auth)/forgot-password.jsx` | Empty placeholder for the planned password recovery screen. |
 | `src/components/AuthButton.jsx` | Shared submit button with a status message and space for footer content. |
 | `src/components/FormField.jsx` | Reusable labeled input with leading icon, password toggle, red error borders, and error text. |
 | `src/components/PasswordStrength.jsx` | Visual 4-bar password complexity indicator for registration. |
@@ -170,6 +168,8 @@ The mobile interface uses `@tabler/icons-react-native` with Expo SDK 57-compatib
 
 The auth screens use `FormField.jsx` for labeled inputs, password visibility, and inline errors. `AuthButton.jsx` shares the submit button and status message. Registration uses `PasswordStrength.jsx` for password feedback and collects full name, email, and password for one shared account type. These controls do not create an account yet. The remember-me selection is also local.
 
+Registration will not require email confirmation. Password recovery will use three screens: `verify-email.jsx` collects the recovery address and requests a six-digit code, `otp.jsx` verifies the code, and `set-password.jsx` accepts the new password. The name Verify Email refers to the recovery address. A valid code must establish a recovery session before the user can change the password. These screens are not implemented, and the flow needs no authentication callback route. See the planned Supabase settings in [installation.md](docs/installation.md#planned-authentication-configuration).
+
 Empty server folders and `supabase/migrations/` exist in this checkout but are not tracked by Git. A fresh clone will contain them once files are committed inside them.
 
 ## Planned structure
@@ -194,10 +194,9 @@ ai-reviewer-app/
 |   |   |   |   |-- _layout.jsx             # Authentication navigation
 |   |   |   |   |-- login.jsx               # UI exists; authentication planned
 |   |   |   |   |-- register.jsx            # UI exists; account creation planned
-|   |   |   |   |-- verify-email.jsx
-|   |   |   |   |-- forgot-password.jsx     # Empty placeholder exists
-|   |   |   |   |-- reset-password.jsx
-|   |   |   |   `-- callback.jsx            # Confirmation/recovery return links
+|   |   |   |   |-- verify-email.jsx        # Planned: collect recovery email and request code
+|   |   |   |   |-- otp.jsx                 # Planned: verify six-digit recovery code
+|   |   |   |   `-- set-password.jsx        # Planned: save new password after verified code
 |   |   |   `-- (main)/
 |   |   |       |-- _layout.jsx             # Signed-in stack and session checks
 |   |   |       |-- (tabs)/
@@ -367,7 +366,7 @@ ai-reviewer-app/
 - Write each screen in its route file under `mobile/src/app/`. Keep filenames lowercase or kebab-case; bracketed names such as `[sessionId]` identify dynamic routes. Keep non-route code outside `app/`.
 - Use Dashboard, Quizzes, Flashcards, and Profile as the four tabs. Dashboard opens the module library and personal reports. Recommendations stay on Dashboard; the user chooses the next topic.
 - Keep module details, quiz answering, flashcard review, and reports outside `(tabs)` so these flows can hide the bottom navigation. Quiz setup generates a fresh quiz; history resumes interrupted sessions or opens completed results, without saved-quiz retakes.
-- Restore the session before choosing login or Dashboard. Confirmation and recovery callbacks must work without an existing session; finish password recovery before redirecting to Dashboard. Students and instructors use one shared account type with the same features, permissions, core UI, and routes. Each account's resources remain private.
+- Restore the session before choosing login or Dashboard. Registration does not require email confirmation. Password recovery starts without an existing session and follows Verify Email -> OTP -> Set Password. Require a valid six-digit code and the resulting recovery session before allowing a password change. Finish recovery before opening Dashboard. Students and instructors use one shared account type with the same features, permissions, core UI, and routes. Each account's resources remain private.
 - Keep reusable UI in `components/`, custom hooks in `hooks/`, shared session state in `providers/`, and service requests/helpers in `lib/`. Add Reusables component files and custom hooks only as needed. The configured `@/hooks` alias does not require an empty hooks folder until hooks are written.
 - Loading, empty, error, answer feedback, and deletion confirmation are screen states or components. They do not each need a separate route. Confirm module deletion with a warning about losing its derived content and results.
 
@@ -407,7 +406,7 @@ Keep uploads in private Storage and real credentials out of Git. AI keys and pri
 
 ### Verification and remaining decisions
 
-The mobile test files are planned additions, not installed test tooling or passing checks. Cover authentication return links, rejected imports, interrupted sessions, duplicate answer submissions, complete versus partial flashcard reviews, and safe report export.
+The mobile test files are planned additions; test tooling and passing results are still needed. Cover registration without email confirmation, the Verify Email -> OTP -> Set Password flow, rejected imports, interrupted sessions, duplicate answer submissions, complete versus partial flashcard reviews, and safe report export. For recovery, check code delivery, resend limits, interrupted password updates, and rejection of invalid, expired, or reused codes. The Set Password screen must reject access without a verified recovery session.
 
 The server has no general test folder or test command. Local extraction fixture checks and benchmark results are recorded in `docs/validation.md`; they do not verify an upload API. Feature verification still needs controller validation and safe responses, service business rules, model persistence and ownership, and a complete route-to-database flow. Cover two-account isolation, generation and source validation, answer-key integrity, difficulty transitions, duplicate-safe scoring, study dates and streaks, dashboard/report agreement, and deletion cleanup. Record commands and results in `docs/validation.md` when implemented.
 

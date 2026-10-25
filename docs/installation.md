@@ -72,6 +72,17 @@ ipconfig
 
 The standard Android emulator reaches the PC at `http://10.0.2.2:3000`. A phone or emulator uses its own `localhost`, so the PC API needs the appropriate address. The mobile API client has not been implemented yet; setting this variable alone does not connect the app.
 
+### Planned authentication configuration
+
+Authentication is not connected yet. Password recovery will use `verify-email.jsx` to request a code, `otp.jsx` to verify it, and `set-password.jsx` to save the new password. Only login and registration routes currently exist. Configure and test the following settings when connecting Supabase Auth; the live project settings have not been verified.
+
+- Keep email/password registration enabled and disable **Confirm Email** in the hosted project's email Auth provider settings. Registration collects full name, email, and password without an email confirmation step. See [Supabase password authentication](https://supabase.com/docs/guides/auth/passwords).
+- Configure an authorized SMTP sender to deliver recovery codes. Verify the sender and delivery quotas before campus use; see [Supabase SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
+- Configure the **Reset Password** email template to display the six-digit `{{ .Token }}` and omit the `{{ .ConfirmationURL }}` link. The planned screens follow Verify Email -> OTP -> Set Password. See [Supabase email templates](https://supabase.com/docs/guides/auth/auth-email-templates).
+- On Verify Email, request a recovery email with `resetPasswordForEmail`. On OTP, verify the entered code with `verifyOtp` using `type: 'recovery'`. Set Password uses the resulting recovery session to update the password. Block access to Set Password until recovery verification succeeds, and finish recovery before opening Dashboard. See [OTP verification](https://supabase.com/docs/reference/javascript/auth-verifyotp) and [password recovery](https://supabase.com/docs/guides/auth/passwords#resetting-a-password).
+
+Verify Email collects the address used for password recovery. Registration has no email confirmation screen, and code-based recovery needs no authentication callback route. Configure the Auth provider and email template in Supabase; no SQL migration is needed for these settings. Email ownership is not checked at registration, so a mistyped address can prevent delivery of a recovery code.
+
 ## 4. Choose how to run the Android app
 
 Expo Go is Expo's ready-made Android app. It loads RebyuIT's JavaScript using the native libraries already included in Expo Go. The RebyuIT Dev APK is a development build of this project with `expo-dev-client` and the native libraries compiled into that build.
