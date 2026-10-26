@@ -1,4 +1,4 @@
-export function validateLogin(email, password) {
+export function validateEmail(email) {
   const errors = {};
 
   if (!email.trim()) {
@@ -6,6 +6,12 @@ export function validateLogin(email, password) {
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
     errors.email = 'Enter a valid email address.';
   }
+
+  return errors;
+}
+
+export function validateLogin(email, password) {
+  const errors = validateEmail(email);
 
   if (!password.length) {
     errors.password = 'Enter your password.';
@@ -19,6 +25,29 @@ export function validateRegister(fullName, email, password) {
 
   if (!fullName.trim()) {
     errors.fullName = 'Enter your full name.';
+  }
+
+  return errors;
+}
+
+export function validateOtp(code) {
+  if (!/^\d{6}$/.test(code)) {
+    return { code: 'Enter a 6-digit code.' };
+  }
+
+  return {};
+}
+
+export function validateSetPassword(password, confirmPassword) {
+  const errors = {};
+
+  if (!password.length) {
+    errors.password = 'Enter your new password.';
+  }
+  if (!confirmPassword.length) {
+    errors.confirmPassword = 'Confirm your password.';
+  } else if (password !== confirmPassword) {
+    errors.confirmPassword = 'Passwords do not match.';
   }
 
   return errors;

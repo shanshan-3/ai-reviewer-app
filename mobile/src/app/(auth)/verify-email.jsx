@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconArrowLeft } from "@tabler/icons-react-native";
 import { router } from "expo-router";
+import { validateEmail } from "@/lib/auth";
 import FormField from "@/components/FormField";
 import AuthButton from "@/components/AuthButton";
 
@@ -18,8 +19,10 @@ export default function VerifyEmailPage() {
     const [email, setEmail] = useState("");
     const [message, setMessage] = useState("");
     const [emailFocused, setEmailFocused] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
     const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
     const { fontScale } = useWindowDimensions();
+    const errors = submitted ? validateEmail(email) : {};
 
     useEffect(() => {
         const shown = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
@@ -31,8 +34,14 @@ export default function VerifyEmailPage() {
     }, []);
 
     function handleSubmit() {
+        setSubmitted(true);
+        if (Object.keys(validateEmail(email)).length) {
+            setMessage("");
+            return;
+        }
         Keyboard.dismiss();
-        setMessage("Password reset isn't connected yet.");
+        // setMessage("Password reset isn't connected yet.");
+        router.push("/(auth)/otp");
     }
 
     return (
@@ -82,6 +91,7 @@ export default function VerifyEmailPage() {
                             labelId="email-label"
                             onFocus={() => setEmailFocused(true)}
                             onBlur={() => setEmailFocused(false)}
+                            error = {errors.email}
                             autoCapitalize="none"
                             autoComplete="email"
                             autoCorrect={false}
