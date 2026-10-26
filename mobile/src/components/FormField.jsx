@@ -51,7 +51,9 @@ const FormField = forwardRef(function FormField(
           accessibilityLabel={error ? `${label}. ${error}` : label}
           accessibilityLabelledBy={labelId}
           placeholderTextColor={theme.mutedForeground}
-          selectionColor={theme.foreground}
+          selectionColor="rgba(10, 10, 10, 0.2)"
+          cursorColor={theme.foreground}
+          selectionHandleColor={theme.foreground}
           className={`font-geist min-h-14 rounded-lg border py-3 text-base text-foreground focus:border-foreground ${
             error ? "border-destructive" : "border-muted-foreground"
           } ${Icon ? "pl-12" : "pl-4"} ${isPassword ? "pr-14" : "pr-4"}`}
