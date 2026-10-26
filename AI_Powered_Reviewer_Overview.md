@@ -25,7 +25,7 @@ Provide an intelligent, automated, and interactive reviewer that dynamically gen
 3. **Smart Flashcards:** Interactive cards for reviewing technical terms and definitions.
 4. **Real-Time AI Feedback:** Explanations of incorrect answers to reinforce understanding.
 5. **Student Progress Dashboard:** Tracking for scores, study streaks, and subject mastery.
-6. **Performance Reports:** Viewable or downloadable reports showing strengths and weaknesses across IT subjects.
+6. **Performance Reports:** In-app reports showing strengths and weaknesses across IT subjects.
 
 ## Design Thinking Approach
 - **Empathize:** Understand students' study habits and challenges through interviews, surveys, and observations.

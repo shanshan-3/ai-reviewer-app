@@ -80,7 +80,8 @@ ai-reviewer-app/
 |   |-- package.json                         # Dependencies and start/dev commands
 |   `-- package-lock.json
 |-- supabase/
-|   `-- migrations/                          # Directory initialized; migrations planned
+|   `-- migrations/
+|       `-- 0001_profiles_and_labels.sql      # Profiles and private subject/topic labels
 |-- docs/
 |   |-- adr/
 |   |   `-- 0001-private-independent-preparation.md
@@ -170,7 +171,7 @@ The auth screens use `FormField.jsx` for labeled inputs, password visibility, an
 
 Registration will not require email confirmation. Password recovery will use three screens: `verify-email.jsx` collects the recovery address and requests a six-digit code, `otp.jsx` verifies the code, and `set-password.jsx` accepts the new password. The name Verify Email refers to the recovery address. A valid code must establish a recovery session before the user can change the password. These screens are not implemented, and the flow needs no authentication callback route. See the planned Supabase settings in [installation.md](docs/installation.md#planned-authentication-configuration).
 
-Empty server folders and `supabase/migrations/` exist in this checkout but are not tracked by Git. A fresh clone will contain them once files are committed inside them.
+The first migration is prepared under `supabase/migrations/`. Database execution and ownership policies have not been verified from this workspace. The remaining migration files in the planned tree are not implemented. Empty server folders exist locally and will appear in a fresh clone once files are committed inside them.
 
 ## Planned structure
 
@@ -218,7 +219,7 @@ ai-reviewer-app/
 |   |   |       |   |-- create.jsx          # Module/topic selection and generation
 |   |   |       |   `-- [setId].jsx         # Front/back review and completion
 |   |   |       `-- reports/
-|   |   |           `-- index.jsx           # Personal report and PDF export
+|   |   |           `-- index.jsx           # In-app personal report
 |   |   |-- components/
 |   |   |   |-- ui/                         # Reusables components, added as needed
 |   |   |   |-- AuthButton.jsx              # Existing submit button and status message
@@ -247,14 +248,12 @@ ai-reviewer-app/
 |   |       |-- quizzes.js                  # Generate, resume, answer, results
 |   |       |-- flashcards.js               # Generate, list, review
 |   |       |-- progress.js                 # Dashboard/report data requests
-|   |       |-- report-pdf.js               # Escaped report HTML, print/share
 |   |       `-- study-date.js               # Device timezone and local study date
 |   |-- test/
 |   |   |-- auth-flow.test.jsx
 |   |   |-- material-import.test.jsx
 |   |   |-- quiz-session.test.jsx
-|   |   |-- flashcard-review.test.jsx
-|   |   `-- report-pdf.test.js
+|   |   `-- flashcard-review.test.jsx
 |   |-- .env.example                        # Public URL/key placeholders
 |   |-- .gitignore
 |   |-- AGENTS.md
@@ -406,7 +405,7 @@ Keep uploads in private Storage and real credentials out of Git. AI keys and pri
 
 ### Verification and remaining decisions
 
-The mobile test files are planned additions; test tooling and passing results are still needed. Cover registration without email confirmation, the Verify Email -> OTP -> Set Password flow, rejected imports, interrupted sessions, duplicate answer submissions, complete versus partial flashcard reviews, and safe report export. For recovery, check code delivery, resend limits, interrupted password updates, and rejection of invalid, expired, or reused codes. The Set Password screen must reject access without a verified recovery session.
+The mobile test files are planned additions; test tooling and passing results are still needed. Cover registration without email confirmation, the Verify Email -> OTP -> Set Password flow, rejected imports, interrupted sessions, duplicate answer submissions, complete versus partial flashcard reviews, and in-app report viewing. For recovery, check code delivery, resend limits, interrupted password updates, and rejection of invalid, expired, or reused codes. The Set Password screen must reject access without a verified recovery session.
 
 The server has no general test folder or test command. Local extraction fixture checks and benchmark results are recorded in `docs/validation.md`; they do not verify an upload API. Feature verification still needs controller validation and safe responses, service business rules, model persistence and ownership, and a complete route-to-database flow. Cover two-account isolation, generation and source validation, answer-key integrity, difficulty transitions, duplicate-safe scoring, study dates and streaks, dashboard/report agreement, and deletion cleanup. Record commands and results in `docs/validation.md` when implemented.
 

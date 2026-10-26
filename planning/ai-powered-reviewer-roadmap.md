@@ -33,9 +33,9 @@ The goal is an installed Android review application for BSIT students and IT ins
 3. Users choose conceptual or coding-syntax multiple choice, 5 or 10 questions (default 10), and an initial difficulty (default medium). Each new study session generates a fresh quiz; interrupted sessions resume their existing quiz. Saved-quiz retakes and mixed question types are excluded.
 4. Each accepted answer receives immediate corrective feedback. The app saves results, scores, and subject/topic diagnostics without counting duplicate submissions.
 5. Difficulty moves one level after two consecutive correct or incorrect answers. Topic practice estimates show percentage correct over the latest 20 first-submission answers, with a five-answer minimum and sample counts. Recommendations suggest weak topics; users choose what to study next.
-6. Flashcards support front/back review. The dashboard shows scores, study streaks, and subject/topic practice estimates. Users can view and download a performance report based on the same data.
+6. Flashcards support front/back review. The dashboard shows scores, study streaks, and subject/topic practice estimates. Users can view an in-app performance report based on the same data.
 7. One user's documents, generated content, answers, and reports remain inaccessible to another user, including instructors. Confirmed module deletion removes its source and derived content/results, then recalculates affected progress and streaks; capacity limits block uploads without automatically deleting retained data.
-8. Physical Android testing verifies document import, code readability, interrupted sessions, registration without email confirmation, password recovery by email code, report export, and service-error behavior.
+8. Physical Android testing verifies document import, code readability, interrupted sessions, registration without email confirmation, password recovery by email code, in-app reports, and service-error behavior.
 9. Before release, an instructor checks representative module questions for correct answers, support in the source material, and clear wording. A working app alone does not establish educational effectiveness or examination readiness.
 
 ### Uncertainty map
@@ -59,7 +59,7 @@ The goal is an installed Android review application for BSIT students and IT ins
 - Immediate explanations, adaptive difficulty, diagnostic results, optional weak-topic recommendations, and saved practice history. Generation and answering require internet; interrupted sessions resume after reconnecting.
 - Fresh quizzes for new study sessions, source-supported module questions, and confirmed deletion of a module and its derived study content/results. Modules and history have no automatic expiry; at capacity, block new uploads and explain the limit.
 - Technical-term flashcards, student progress dashboard, study streaks, subject/topic practice estimates, and performance reports.
-- Viewing personal performance reports on the device and exporting them as PDFs. Exporting instructor quizzes is excluded.
+- Viewing personal performance reports on the device. Report downloads and exports are excluded. Exporting instructor quizzes is excluded.
 - Android APK delivery and checks of network behavior, devices, accounts, and services.
 
 ### Excluded and scope interpretation
@@ -91,7 +91,6 @@ The app is intended for campus use. Free-tier evaluation must establish whether 
 | PDF text extraction | PDF.js | Library installed; extraction approach still requires validation |
 | Word `.docx` extraction | Mammoth | Library installed; extraction approach still requires validation |
 | Document selection | Expo DocumentPicker | Installed; import behavior unverified |
-| PDF performance reports | Expo Print | Installed; report export unverified |
 | Backend hosting | Free hosting or existing school infrastructure | Undecided |
 
 Current dependency versions are recorded in the application manifests and lockfiles. Local checks passed for the starter baseline. Physical-device compatibility and the planned feature integrations still need testing.
@@ -118,7 +117,6 @@ Current dependency versions are recorded in the application manifests and lockfi
 | Email/password self-registration with one shared account type | User-confirmed, Q22; role selection and signup email confirmation removed on 2026-10-25 | Registration collects full name, email, and password without a student/instructor role or email confirmation. It does not verify email ownership or university membership. Password recovery still requires working email delivery. |
 | Password recovery by email code | User-confirmed on 2026-10-25 | Use three screens: Verify Email requests a code, OTP verifies the six-digit code, and Set Password saves the new password using the recovery session. Registration has no email confirmation step. No recovery link or callback route is required. |
 | Internet required for generation and answering | User-confirmed, Q21 | Resume interrupted sessions after reconnecting. No offline answer queue or synchronization. |
-| PDF performance reports | Assumption: implementation proposal | Provides a practical downloadable report on Android; validate export using Android's file/share flow. |
 | Explain answers from pre-generated, validated content | Delegated technical approach | Generate explanations with the questions so feedback does not require a new AI call for every answer. |
 | Module-based answers and explanations need source support | User-confirmed, Q14 | Keep supporting excerpts/references. Return fewer questions when evidence is limited, or an insufficient-source state when none are usable. Topic-only general review remains available and separately labeled. |
 | Fresh quiz per new study session; resume interruptions | User-confirmed, Q15 | Preserve completed history and resume the same interrupted quiz. Do not offer saved-quiz retakes. |
@@ -214,7 +212,7 @@ Store profiles, materials and extracted sections, generation records, quizzes an
 
 Evaluate PDF.js for PDF extraction and Mammoth's raw-text API for `.docx` on the selected Node runtime. Use Phase 1 samples to set file-size, page-count, extracted-text, decompressed-DOCX, processing-time, and memory limits. Enforce those limits; if a library cannot, isolate extraction in a worker/process that can be terminated. Render no raw DOCX-generated HTML and fetch no links embedded in modules. [PDF.js](https://mozilla.github.io/pdf.js/getting_started/), [Mammoth raw text and security guidance](https://github.com/mwilliamson/mammoth.js).
 
-Use Expo DocumentPicker for import and check that the selected file is readable before uploading it. Its cache-copy option affects FileSystem access. Expo Print can create report PDFs in the application cache. Verify saving/sharing on Android and remove temporary report files when appropriate. [DocumentPicker](https://docs.expo.dev/versions/latest/sdk/document-picker/), [Print](https://docs.expo.dev/versions/latest/sdk/print/).
+Use Expo DocumentPicker for import and check that the selected file is readable before uploading it. Its cache-copy option affects FileSystem access. [DocumentPicker](https://docs.expo.dev/versions/latest/sdk/document-picker/).
 
 ### Permissions, trust boundaries, and failure handling
 
@@ -237,7 +235,7 @@ Verify controller input validation and safe responses, service business rules, a
 
 ## 5. Phase-by-phase roadmap
 
-Checked items below record completed setup or login UI substeps. The original phase tasks remain unchecked because their full acceptance checks have not passed. No full phase is complete. Release tasks remain provisional until their stated requirements are met.
+Checked items below record completed setup, authentication UI, or migration-preparation substeps. The original phase tasks remain unchecked because their full acceptance checks have not passed. No full phase is complete. Release tasks remain provisional until their stated requirements are met.
 
 ### Phase 1: Test module extraction, question generation, and free services
 
@@ -267,7 +265,11 @@ Outcome: Each user can access only their own workspace and supported school modu
 
 Prerequisites: The runtime and extraction setup tested in Phase 1, plus an isolated development configuration. Keep email limitations documented until a working sender is verified.
 
-- [x] Build the initial login UI with input validation, mail/lock icons, password visibility, local Remember me selection, and recovery/registration text. Lint and JavaScript type checking passed; authentication, persistence, recovery, registration navigation, and device validation remain pending.
+- [x] Build the initial login UI with input validation, mail/lock icons, password visibility, local Remember me selection, and recovery/registration links. Authentication, persistence, recovery, and device validation remain pending.
+- [x] Build the registration UI with full name, email, password, password visibility/strength, local validation, and navigation between login and registration. Account creation remains unconnected.
+- [x] Build Verify Email, OTP, and Set Password screens with local email/code/password validation and navigation between the recovery screens. Code delivery, resend requests, verification, recovery-session protection, and password updates remain unconnected; Android behavior is unverified.
+- [x] Create the server config, routes, controllers, services, models, and middleware folders. These are structural placeholders; authenticated route/controller/service/model behavior remains pending.
+- [x] Prepare the profiles and personal subject/topic labels migration with ownership policies and setup instructions. Applying the migration and verifying database behavior with two accounts remain pending.
 
 - [ ] Implement the server structure using separate config, routes, controllers, services, models, and middleware folders, schema migrations, and their setup instructions. The mobile/server starters, environment examples, and starter installation guides already exist. Validate one authenticated own-profile read through route, controller, service, and model before expanding; keep additions limited to the current feature work.
 - [ ] Implement email/password self-registration without email confirmation, sign-in, session restoration, sign-out, and recovery by emailed six-digit code. Use separate Verify Email, OTP, and Set Password screens. Verify Email collects the recovery address; allow a new password only after the OTP establishes a recovery session. Use one shared account type and registration flow without a student/instructor selection or claiming verified PSU membership.
@@ -310,18 +312,18 @@ Acceptance checks: Controlled consecutive and alternating answer sequences verif
 
 Decision: If generating the question pool exceeds free limits, revise its size or selection strategy and test again. Adaptive difficulty stays in scope.
 
-### Phase 5: Explain progress and export a personal report
+### Phase 5: Explain progress and display a personal report
 
 Outcome: Users can view consistent scores, streaks, practice estimates, and reports of strengths and weaknesses.
 
 Prerequisites: Correctly saved completed study sessions and review events.
 
 - [ ] Build the student dashboard and personal progress views. Show scores, trends, streaks, and topic practice estimates using percentage correct among the latest 20 first-submission answers, a five-answer minimum, and visible sample counts. Explain subject mastery as a practice estimate.
-- [ ] Implement the shared reporting query and Android PDF export. Escape untrusted text and test Android save/share behavior.
+- [ ] Implement the shared reporting query and in-app personal report.
 - [ ] Test empty history, four/five-answer thresholds, the rolling 20-answer window, repeated completion, full/partial flashcard reviews, timezone boundaries/changes with preserved completion dates, and report/dashboard agreement. Verify that confirmed module deletion removes all derived content/results and recalculates progress and streaks without changing unrelated history.
 - [ ] Check large fonts, screen-reader announcements, touch targets, code readability, system-back navigation, and error states throughout the review flow.
 
-Acceptance checks: Report totals match the same user's dashboard for the same data range. Empty history produces no invented strengths claim; four answers show insufficient data, five show an estimate, and answers older than the latest 20 leave the calculation. Completed quizzes or full flashcard reviews qualify once per date; opening the app and incomplete activity do not. Streaks remain correct across midnight, device-timezone changes, duplicate events, and module deletion. Export a PDF and check that it opens and is readable on Android.
+Acceptance checks: Report totals match the same user's dashboard for the same data range. Empty history produces no invented strengths claim; four answers show insufficient data, five show an estimate, and answers older than the latest 20 leave the calculation. Completed quizzes or full flashcard reviews qualify once per date; opening the app and incomplete activity do not. Streaks remain correct across midnight, device-timezone changes, duplicate events, and module deletion. Check that the in-app report is readable on Android.
 
 Release requirement: Have instructors and users evaluate practice estimates and recommendations before making claims about learning benefits.
 
@@ -333,7 +335,7 @@ Prerequisites: Earlier acceptance checks, suitable free API hosting and SMTP, me
 
 - [ ] Configure authorized free services and secrets, deploy the API and database policies, and test registration without email confirmation and recovery-code emails with the live services on Android.
 - [ ] Build and install a signed APK on representative physical Android devices. Verify distribution eligibility, safe installation instructions, signing-key custody, and an update path.
-- [ ] Test separate user accounts against live Supabase and Groq. Cover import, generation, answers, resumption, flashcards, dashboard, report export, sign-out, recovery, and denied access to other users' resources.
+- [ ] Test separate user accounts against live Supabase and Groq. Cover import, generation, answers, resumption, flashcards, dashboard, in-app reports, sign-out, recovery, and denied access to other users' resources.
 - [ ] Test the measured concurrent generation load, cold starts, exhausted quotas/storage, host/database restart or pause recovery, and lost connectivity. Verify that scores are not duplicated and material remains private.
 - [ ] Export the database and private objects, then restore them into an isolated environment. Verify account/resource ownership and that recovery does not silently reintroduce deleted modules or derived results; record who handles backups and how often.
 - [ ] Evaluate quiz correctness and usability with representative students and instructors. Compare findings with the overview's intended outcomes and update the affected rules here.
