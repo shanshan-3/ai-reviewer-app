@@ -9,6 +9,8 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import StartupSplash from '@/components/StartupSplash';
 import { NAV_THEME } from '@/lib/theme';
+import { AppState } from 'react-native';
+import { supabase } from '@/lib/supabase';
 
 SplashScreen.preventAutoHideAsync().catch((error) => {
   console.warn('Could not hold the native splash screen.', error);
@@ -25,6 +27,23 @@ export default function RootLayout() {
   useEffect(() => {
     if (fontError) console.warn('Could not load Geist. Using system fonts.', fontError);
   }, [fontError]);
+
+  useEffect(() => {
+    function updateRefresh(state) {
+      if (state === 'active') {
+        supabase.auth.startAutoRefresh();
+      } else {
+        supabase.auth.stopAutoRefresh();
+      }
+    }
+
+    updateRefresh(AppState.currentState);
+    const subscription = AppState.addEventListener('change', updateRefresh);
+    return () => {
+      subscription.remove();
+      supabase.auth.stopAutoRefresh();
+    };
+  }, []);
 
   if (!fontsLoaded && !fontError) return null;
 

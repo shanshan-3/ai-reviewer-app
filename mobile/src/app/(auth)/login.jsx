@@ -14,19 +14,43 @@ import { validateLogin } from "@/lib/auth";
 import { router } from "expo-router";
 import FormField from "@/components/FormField";
 import AuthButton from "@/components/AuthButton";
+import { authStorage, supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
     const passwordInput = useRef(/** @type {import('react-native').TextInput | null} */(null));
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-    // shortcut: remember-me selection is local, connect session persistence with authentication.
     const [rememberMe, setRememberMe] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [message, setMessage] = useState("");
     const [inputFocused, setInputFocused] = useState(false);
     const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
     const errors = submitted ? validateLogin(email, password) : {};
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let mounted = true;
+
+        Promise.all([supabase.auth.getSession(), authStorage.getRememberMe()])
+            .then(([{ data, error }, remember]) => {
+                if (!mounted) return;
+                setRememberMe(remember);
+                if (error) {
+                    setMessage(error.message);
+                } else if (data.session) {
+                    setMessage('You are already signed in.');
+                }
+            })
+            .catch(() => {
+                if (mounted) setMessage('Could not restore your session. Try signing in again.');
+            })
+            .finally(() => {
+                if (mounted) setLoading(false);
+            });
+
+        return () => { mounted = false; };
+    }, []);
 
     useEffect(() => {
         const shown = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
@@ -37,17 +61,36 @@ export default function LoginPage() {
         };
     }, []);
 
-    function handleSubmit() {
+    async function handleSubmit() {
+        if (loading) return;
+
         setSubmitted(true);
-        if (Object.keys(validateLogin(email, password)).length) {
-            setMessage("");
-            return;
-        }
+        setMessage('');
+
+        if (Object.keys(validateLogin(email, password)).length) return;
 
         Keyboard.dismiss();
-        setMessage("Sign-in isn't connected yet.");
-    }
+        setLoading(true);
 
+        try {
+            await authStorage.setRememberMe(rememberMe);
+            const { error } = await supabase.auth.signInWithPassword({
+                email: email.trim(),
+                password,
+            });
+
+            if (error) {
+                setMessage(error.message);
+                return;
+            }
+
+            setMessage('Signed in successfully.');
+        } catch {
+            setMessage('Could not sign in. Check your connection and try again.');
+        } finally {
+            setLoading(false);
+        }
+    }
     return (
         <SafeAreaView className="flex-1 bg-background">
             <View className="flex-1">
@@ -132,7 +175,8 @@ export default function LoginPage() {
                             <Pressable
                                 accessibilityRole="checkbox"
                                 accessibilityLabel="Remember me"
-                                accessibilityState={{ checked: rememberMe }}
+                                accessibilityState={{ checked: rememberMe, disabled: loading }}
+                                disabled={loading}
                                 onPress={() => setRememberMe(!rememberMe)}
                                 className="min-h-12 max-w-full flex-row items-center gap-2 rounded-lg border-2 border-transparent px-1 active:opacity-70 focus:border-foreground"
                             >
@@ -162,9 +206,10 @@ export default function LoginPage() {
 
                     </View>
                     <AuthButton
-                        submitLabel="Sign in"
+                        submitLabel={loading ? "Signing in..." : "Sign in"}
                         onSubmit={handleSubmit}
                         message={message}
+                        disabled={loading}
                     >
                         <Pressable
                             accessibilityRole="link"
