@@ -44,7 +44,8 @@ ai-reviewer-app/
 |   |   |   |-- _layout.jsx                  # Theme, fonts, splash, foreground token refresh
 |   |   |   `-- index.jsx                    # Starter redirect to login
 |   |   |-- components/
-|   |   |   |-- AuthButton.jsx               # Submit button, disabled/busy state, message, footer
+|   |   |   |-- AuthButton.jsx               # Submit button, disabled/busy state, footer
+|   |   |   |-- AuthMessage.jsx              # Feedback directly above authentication submit buttons
 |   |   |   |-- FormField.jsx                # Labeled input with icons, error border, password toggle
 |   |   |   |-- PasswordStrength.jsx         # Visual 4-bar password complexity indicator
 |   |   |   `-- StartupSplash.jsx            # Animated splash coordinator and motion detection
@@ -143,8 +144,9 @@ Paths in this table are relative to `mobile/` unless stated otherwise.
 | `src/app/(auth)/verify-email.jsx` | Validates the recovery address and opens OTP; sending a recovery email remains unconnected. |
 | `src/app/(auth)/otp.jsx` | Accepts a six-digit code and opens Set Password; verification and resend remain unconnected. |
 | `src/app/(auth)/set-password.jsx` | Validates the new password and confirmation; recovery-session protection and password updates remain unconnected. |
-| `src/components/AuthButton.jsx` | Shared submit button with optional disabled/busy accessibility state, a status message, and footer content. |
-| `src/components/FormField.jsx` | Reusable labeled input with leading icon, password toggle, red error borders, and error text. |
+| `src/components/AuthButton.jsx` | Shared submit button with optional disabled/busy accessibility state and footer content. |
+| `src/components/AuthMessage.jsx` | Shared feedback directly above each authentication submit button; `isError` selects red text, while success and informational messages use the normal text color. Hidden when empty and announced politely to screen readers. |
+| `src/components/FormField.jsx` | Reusable labeled input with leading icon, password toggle, error text, and an optional `invalid` flag for red borders/icons without duplicate messages. Invalid borders stay red while focused. |
 | `src/components/PasswordStrength.jsx` | Visual 4-bar password complexity indicator for registration. |
 | `src/components/StartupSplash.jsx` | Shows the animated logo during startup and respects reduced-motion settings. |
 | `src/lib/auth.js` | Client-side email, login, registration, recovery-code, and password-confirmation validation. |
@@ -194,7 +196,7 @@ The [installation guide's Android workflow comparison](docs/installation.md#4-ch
 
 The mobile interface uses `@tabler/icons-react-native` with Expo SDK 57-compatible `react-native-svg 15.15.4`. Use direct named outline icon imports in screens and components; no icon wrapper is required. Geist Sans is bundled locally in four weights under `mobile/assets/fonts/` and loaded by the root layout.
 
-The auth screens use `FormField.jsx` for labeled inputs, password visibility, and inline errors. `AuthButton.jsx` shares the submit button, disabled/busy state, and status message. Registration uses `PasswordStrength.jsx` for password feedback and collects full name, email, and password for one shared account type. Account creation remains unconnected.
+The auth screens use `FormField.jsx` for labeled inputs, password visibility, and inline errors. `AuthButton.jsx` shares the submit button and disabled/busy state. Each screen groups `AuthMessage.jsx` directly above `AuthButton.jsx` in its action area. Feedback stays aligned with the button and is hidden when empty. On Login, Supabase's `invalid_credentials` response marks both Email and Password red; editing either field or starting another submission clears that state. Network and storage failures show feedback without marking credentials invalid. Registration uses `PasswordStrength.jsx` for password feedback and collects full name, email, and password for one shared account type. Account creation remains unconnected.
 
 Login calls Supabase email/password authentication. Remember me controls persistent versus in-memory session storage; disabling it removes saved tokens while preserving the current in-memory session. On mount, Login restores the saved preference and recognizes an available session. The root layout controls foreground token refresh. `index.jsx` still redirects to Login: authenticated routing, sign-out UI, and the mobile call to `/api/profile` remain planned. Live Android sign-in and cold-restart behavior remain unverified.
 
@@ -251,7 +253,8 @@ ai-reviewer-app/
 |   |   |           `-- index.jsx           # In-app personal report
 |   |   |-- components/
 |   |   |   |-- ui/                         # Reusables components, added as needed
-|   |   |   |-- AuthButton.jsx              # Existing submit button, disabled/busy state, message
+|   |   |   |-- AuthButton.jsx              # Existing submit button and disabled/busy state
+|   |   |   |-- AuthMessage.jsx             # Existing feedback above submit buttons
 |   |   |   |-- FormField.jsx               # Implemented
 |   |   |   |-- PasswordStrength.jsx        # Implemented
 |   |   |   |-- StartupSplash.jsx           # Implemented
