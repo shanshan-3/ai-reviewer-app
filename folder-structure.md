@@ -2,15 +2,15 @@
 
 The project has separate mobile and server applications. Each keeps its own dependencies and lockfile.
 
-The mobile app has login and registration screens with local validation and shared form components. Sign-in, account creation, and session persistence are not connected yet. Password recovery screens are planned. The Express starter has a health endpoint and empty MVC folders. Standalone scripts measure PDF and DOCX extraction; application APIs, service connections, and database migrations remain planned.
+The mobile app has Supabase email/password sign-in, Remember me session storage, and shared authentication form components. Registration and recovery screens provide local validation only; account creation and recovery requests remain unconnected. The Express API implements health and authenticated own-profile reads. The first database migration is prepared. Standalone scripts measure PDF and DOCX extraction; module import, AI generation, and study features remain planned.
 
-The planned server uses MVC with a service layer, grouped by responsibility. Controllers, services, and models still need implementation.
+The server uses MVC with a service layer, grouped by responsibility. The own-profile endpoint runs through routes, authentication middleware, a controller, a service, and a model. Other feature endpoints remain planned.
 
 Follow the [installation guide](docs/installation.md) to install dependencies, configure local environment files, and run the app. The [development page](docs/development.md) links to the project guides. The [command handbook](docs/commands.md) covers Expo, Android, Gradle, ADB, and server commands.
 
 ## Current files
 
-Checked on 2026-10-24, with authentication route entries updated on 2026-10-25. This tree leaves out installed dependencies, generated caches and bundles, Git metadata, and agent-tool settings.
+Checked on 2026-10-30. This tree leaves out installed dependencies, generated native projects, caches and bundles, Git metadata, and agent-tool settings.
 
 ```text
 ai-reviewer-app/
@@ -22,6 +22,10 @@ ai-reviewer-app/
 |   |   |   |-- Geist-Medium.ttf
 |   |   |   |-- Geist-Regular.ttf
 |   |   |   `-- Geist-SemiBold.ttf
+|   |   |-- illustrations/
+|   |   |   |-- create-password.png
+|   |   |   |-- otp.png
+|   |   |   `-- verify-email.png
 |   |   `-- logo/
 |   |       |-- logo-symbol-transparent.png
 |   |       |-- logo-symbol-white-background-1024.png
@@ -32,17 +36,22 @@ ai-reviewer-app/
 |   |-- src/
 |   |   |-- app/
 |   |   |   |-- (auth)/
-|   |   |   |   |-- login.jsx                # Login UI; validation and local remember-me selection
-|   |   |   |   `-- register.jsx             # Registration UI; password feedback and validation
-|   |   |   |-- _layout.jsx                  # Navigation theme, status bar, fonts, splash
+|   |   |   |   |-- login.jsx                # Supabase sign-in, Remember me, session restoration
+|   |   |   |   |-- otp.jsx                  # Recovery-code UI; verification not connected
+|   |   |   |   |-- register.jsx             # Registration UI; account creation not connected
+|   |   |   |   |-- set-password.jsx         # New-password UI; update not connected
+|   |   |   |   `-- verify-email.jsx         # Recovery-email UI; code delivery not connected
+|   |   |   |-- _layout.jsx                  # Theme, fonts, splash, foreground token refresh
 |   |   |   `-- index.jsx                    # Starter redirect to login
 |   |   |-- components/
-|   |   |   |-- AuthButton.jsx               # Shared submit button, message, and footer content
+|   |   |   |-- AuthButton.jsx               # Submit button, disabled/busy state, message, footer
 |   |   |   |-- FormField.jsx                # Labeled input with icons, error border, password toggle
 |   |   |   |-- PasswordStrength.jsx         # Visual 4-bar password complexity indicator
 |   |   |   `-- StartupSplash.jsx            # Animated splash coordinator and motion detection
 |   |   `-- lib/
-|   |       |-- auth.js                      # Login and registration validation rules
+|   |       |-- auth.js                      # Login, registration, and recovery validation rules
+|   |       |-- session-storage.js           # Remember me; memory or persistent session storage
+|   |       |-- supabase.js                  # Public Supabase client and shared auth storage
 |   |       |-- theme.js                     # Theme tokens, palette, and navigation theme
 |   |       `-- utils.js                     # Class-name merging helper
 |   |-- .env.example
@@ -68,13 +77,19 @@ ai-reviewer-app/
 |   |       |-- fixtures.mjs                 # Test document fixtures
 |   |       `-- memory-guard.ps1             # Process memory monitor script
 |   |-- src/
-|   |   |-- config/                          # Scaffolded; configuration files planned
-|   |   |-- controllers/                     # Scaffolded; route controllers planned
-|   |   |-- middleware/                      # Scaffolded; auth/error middleware planned
-|   |   |-- models/                          # Scaffolded; Supabase data models planned
-|   |   |-- routes/                          # Scaffolded; Express routers planned
-|   |   |-- services/                        # Scaffolded; business services planned
-|   |   |-- app.js                           # Express app configuration and health endpoint
+|   |   |-- config/
+|   |   |   `-- supabase.js                  # Per-request client with caller token
+|   |   |-- controllers/
+|   |   |   `-- profileController.js         # Own-profile response and safe errors
+|   |   |-- middleware/
+|   |   |   `-- authMiddleware.js            # Verify Bearer token and attach identity
+|   |   |-- models/
+|   |   |   `-- profileModel.js              # Read profile by authenticated user ID
+|   |   |-- routes/
+|   |   |   `-- profileRoutes.js             # Protected GET /api/profile
+|   |   |-- services/
+|   |   |   `-- profileService.js            # Lookup and missing-profile handling
+|   |   |-- app.js                           # Express, health, and profile route mount
 |   |   `-- server.js                        # Port validation and listener startup
 |   |-- .env.example
 |   |-- package.json                         # Dependencies and start/dev commands
@@ -101,16 +116,16 @@ ai-reviewer-app/
 
 | Folder | Purpose | Status |
 |---|---|---|
-| `mobile/` | The Android application code. | Starter configured |
-| `mobile/assets/` | Images, icons, and fonts used by the app. | Fonts and logo assets exist |
+| `mobile/` | The Android application code. | Auth screens, sign-in, and Remember me implemented; remaining product flows planned |
+| `mobile/assets/` | Images, icons, and fonts used by the app. | Fonts, logo assets, and recovery illustrations exist |
 | `mobile/src/` | Application source code. | Exists |
-| `mobile/src/app/` | Expo Router screens and navigation layouts. Keep helpers outside this folder. | Root layout and login redirect exist; auth routes contain only login and registration; recovery and main routes planned |
+| `mobile/src/app/` | Expo Router screens and navigation layouts. Keep helpers outside this folder. | Login, registration, and recovery screens exist; authenticated navigation and main routes planned |
 | `mobile/src/components/` | Shared UI and screen components. | Auth button, form, password feedback, and splash components exist; Reusables UI planned |
-| `mobile/src/lib/` | Shared mobile helpers, theme values, and client validators. | Auth validation, theme tokens, and utils exist; API clients planned |
-| `server/` | The Express API for document processing, AI requests, and scoring. | Health starter runs; extraction benchmark harness exists; feature APIs planned |
+| `mobile/src/lib/` | Shared mobile helpers, theme values, and client validators. | Auth validation, theme, utils, public Supabase client, and session storage exist; Express API helper planned |
+| `server/` | The Express API for document processing, AI requests, and scoring. | Health and protected own-profile endpoint implemented; extraction harness exists; other feature APIs planned |
 | `server/scripts/` | Development, extraction benchmark, and diagnostic scripts. | Extraction harness and memory monitor exist |
-| `server/src/` | Server application code. | App, listener, and MVC directory scaffolding exist |
-| `supabase/` | Database migrations, access policies, and development data. | Empty migrations folder exists locally; schema migrations planned |
+| `server/src/` | Server application code. | App, listener, and own-profile MVC implementation exist |
+| `supabase/` | Database migrations, access policies, and development data. | Profiles/labels migration exists; remaining migrations planned; live database state not established by this guide |
 | `docs/` | Developer onboarding, setup instructions, commands, and technical decisions. | Installation, commands, validation, development, and ADR docs exist |
 | `docs/adr/` | Numbered records of architecture decisions and their reasons. | One decision recorded |
 | `planning/` | The agreed scope and implementation roadmap. | Exists |
@@ -121,15 +136,20 @@ Paths in this table are relative to `mobile/` unless stated otherwise.
 
 | File | Purpose |
 |---|---|
-| `src/app/_layout.jsx` | Sets the navigation theme, status bar, screen stack, font loading, and portal host. |
+| `src/app/_layout.jsx` | Sets the navigation theme, status bar, screen stack, fonts, splash, and portal host; starts/stops token refresh with app foreground state and cleans up its listener. |
 | `src/app/index.jsx` | Redirects initial entry to the login screen. |
-| `src/app/(auth)/login.jsx` | Login screen with email, password, and remember-me selection using FormField. |
+| `src/app/(auth)/login.jsx` | Signs in through Supabase, restores Remember me and an available session, and displays loading/error/success states. |
 | `src/app/(auth)/register.jsx` | Shared registration screen with full name, email, password strength feedback, and validation. |
-| `src/components/AuthButton.jsx` | Shared submit button with a status message and space for footer content. |
+| `src/app/(auth)/verify-email.jsx` | Validates the recovery address and opens OTP; sending a recovery email remains unconnected. |
+| `src/app/(auth)/otp.jsx` | Accepts a six-digit code and opens Set Password; verification and resend remain unconnected. |
+| `src/app/(auth)/set-password.jsx` | Validates the new password and confirmation; recovery-session protection and password updates remain unconnected. |
+| `src/components/AuthButton.jsx` | Shared submit button with optional disabled/busy accessibility state, a status message, and footer content. |
 | `src/components/FormField.jsx` | Reusable labeled input with leading icon, password toggle, red error borders, and error text. |
 | `src/components/PasswordStrength.jsx` | Visual 4-bar password complexity indicator for registration. |
 | `src/components/StartupSplash.jsx` | Shows the animated logo during startup and respects reduced-motion settings. |
-| `src/lib/auth.js` | Client-side input validation functions for login and registration. |
+| `src/lib/auth.js` | Client-side email, login, registration, recovery-code, and password-confirmation validation. |
+| `src/lib/session-storage.js` | Supplies Supabase-compatible storage: checked Remember me saves sessions with AsyncStorage; unchecked sessions stay in memory until the app process ends. |
+| `src/lib/supabase.js` | Creates the public mobile Supabase client using Expo environment variables and exports its shared auth storage. |
 | `src/lib/theme.js` | Defines the fixed color palette, destructive tokens, and navigation theme. |
 | `src/lib/utils.js` | Combines style class names and resolves conflicts. |
 | `app.json` | Sets the app name, icons, appearance, link scheme, and Expo plugins. |
@@ -152,8 +172,15 @@ Paths in this table are relative to `mobile/` unless stated otherwise.
 | `server/scripts/extraction/extract.mjs` (from the repository root) | Runs bounded extraction in a child process and returns text, warnings, and metrics. |
 | `server/scripts/extraction/fixtures.mjs` (from the repository root) | Creates synthetic PDF and DOCX test documents. |
 | `server/scripts/extraction/memory-guard.ps1` (from the repository root) | Monitors extraction processes against memory and time limits on Windows. |
-| `server/src/app.js` (from the repository root) | Configures Express and the health endpoint without opening a port. |
+| `server/src/app.js` (from the repository root) | Configures Express, the health endpoint, and `/api/profile` without opening a port. |
+| `server/src/config/supabase.js` (from the repository root) | Creates a Supabase client using the caller's access token, with server session persistence disabled. |
+| `server/src/middleware/authMiddleware.js` (from the repository root) | Verifies Bearer tokens and attaches the authenticated user and Supabase client to the request. |
+| `server/src/routes/profileRoutes.js` (from the repository root) | Connects the protected own-profile GET route to its controller. |
+| `server/src/controllers/profileController.js` (from the repository root) | Returns the authenticated profile or safe not-found/server errors. |
+| `server/src/services/profileService.js` (from the repository root) | Loads the own profile and reports a missing profile. |
+| `server/src/models/profileModel.js` (from the repository root) | Reads profile ID, full name, and creation date using the authenticated user ID. |
 | `server/src/server.js` (from the repository root) | Validates the port and starts the listener, reporting startup errors. |
+| `supabase/migrations/0001_profiles_and_labels.sql` (from the repository root) | Defines profiles, personal subject/topic labels, and ownership policies; file presence does not establish live database execution. |
 | `mobile/.env.example` and `server/.env.example` (from the repository root) | List required settings with placeholders. Local `.env` files are ignored and omitted from the tree. |
 | `docs/commands.md` (from the repository root) | Project command handbook covering Expo, Android, Gradle, ADB, Node, and Metro. |
 | `docs/validation.md` (from the repository root) | Records extraction benchmark evidence, memory budgets, and test verification data. |
@@ -167,11 +194,13 @@ The [installation guide's Android workflow comparison](docs/installation.md#4-ch
 
 The mobile interface uses `@tabler/icons-react-native` with Expo SDK 57-compatible `react-native-svg 15.15.4`. Use direct named outline icon imports in screens and components; no icon wrapper is required. Geist Sans is bundled locally in four weights under `mobile/assets/fonts/` and loaded by the root layout.
 
-The auth screens use `FormField.jsx` for labeled inputs, password visibility, and inline errors. `AuthButton.jsx` shares the submit button and status message. Registration uses `PasswordStrength.jsx` for password feedback and collects full name, email, and password for one shared account type. These controls do not create an account yet. The remember-me selection is also local.
+The auth screens use `FormField.jsx` for labeled inputs, password visibility, and inline errors. `AuthButton.jsx` shares the submit button, disabled/busy state, and status message. Registration uses `PasswordStrength.jsx` for password feedback and collects full name, email, and password for one shared account type. Account creation remains unconnected.
 
-Registration will not require email confirmation. Password recovery will use three screens: `verify-email.jsx` collects the recovery address and requests a six-digit code, `otp.jsx` verifies the code, and `set-password.jsx` accepts the new password. The name Verify Email refers to the recovery address. A valid code must establish a recovery session before the user can change the password. These screens are not implemented, and the flow needs no authentication callback route. See the planned Supabase settings in [installation.md](docs/installation.md#planned-authentication-configuration).
+Login calls Supabase email/password authentication. Remember me controls persistent versus in-memory session storage; disabling it removes saved tokens while preserving the current in-memory session. On mount, Login restores the saved preference and recognizes an available session. The root layout controls foreground token refresh. `index.jsx` still redirects to Login: authenticated routing, sign-out UI, and the mobile call to `/api/profile` remain planned. Live Android sign-in and cold-restart behavior remain unverified.
 
-The first migration is prepared under `supabase/migrations/`. Database execution and ownership policies have not been verified from this workspace. The remaining migration files in the planned tree are not implemented. Empty server folders exist locally and will appear in a fresh clone once files are committed inside them.
+Registration will not require email confirmation. The recovery screens already exist with local validation and navigation: `verify-email.jsx`, `otp.jsx`, and `set-password.jsx`. Code delivery, resend, verification, recovery-session protection, and password updates remain unconnected. The name Verify Email refers to the recovery address. The completed flow must require a verified recovery session before a password change and needs no authentication callback route. See the planned Supabase settings in [installation.md](docs/installation.md#planned-authentication-configuration).
+
+The first migration is prepared under `supabase/migrations/`; the remaining migration files below are planned. The server implements `GET /api/profile` through the MVC layers using the verified token's user ID. This guide describes source files, not proof of current live migrations, database policies, or cross-account isolation.
 
 ## Planned structure
 
@@ -193,11 +222,11 @@ ai-reviewer-app/
 |   |   |   |-- +not-found.jsx              # Unknown route
 |   |   |   |-- (auth)/
 |   |   |   |   |-- _layout.jsx             # Authentication navigation
-|   |   |   |   |-- login.jsx               # UI exists; authentication planned
+|   |   |   |   |-- login.jsx               # Implemented sign-in, Remember me, session recognition
 |   |   |   |   |-- register.jsx            # UI exists; account creation planned
-|   |   |   |   |-- verify-email.jsx        # Planned: collect recovery email and request code
-|   |   |   |   |-- otp.jsx                 # Planned: verify six-digit recovery code
-|   |   |   |   `-- set-password.jsx        # Planned: save new password after verified code
+|   |   |   |   |-- verify-email.jsx        # UI exists; recovery email request planned
+|   |   |   |   |-- otp.jsx                 # UI exists; recovery-code verification planned
+|   |   |   |   `-- set-password.jsx        # UI exists; protected password update planned
 |   |   |   `-- (main)/
 |   |   |       |-- _layout.jsx             # Signed-in stack and session checks
 |   |   |       |-- (tabs)/
@@ -222,7 +251,7 @@ ai-reviewer-app/
 |   |   |           `-- index.jsx           # In-app personal report
 |   |   |-- components/
 |   |   |   |-- ui/                         # Reusables components, added as needed
-|   |   |   |-- AuthButton.jsx              # Existing submit button and status message
+|   |   |   |-- AuthButton.jsx              # Existing submit button, disabled/busy state, message
 |   |   |   |-- FormField.jsx               # Implemented
 |   |   |   |-- PasswordStrength.jsx        # Implemented
 |   |   |   |-- StartupSplash.jsx           # Implemented
@@ -242,7 +271,8 @@ ai-reviewer-app/
 |   |       |-- theme.js                    # Existing theme/navigation tokens
 |   |       |-- utils.js                    # Existing class-name helper
 |   |       |-- auth.js                     # Implemented auth validation rules
-|   |       |-- supabase.js                 # Public mobile Supabase client
+|   |       |-- supabase.js                 # Implemented public mobile Supabase client
+|   |       |-- session-storage.js          # Implemented Remember me session storage
 |   |       |-- api.js                      # Authenticated API requests/errors
 |   |       |-- materials.js                # Import, status, retrieval, deletion
 |   |       |-- quizzes.js                  # Generate, resume, answer, results
@@ -399,13 +429,13 @@ Use plain JavaScript functions and add files with their implementation. Start wi
 
 Keep answer keys and scoring on the server. Store stable option identifiers, accept one answer per question/session, and use atomic database operations for answer saving and completion. Preserve quiz sequence and adaptation state when resuming. Dashboard and report data use the same progress calculations.
 
-The migration names describe the intended responsibilities and order; the exact SQL remains to be designed. Add owner policies and constraints with each table migration. Keep answer keys inaccessible through direct mobile database access. Private bucket policies belong with the Storage migration, and atomic scoring/finalization functions belong with study operations.
+The first migration defines the profiles and personal-label schema. The remaining migration names describe the intended responsibilities and order; their SQL remains to be designed. Add owner policies and constraints with each table migration. Keep answer keys inaccessible through direct mobile database access. Private bucket policies belong with the Storage migration, and atomic scoring/finalization functions belong with study operations.
 
 Keep uploads in private Storage and real credentials out of Git. AI keys and privileged Supabase credentials belong only on the server. Students and instructors can access only their own resources; instructors cannot view student histories or publish shared quizzes. Confirmed module deletion removes its source, derived quizzes, flashcards, and study results, then recalculates affected progress and streaks while preserving unrelated history.
 
 ### Verification and remaining decisions
 
-The mobile test files are planned additions; test tooling and passing results are still needed. Cover registration without email confirmation, the Verify Email -> OTP -> Set Password flow, rejected imports, interrupted sessions, duplicate answer submissions, complete versus partial flashcard reviews, and in-app report viewing. For recovery, check code delivery, resend limits, interrupted password updates, and rejection of invalid, expired, or reused codes. The Set Password screen must reject access without a verified recovery session.
+The mobile test files shown in the planned tree are not present. `session-storage.test.mjs`, used during development, is also absent from the current checkout; no repeatable mobile regression suite is retained here. When adding that suite, cover checked/unchecked Remember me, cold restarts, token refresh, disabling persistence, sign-out, and storage failures. Cover registration without email confirmation, the Verify Email -> OTP -> Set Password flow, rejected imports, interrupted sessions, duplicate answer submissions, complete versus partial flashcard reviews, and in-app report viewing. For recovery, check code delivery, resend limits, interrupted password updates, and rejection of invalid, expired, or reused codes. The Set Password screen must reject access without a verified recovery session.
 
 The server has no general test folder or test command. Local extraction fixture checks and benchmark results are recorded in `docs/validation.md`; they do not verify an upload API. Feature verification still needs controller validation and safe responses, service business rules, model persistence and ownership, and a complete route-to-database flow. Cover two-account isolation, generation and source validation, answer-key integrity, difficulty transitions, duplicate-safe scoring, study dates and streaks, dashboard/report agreement, and deletion cleanup. Record commands and results in `docs/validation.md` when implemented.
 
