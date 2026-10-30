@@ -14,6 +14,7 @@ import { validateLogin } from "@/lib/auth";
 import { router } from "expo-router";
 import FormField from "@/components/FormField";
 import AuthButton from "@/components/AuthButton";
+import AuthMessage from "@/components/AuthMessage";
 import { authStorage, supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
@@ -24,6 +25,8 @@ export default function LoginPage() {
     const [rememberMe, setRememberMe] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [message, setMessage] = useState("");
+    const [messageIsError, setMessageIsError] = useState(false);
+    const [invalidCredentials, setInvalidCredentials] = useState(false);
     const [inputFocused, setInputFocused] = useState(false);
     const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
     const errors = submitted ? validateLogin(email, password) : {};
@@ -37,13 +40,18 @@ export default function LoginPage() {
                 if (!mounted) return;
                 setRememberMe(remember);
                 if (error) {
+                    setMessageIsError(true);
                     setMessage(error.message);
                 } else if (data.session) {
+                    setMessageIsError(false);
                     setMessage('You are already signed in.');
                 }
             })
             .catch(() => {
-                if (mounted) setMessage('Could not restore your session. Try signing in again.');
+                if (mounted) {
+                    setMessageIsError(true);
+                    setMessage('Could not restore your session. Try signing in again.');
+                }
             })
             .finally(() => {
                 if (mounted) setLoading(false);
@@ -66,6 +74,8 @@ export default function LoginPage() {
 
         setSubmitted(true);
         setMessage('');
+        setMessageIsError(false);
+        setInvalidCredentials(false);
 
         if (Object.keys(validateLogin(email, password)).length) return;
 
@@ -80,12 +90,15 @@ export default function LoginPage() {
             });
 
             if (error) {
+                setMessageIsError(true);
+                setInvalidCredentials(error.code === 'invalid_credentials');
                 setMessage(error.message);
                 return;
             }
 
             setMessage('Signed in successfully.');
         } catch {
+            setMessageIsError(true);
             setMessage('Could not sign in. Check your connection and try again.');
         } finally {
             setLoading(false);
@@ -129,6 +142,8 @@ export default function LoginPage() {
                             labelId="email-label"
                             icon={IconMail}
                             error={errors.email}
+                            invalid={invalidCredentials}
+                            accessibilityHint={invalidCredentials ? "Check your email and password." : undefined}
                             onFocus={() => setInputFocused(true)}
                             onBlur={() => setInputFocused(false)}
                             autoCapitalize="none"
@@ -143,6 +158,7 @@ export default function LoginPage() {
                             onChangeText={(value) => {
                                 setEmail(value);
                                 setMessage("");
+                                setInvalidCredentials(false);
                             }}
                         />
 
@@ -153,6 +169,8 @@ export default function LoginPage() {
                             labelId="password-label"
                             icon={IconLock}
                             error={errors.password}
+                            invalid={invalidCredentials}
+                            accessibilityHint={invalidCredentials ? "Check your email and password." : undefined}
                             onFocus={() => setInputFocused(true)}
                             onBlur={() => setInputFocused(false)}
                             isPassword
@@ -168,6 +186,7 @@ export default function LoginPage() {
                             onChangeText={(value) => {
                                 setPassword(value);
                                 setMessage("");
+                                setInvalidCredentials(false);
                             }}
                         />
 
@@ -205,25 +224,27 @@ export default function LoginPage() {
                         </View>
 
                     </View>
-                    <AuthButton
-                        submitLabel={loading ? "Signing in..." : "Sign in"}
-                        onSubmit={handleSubmit}
-                        message={message}
-                        disabled={loading}
-                    >
-                        <Pressable
-                            accessibilityRole="link"
-                            onPress={() => router.push("/(auth)/register")}
-                            className="mt-6 min-h-12 items-center justify-center rounded-lg border-2 border-transparent px-1 active:opacity-70 focus:border-foreground"
+                    <View className="mt-auto w-full max-w-sm self-center">
+                        <AuthMessage message={message} isError={messageIsError} />
+                        <AuthButton
+                            submitLabel={loading ? "Signing in..." : "Sign in"}
+                            onSubmit={handleSubmit}
+                            disabled={loading}
                         >
-                            <Text className="font-geist text-center text-sm text-muted-foreground">
-                                Need an account?{" "}
-                                <Text className="font-geist-semibold text-foreground underline">
-                                    Create a new one
+                            <Pressable
+                                accessibilityRole="link"
+                                onPress={() => router.push("/(auth)/register")}
+                                className="mt-6 min-h-12 items-center justify-center rounded-lg border-2 border-transparent px-1 active:opacity-70 focus:border-foreground"
+                            >
+                                <Text className="font-geist text-center text-sm text-muted-foreground">
+                                    Need an account?{" "}
+                                    <Text className="font-geist-semibold text-foreground underline">
+                                        Create a new one
+                                    </Text>
                                 </Text>
-                            </Text>
-                        </Pressable>
-                    </AuthButton>
+                            </Pressable>
+                        </AuthButton>
+                    </View>
                 </ScrollView>
             </View>
         </SafeAreaView>

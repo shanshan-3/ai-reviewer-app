@@ -15,6 +15,8 @@ import { validateRegister } from "@/lib/auth";
 import FormField from "@/components/FormField";
 import PasswordStrength from "@/components/PasswordStrength";
 import AuthButton from "@/components/AuthButton";
+import AuthMessage from "@/components/AuthMessage";
+import { authStorage, supabase } from "@/lib/supabase";
 
 export default function RegisterPage() {
     const { fontScale } = useWindowDimensions();
@@ -31,7 +33,9 @@ export default function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [message, setMessage] = useState("");
+    const [messageIsError, setMessageIsError] = useState(false);
     const errors = submitted ? validateRegister(fullName, email, password) : {};
+    const [loading, setLoading] = useState(false);
 
     const scrollToFocusedInput = useCallback(() => {
         const input = TextInput.State.currentlyFocusedInput();
@@ -64,15 +68,53 @@ export default function RegisterPage() {
         scrollToFocusedInput();
     }
 
-    function handleSubmit() {
+    async function handleSubmit() {
+        if (loading) return;
+
         setSubmitted(true);
+        setMessage("");
+        setMessageIsError(false);
+
         if (Object.keys(validateRegister(fullName, email, password)).length) {
-            setMessage("");
             return;
         }
 
         Keyboard.dismiss();
-        setMessage("Registration isn't connected yet.");
+        setLoading(true);
+
+        try {
+            await authStorage.setRememberMe(false);
+
+            const { data, error } = await supabase.auth.signUp({
+                email: email.trim(),
+                password,
+                options: {
+                    data: {
+                        full_name: fullName.trim(),
+                    },
+                },
+            });
+
+            if (error) {
+                setMessageIsError(true);
+                setMessage(error.message);
+                return;
+            }
+            
+            if (!data.session) {
+                setMessageIsError(true);
+                setMessage("No sign-in session found.");
+                return;
+            }
+
+            setPassword("");
+            setMessage("Account created successfully.");
+        } catch  {
+            setMessageIsError(true);
+            setMessage("Could not complete registration. Try again.");
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
@@ -195,25 +237,28 @@ export default function RegisterPage() {
                             <PasswordStrength password={password} />
                         </View>
                     </View>
-                    <AuthButton
-                        submitLabel="Create account"
-                        onSubmit={handleSubmit}
-                        message={message}
-                    >
-                        <Pressable
-                            accessibilityRole="button"
-                            accessibilityLabel="Already have an account? Sign in"
-                            onPress={() => router.navigate("/(auth)/login")}
-                            className="mt-6 min-h-12 items-center justify-center rounded-lg border-2 border-transparent px-1 active:opacity-70 focus:border-foreground"
+                    <View className="mt-auto w-full max-w-sm self-center">
+                        <AuthMessage message={message} isError={messageIsError} />
+                        <AuthButton
+                            submitLabel= {loading ? "Creating account..." : "Create account"}
+                            onSubmit={handleSubmit}
+                            disabled={loading}
                         >
-                            <Text className="font-geist text-center text-sm text-muted-foreground">
-                                Already have an account?{" "}
-                                <Text className="font-geist-semibold text-foreground underline">
-                                    Sign in
+                            <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel="Already have an account? Sign in"
+                                onPress={() => router.navigate("/(auth)/login")}
+                                className="mt-6 min-h-12 items-center justify-center rounded-lg border-2 border-transparent px-1 active:opacity-70 focus:border-foreground"
+                            >
+                                <Text className="font-geist text-center text-sm text-muted-foreground">
+                                    Already have an account?{" "}
+                                    <Text className="font-geist-semibold text-foreground underline">
+                                        Sign in
+                                    </Text>
                                 </Text>
-                            </Text>
-                        </Pressable>
-                    </AuthButton>
+                            </Pressable>
+                        </AuthButton>
+                    </View>
                 </ScrollView>
             </View>
         </SafeAreaView>

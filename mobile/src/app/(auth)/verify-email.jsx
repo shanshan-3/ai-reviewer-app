@@ -14,6 +14,7 @@ import { router } from "expo-router";
 import { validateEmail } from "@/lib/auth";
 import FormField from "@/components/FormField";
 import AuthButton from "@/components/AuthButton";
+import AuthMessage from "@/components/AuthMessage";
 
 export default function VerifyEmailPage() {
     const [email, setEmail] = useState("");
@@ -105,11 +106,13 @@ export default function VerifyEmailPage() {
                                 setMessage("");
                             }}
                         />
-                        <AuthButton
-                            submitLabel="Send reset link"
-                            onSubmit={handleSubmit}
-                            message={message}
-                        />
+                        <View className="mt-auto w-full max-w-sm self-center">
+                            <AuthMessage message={message} />
+                            <AuthButton
+                                submitLabel="Send reset link"
+                                onSubmit={handleSubmit}
+                            />
+                        </View>
                     </View>
                 </ScrollView>
             </View>

@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { IconArrowLeft } from "@tabler/icons-react-native";
 import { router } from "expo-router";
 import AuthButton from "@/components/AuthButton";
+import AuthMessage from "@/components/AuthMessage";
 import { validateOtp } from "@/lib/auth";
 import { THEME as theme } from "@/lib/theme";
 
@@ -156,29 +157,31 @@ export default function OTPPage() {
                                 </Text>
                             ) : null}
                         </View>
-                        <AuthButton
-                            submitLabel="Verify code"
-                            onSubmit={handleSubmit}
-                            message={message}
-                        >
-                            <View className="mt-4 flex-row flex-wrap items-center justify-center gap-x-1">
-                                <Text className="font-geist text-sm text-foreground">
-                                    Didn&apos;t receive a code?
-                                </Text>
-                                <Pressable
-                                    accessibilityRole="button"
-                                    accessibilityLabel={resendDisabled ? `Resend code in ${resendSeconds} seconds` : "Resend code"}
-                                    accessibilityState={{ disabled: resendDisabled }}
-                                    disabled={resendDisabled}
-                                    onPress={handleResend}
-                                    className="min-h-12 min-w-12 justify-center rounded-lg px-1 active:opacity-70 focus:bg-secondary"
-                                >
-                                    <Text className={`font-geist-medium text-sm ${resendDisabled ? "text-muted-foreground" : "text-foreground underline"}`}>
-                                        {resendDisabled ? `Resend in ${resendSeconds}s` : "Resend now"}
+                        <View className="mt-auto w-full max-w-sm self-center">
+                            <AuthMessage message={message} />
+                            <AuthButton
+                                submitLabel="Verify code"
+                                onSubmit={handleSubmit}
+                            >
+                                <View className="mt-4 flex-row flex-wrap items-center justify-center gap-x-1">
+                                    <Text className="font-geist text-sm text-foreground">
+                                        Didn&apos;t receive a code?
                                     </Text>
-                                </Pressable>
-                            </View>
-                        </AuthButton>
+                                    <Pressable
+                                        accessibilityRole="button"
+                                        accessibilityLabel={resendDisabled ? `Resend code in ${resendSeconds} seconds` : "Resend code"}
+                                        accessibilityState={{ disabled: resendDisabled }}
+                                        disabled={resendDisabled}
+                                        onPress={handleResend}
+                                        className="min-h-12 min-w-12 justify-center rounded-lg px-1 active:opacity-70 focus:bg-secondary"
+                                    >
+                                        <Text className={`font-geist-medium text-sm ${resendDisabled ? "text-muted-foreground" : "text-foreground underline"}`}>
+                                            {resendDisabled ? `Resend in ${resendSeconds}s` : "Resend now"}
+                                        </Text>
+                                    </Pressable>
+                                </View>
+                            </AuthButton>
+                        </View>
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>

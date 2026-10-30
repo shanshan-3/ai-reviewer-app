@@ -12,6 +12,7 @@ import { THEME as theme } from "@/lib/theme";
  *   labelId: string,
  *   icon?: import('react').ElementType,
  *   error?: string,
+ *   invalid?: boolean,
  *   isPassword?: boolean,
  *   showPassword?: boolean,
  *   onTogglePassword?: () => void,
@@ -25,6 +26,7 @@ const FormField = forwardRef(function FormField(
     labelId,
     icon: Icon,
     error,
+    invalid = false,
     isPassword,
     showPassword,
     onTogglePassword,
@@ -35,6 +37,7 @@ const FormField = forwardRef(function FormField(
   ref,
 ) {
   const PasswordVisibilityIcon = showPassword ? IconEyeOff : IconEye;
+  const hasError = Boolean(error) || invalid;
 
   return (
     <View className={`gap-2 ${containerClassName}`}>
@@ -54,8 +57,8 @@ const FormField = forwardRef(function FormField(
           selectionColor="rgba(10, 10, 10, 0.2)"
           cursorColor={theme.foreground}
           selectionHandleColor={theme.foreground}
-          className={`font-geist min-h-14 rounded-lg border py-3 text-base text-foreground focus:border-foreground ${
-            error ? "border-destructive" : "border-muted-foreground"
+          className={`font-geist min-h-14 rounded-lg border py-3 text-base text-foreground ${
+            hasError ? "border-destructive focus:border-destructive" : "border-muted-foreground focus:border-foreground"
           } ${Icon ? "pl-12" : "pl-4"} ${isPassword ? "pr-14" : "pr-4"}`}
           secureTextEntry={isPassword && !showPassword}
           {...inputProps}
@@ -67,7 +70,7 @@ const FormField = forwardRef(function FormField(
             importantForAccessibility="no-hide-descendants"
             className="absolute bottom-0 left-4 top-0 justify-center"
           >
-            <Icon size={20} color={error ? theme.destructive : theme.mutedForeground} />
+            <Icon size={20} color={hasError ? theme.destructive : theme.mutedForeground} />
           </View>
         )}
         {isPassword && onTogglePassword && (

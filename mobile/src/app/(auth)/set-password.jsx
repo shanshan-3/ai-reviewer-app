@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { IconArrowLeft, IconLock } from "@tabler/icons-react-native";
 import { router } from "expo-router";
 import AuthButton from "@/components/AuthButton";
+import AuthMessage from "@/components/AuthMessage";
 import FormField from "@/components/FormField";
 import { validateSetPassword } from "@/lib/auth";
 import { THEME as theme } from "@/lib/theme";
@@ -145,11 +146,13 @@ export default function SetPasswordPage() {
                                 setMessage("");
                             }}
                         />
-                        <AuthButton
-                            submitLabel="Set password"
-                            onSubmit={handleSubmit}
-                            message={message}
-                        />
+                        <View className="mt-auto w-full max-w-sm self-center">
+                            <AuthMessage message={message} />
+                            <AuthButton
+                                submitLabel="Set password"
+                                onSubmit={handleSubmit}
+                            />
+                        </View>
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
