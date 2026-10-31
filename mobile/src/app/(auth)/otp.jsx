@@ -2,37 +2,72 @@ import { useEffect, useRef, useState } from "react";
 import { Image, Keyboard, KeyboardAvoidingView, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconArrowLeft } from "@tabler/icons-react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
+import { usePreventRemove } from "expo-router/react-navigation";
 import AuthButton from "@/components/AuthButton";
 import AuthMessage from "@/components/AuthMessage";
-import { validateOtp } from "@/lib/auth";
+import { validateEmail, validateOtp } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
+import { markRecoverySession } from "@/lib/recovery-session";
 import { THEME as theme } from "@/lib/theme";
 
 export default function OTPPage() {
+    const params = useLocalSearchParams();
+    const email = typeof params.email === "string" ? params.email.trim() : "";
+    const validEmail = !Object.keys(validateEmail(email)).length;
+    const pending = useRef(false);
+    const [loading, setLoading] = useState(false);
+    const [messageIsError, setMessageIsError] = useState(false);
+    usePreventRemove(loading, () => {});
     const inputs = useRef(/** @type {(TextInput | null)[]} */([]));
     const [digits, setDigits] = useState(["", "", "", "", "", ""]);
     const [submitted, setSubmitted] = useState(false);
     const [message, setMessage] = useState("");
     const resendAvailableAt = useRef(0);
-    const [resendSeconds, setResendSeconds] = useState(30);
-    const resendDisabled = resendSeconds > 0;
+    const [resendSeconds, setResendSeconds] = useState(60);
+    const cooldownActive = resendSeconds > 0;
+    const resendDisabled = cooldownActive || loading || !validEmail;
     const code = digits.join("");
     const errors = submitted ? validateOtp(code) : {};
 
     useEffect(() => {
-        if (!resendDisabled) return;
-        if (!resendAvailableAt.current) resendAvailableAt.current = Date.now() + 30000;
+        if (!validEmail) router.replace("/(auth)/verify-email");
+    }, [validEmail]);
+
+    useEffect(() => {
+        if (!cooldownActive) return;
+        if (!resendAvailableAt.current) resendAvailableAt.current = Date.now() + 60000;
         const interval = setInterval(() => {
             setResendSeconds(Math.max(0, Math.ceil((resendAvailableAt.current - Date.now()) / 1000)));
         }, 1000);
         return () => clearInterval(interval);
-    }, [resendDisabled]);
+    }, [cooldownActive]);
 
-    function handleResend() {
-        if (Date.now() < resendAvailableAt.current) return;
-        resendAvailableAt.current = Date.now() + 60000;
-        setResendSeconds(60);
-        // setMessage("Resending codes isn't connected yet.");
+    async function handleResend() {
+        if (pending.current || !validEmail || Date.now() < resendAvailableAt.current) return;
+        pending.current = true;
+        setLoading(true);
+        setMessage("");
+        setMessageIsError(false);
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email);
+            if (error) {
+                setMessageIsError(true);
+                setMessage(error.message);
+                return;
+            }
+            resendAvailableAt.current = Date.now() + 60000;
+            setResendSeconds(60);
+            setDigits(["", "", "", "", "", ""]);
+            setSubmitted(false);
+            setMessage("A new code was requested. Check your email.");
+        } catch {
+            setMessageIsError(true);
+            setMessage("Could not resend the code. Check your connection and try again.");
+        } finally {
+            pending.current = false;
+            setLoading(false);
+        }
     }
 
     function handleChange(value, index) {
@@ -61,17 +96,40 @@ export default function OTPPage() {
         inputs.current[index - 1]?.focus();
     }
 
-    function handleSubmit() {
+    async function handleSubmit() {
+        if (pending.current || !validEmail) return;
         setSubmitted(true);
+        setMessage("");
         if (Object.keys(validateOtp(code)).length) {
             setMessage("");
             return;
         }
         Keyboard.dismiss();
-        router.push("/(auth)/set-password");
+        pending.current = true;
+        setLoading(true);
+        setMessageIsError(true);
+        try {
+            const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: "recovery" });
+            if (error) {
+                setMessage(error.message);
+                return;
+            }
+            if (!data.session?.user?.id) {
+                setMessage("Could not verify recovery. Request a new code.");
+                return;
+            }
+            markRecoverySession(data.session);
+            router.push("/(auth)/set-password");
+        } catch {
+            setMessage("Could not verify the code. Check your connection and try again.");
+        } finally {
+            pending.current = false;
+            setLoading(false);
+        }
     }
 
     function handleBack() {
+        if (pending.current) return;
         if (router.canGoBack()) {
             router.back();
         } else {
@@ -116,7 +174,7 @@ export default function OTPPage() {
                             Verify account
                         </Text>
                         <Text className="font-geist mt-3 text-center text-sm leading-5 text-foreground">
-                            Enter the six-digit code sent your email to verify.
+                            Enter the six-digit code sent to your email to verify.
                         </Text>
                         <View className="mt-8 gap-2">
                             <Text className="font-geist-medium text-base text-foreground">
@@ -142,6 +200,7 @@ export default function OTPPage() {
                                         selectionHandleColor={theme.foreground}
                                         className={`font-geist min-h-16 min-w-0 flex-1 rounded-lg border px-0 py-3 text-center text-2xl text-foreground focus:border-foreground ${errors.code ? "border-destructive" : "border-muted-foreground"}`}
                                         value={digit}
+                                        editable={!loading}
                                         onChangeText={(value) => handleChange(value, index)}
                                         onKeyPress={({ nativeEvent }) => handleBackspace(nativeEvent.key, index)}
                                         onSubmitEditing={() => {
@@ -158,10 +217,11 @@ export default function OTPPage() {
                             ) : null}
                         </View>
                         <View className="mt-auto w-full max-w-sm self-center">
-                            <AuthMessage message={message} />
+                            <AuthMessage message={message} isError={messageIsError} />
                             <AuthButton
-                                submitLabel="Verify code"
+                                submitLabel={loading ? "Please wait..." : "Verify code"}
                                 onSubmit={handleSubmit}
+                                disabled={loading || !validEmail}
                             >
                                 <View className="mt-4 flex-row flex-wrap items-center justify-center gap-x-1">
                                     <Text className="font-geist text-sm text-foreground">

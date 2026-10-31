@@ -2,7 +2,7 @@
 
 The project has separate mobile and server applications. Each keeps its own dependencies and lockfile.
 
-The mobile app has Supabase email/password sign-in, Remember me session storage, and shared authentication form components. Registration and recovery screens provide local validation only; account creation and recovery requests remain unconnected. The Express API implements health and authenticated own-profile reads. The first database migration is prepared. Standalone scripts measure PDF and DOCX extraction; module import, AI generation, and study features remain planned.
+The mobile app has Supabase email/password sign-in, Remember me session storage, and shared authentication form components. Registration and password recovery also call Supabase. Brevo delivers recovery emails; the maintainer reported a successful recovery test on their phone. The Express API implements health and authenticated own-profile reads. The first database migration is prepared. Standalone scripts measure PDF and DOCX extraction; module import, AI generation, and study features remain planned.
 
 The server uses MVC with a service layer, grouped by responsibility. The own-profile endpoint runs through routes, authentication middleware, a controller, a service, and a model. Other feature endpoints remain planned.
 
@@ -10,7 +10,7 @@ Follow the [installation guide](docs/installation.md) to install dependencies, c
 
 ## Current files
 
-Checked on 2026-10-30. This tree leaves out installed dependencies, generated native projects, caches and bundles, Git metadata, and agent-tool settings.
+Recovery entries updated on 2026-10-31. This tree leaves out installed dependencies, generated native projects, caches and bundles, Git metadata, and agent-tool settings.
 
 ```text
 ai-reviewer-app/
@@ -37,10 +37,10 @@ ai-reviewer-app/
 |   |   |-- app/
 |   |   |   |-- (auth)/
 |   |   |   |   |-- login.jsx                # Supabase sign-in, Remember me, session restoration
-|   |   |   |   |-- otp.jsx                  # Recovery-code UI; verification not connected
-|   |   |   |   |-- register.jsx             # Registration UI; account creation not connected
-|   |   |   |   |-- set-password.jsx         # New-password UI; update not connected
-|   |   |   |   `-- verify-email.jsx         # Recovery-email UI; code delivery not connected
+|   |   |   |   |-- otp.jsx                  # Supabase recovery-code verification and resend
+|   |   |   |   |-- register.jsx             # Supabase registration with full name and validation
+|   |   |   |   |-- set-password.jsx         # Verified recovery session, password update, local sign-out
+|   |   |   |   `-- verify-email.jsx         # Supabase recovery-email request and error handling
 |   |   |   |-- _layout.jsx                  # Theme, fonts, splash, foreground token refresh
 |   |   |   `-- index.jsx                    # Starter redirect to login
 |   |   |-- components/
@@ -51,6 +51,7 @@ ai-reviewer-app/
 |   |   |   `-- StartupSplash.jsx            # Animated splash coordinator and motion detection
 |   |   `-- lib/
 |   |       |-- auth.js                      # Login, registration, and recovery validation rules
+|   |       |-- recovery-session.js          # In-memory verified recovery user ID
 |   |       |-- session-storage.js           # Remember me; memory or persistent session storage
 |   |       |-- supabase.js                  # Public Supabase client and shared auth storage
 |   |       |-- theme.js                     # Theme tokens, palette, and navigation theme
@@ -117,12 +118,12 @@ ai-reviewer-app/
 
 | Folder | Purpose | Status |
 |---|---|---|
-| `mobile/` | The Android application code. | Auth screens, sign-in, and Remember me implemented; remaining product flows planned |
+| `mobile/` | The Android application code. | Sign-in, registration, Remember me, and recovery implemented; protected navigation and study flows planned |
 | `mobile/assets/` | Images, icons, and fonts used by the app. | Fonts, logo assets, and recovery illustrations exist |
 | `mobile/src/` | Application source code. | Exists |
 | `mobile/src/app/` | Expo Router screens and navigation layouts. Keep helpers outside this folder. | Login, registration, and recovery screens exist; authenticated navigation and main routes planned |
 | `mobile/src/components/` | Shared UI and screen components. | Auth button, form, password feedback, and splash components exist; Reusables UI planned |
-| `mobile/src/lib/` | Shared mobile helpers, theme values, and client validators. | Auth validation, theme, utils, public Supabase client, and session storage exist; Express API helper planned |
+| `mobile/src/lib/` | Shared mobile helpers, theme values, and client validators. | Auth validation, theme, utils, public Supabase client, session storage, and recovery-session marker exist; Express API helper planned |
 | `server/` | The Express API for document processing, AI requests, and scoring. | Health and protected own-profile endpoint implemented; extraction harness exists; other feature APIs planned |
 | `server/scripts/` | Development, extraction benchmark, and diagnostic scripts. | Extraction harness and memory monitor exist |
 | `server/src/` | Server application code. | App, listener, and own-profile MVC implementation exist |
@@ -140,16 +141,17 @@ Paths in this table are relative to `mobile/` unless stated otherwise.
 | `src/app/_layout.jsx` | Sets the navigation theme, status bar, screen stack, fonts, splash, and portal host; starts/stops token refresh with app foreground state and cleans up its listener. |
 | `src/app/index.jsx` | Redirects initial entry to the login screen. |
 | `src/app/(auth)/login.jsx` | Signs in through Supabase, restores Remember me and an available session, and displays loading/error/success states. |
-| `src/app/(auth)/register.jsx` | Shared registration screen with full name, email, password strength feedback, and validation. |
-| `src/app/(auth)/verify-email.jsx` | Validates the recovery address and opens OTP; sending a recovery email remains unconnected. |
-| `src/app/(auth)/otp.jsx` | Accepts a six-digit code and opens Set Password; verification and resend remain unconnected. |
-| `src/app/(auth)/set-password.jsx` | Validates the new password and confirmation; recovery-session protection and password updates remain unconnected. |
+| `src/app/(auth)/register.jsx` | Calls Supabase registration with full name, email, password strength feedback, and validation. |
+| `src/app/(auth)/verify-email.jsx` | Requests a recovery email through Supabase and passes the address to OTP after success. |
+| `src/app/(auth)/otp.jsx` | Verifies a six-digit recovery code through Supabase before opening Set Password; resends with a 60-second cooldown. |
+| `src/app/(auth)/set-password.jsx` | Checks the verified recovery user against the current session, updates the password, signs out locally, and returns to Login. |
 | `src/components/AuthButton.jsx` | Shared submit button with optional disabled/busy accessibility state and footer content. |
 | `src/components/AuthMessage.jsx` | Shared feedback directly above each authentication submit button; `isError` selects red text, while success and informational messages use the normal text color. Hidden when empty and announced politely to screen readers. |
 | `src/components/FormField.jsx` | Reusable labeled input with leading icon, password toggle, error text, and an optional `invalid` flag for red borders/icons without duplicate messages. Invalid borders stay red while focused. |
 | `src/components/PasswordStrength.jsx` | Visual 4-bar password complexity indicator for registration. |
 | `src/components/StartupSplash.jsx` | Shows the animated logo during startup and respects reduced-motion settings. |
 | `src/lib/auth.js` | Client-side email, login, registration, recovery-code, and password-confirmation validation. |
+| `src/lib/recovery-session.js` | Keeps the verified recovery user ID in memory for Set Password access; clears on completion, cancellation, or app restart. Supabase authorizes password updates. |
 | `src/lib/session-storage.js` | Supplies Supabase-compatible storage: checked Remember me saves sessions with AsyncStorage; unchecked sessions stay in memory until the app process ends. |
 | `src/lib/supabase.js` | Creates the public mobile Supabase client using Expo environment variables and exports its shared auth storage. |
 | `src/lib/theme.js` | Defines the fixed color palette, destructive tokens, and navigation theme. |
@@ -196,11 +198,11 @@ The [installation guide's Android workflow comparison](docs/installation.md#4-ch
 
 The mobile interface uses `@tabler/icons-react-native` with Expo SDK 57-compatible `react-native-svg 15.15.4`. Use direct named outline icon imports in screens and components; no icon wrapper is required. Geist Sans is bundled locally in four weights under `mobile/assets/fonts/` and loaded by the root layout.
 
-The auth screens use `FormField.jsx` for labeled inputs, password visibility, and inline errors. `AuthButton.jsx` shares the submit button and disabled/busy state. Each screen groups `AuthMessage.jsx` directly above `AuthButton.jsx` in its action area. Feedback stays aligned with the button and is hidden when empty. On Login, Supabase's `invalid_credentials` response marks both Email and Password red; editing either field or starting another submission clears that state. Network and storage failures show feedback without marking credentials invalid. Registration uses `PasswordStrength.jsx` for password feedback and collects full name, email, and password for one shared account type. Account creation remains unconnected.
+The auth screens use `FormField.jsx` for labeled inputs, password visibility, and inline errors. `AuthButton.jsx` shares the submit button and disabled/busy state. Each screen groups `AuthMessage.jsx` directly above `AuthButton.jsx` in its action area. Feedback stays aligned with the button and is hidden when empty. On Login, Supabase's `invalid_credentials` response marks both Email and Password red; editing either field or starting another submission clears that state. Network and storage failures show feedback without marking credentials invalid. Registration uses `PasswordStrength.jsx` for password feedback and sends full name, email, and password to Supabase for one shared account type.
 
 Login calls Supabase email/password authentication. Remember me controls persistent versus in-memory session storage; disabling it removes saved tokens while preserving the current in-memory session. On mount, Login restores the saved preference and recognizes an available session. The root layout controls foreground token refresh. `index.jsx` still redirects to Login: authenticated routing, sign-out UI, and the mobile call to `/api/profile` remain planned. Live Android sign-in and cold-restart behavior remain unverified.
 
-Registration will not require email confirmation. The recovery screens already exist with local validation and navigation: `verify-email.jsx`, `otp.jsx`, and `set-password.jsx`. Code delivery, resend, verification, recovery-session protection, and password updates remain unconnected. The name Verify Email refers to the recovery address. The completed flow must require a verified recovery session before a password change and needs no authentication callback route. See the planned Supabase settings in [installation.md](docs/installation.md#planned-authentication-configuration).
+Registration does not require email confirmation. Recovery is connected through `verify-email.jsx`, `otp.jsx`, and `set-password.jsx`: request a code, verify it, then save a new password using the recovery session. Brevo is the configured SMTP sender, as reported by the maintainer. Resend uses a 60-second cooldown. The in-memory recovery marker blocks Set Password without successful verification matching the current session. Completion signs out locally and returns to Login; no callback route is needed. The maintainer reported a successful phone test; failure scenarios and broader device coverage remain unverified. See [authentication configuration](docs/installation.md#authentication-configuration).
 
 The first migration is prepared under `supabase/migrations/`; the remaining migration files below are planned. The server implements `GET /api/profile` through the MVC layers using the verified token's user ID. This guide describes source files, not proof of current live migrations, database policies, or cross-account isolation.
 
@@ -226,9 +228,9 @@ ai-reviewer-app/
 |   |   |   |   |-- _layout.jsx             # Authentication navigation
 |   |   |   |   |-- login.jsx               # Implemented sign-in, Remember me, session recognition
 |   |   |   |   |-- register.jsx            # UI exists; account creation planned
-|   |   |   |   |-- verify-email.jsx        # UI exists; recovery email request planned
-|   |   |   |   |-- otp.jsx                 # UI exists; recovery-code verification planned
-|   |   |   |   `-- set-password.jsx        # UI exists; protected password update planned
+|   |   |   |   |-- verify-email.jsx        # Implemented recovery email request
+|   |   |   |   |-- otp.jsx                 # Implemented recovery-code verification and resend
+|   |   |   |   `-- set-password.jsx        # Implemented recovery password update and local sign-out
 |   |   |   `-- (main)/
 |   |   |       |-- _layout.jsx             # Signed-in stack and session checks
 |   |   |       |-- (tabs)/
@@ -275,6 +277,7 @@ ai-reviewer-app/
 |   |       |-- utils.js                    # Existing class-name helper
 |   |       |-- auth.js                     # Implemented auth validation rules
 |   |       |-- supabase.js                 # Implemented public mobile Supabase client
+|   |       |-- recovery-session.js         # Implemented in-memory recovery marker
 |   |       |-- session-storage.js          # Implemented Remember me session storage
 |   |       |-- api.js                      # Authenticated API requests/errors
 |   |       |-- materials.js                # Import, status, retrieval, deletion

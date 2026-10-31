@@ -72,16 +72,41 @@ ipconfig
 
 The standard Android emulator reaches the PC at `http://10.0.2.2:3000`. A phone or emulator uses its own `localhost`, so the PC API needs the appropriate address. The mobile API client has not been implemented yet; setting this variable alone does not connect the app.
 
-### Planned authentication configuration
+### Authentication configuration
 
-Authentication is not connected yet. Password recovery will use `verify-email.jsx` to request a code, `otp.jsx` to verify it, and `set-password.jsx` to save the new password. The login, registration, and recovery screens currently provide UI and local validation only. Configure and test the following settings when connecting Supabase Auth; the live project settings have not been verified.
+Login and registration call Supabase Auth. Recovery is connected through Verify Email -> OTP -> Set Password. Brevo is the configured SMTP sender, as reported by the maintainer. The maintainer also reported a successful recovery test on their phone. This is user-reported validation, not an independently observed device test. Protected navigation and the general sign-out UI remain planned.
 
 - Keep email/password registration enabled and disable **Confirm Email** in the hosted project's email Auth provider settings. Registration collects full name, email, and password without an email confirmation step. See [Supabase password authentication](https://supabase.com/docs/guides/auth/passwords).
-- Configure an authorized SMTP sender to deliver recovery codes. Verify the sender and delivery quotas before campus use; see [Supabase SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
-- Configure the **Reset Password** email template to display the six-digit `{{ .Token }}` and omit the `{{ .ConfirmationURL }}` link. The planned screens follow Verify Email -> OTP -> Set Password. See [Supabase email templates](https://supabase.com/docs/guides/auth/auth-email-templates).
-- On Verify Email, request a recovery email with `resetPasswordForEmail`. On OTP, verify the entered code with `verifyOtp` using `type: 'recovery'`. Set Password uses the resulting recovery session to update the password. Block access to Set Password until recovery verification succeeds, and finish recovery before opening Dashboard. See [OTP verification](https://supabase.com/docs/reference/javascript/auth-verifyotp) and [password recovery](https://supabase.com/docs/guides/auth/passwords#resetting-a-password).
+- Set **Email OTP length** to **6** in Supabase's Email provider settings to match the app's inputs and validation. The template alone does not set the code length.
+- Configure the **Reset Password** email template to display `{{ .Token }}` and omit the `{{ .ConfirmationURL }}` link. Supabase creates and verifies the code; Brevo delivers the email. See [Supabase email templates](https://supabase.com/docs/guides/auth/auth-email-templates).
+- Verify Email calls `resetPasswordForEmail` and passes the recovery address to OTP. OTP calls `verifyOtp({ email, token, type: 'recovery' })`; resend has a 60-second initial cooldown and restarts that cooldown after success. Set Password checks the recovery session, calls `updateUser({ password })`, signs out locally, and returns to Login. See [OTP verification](https://supabase.com/docs/reference/javascript/auth-verifyotp) and [password recovery](https://supabase.com/docs/guides/auth/passwords#resetting-a-password).
+
+`src/lib/recovery-session.js` remembers the verified user ID in memory. Set Password requires that ID to match the current Supabase session. The marker clears on completion, cancellation, or app restart; restarting requires code verification again. This controls screen access; Supabase authorizes the password update. Codes, passwords, and session tokens are not passed through route parameters.
 
 Verify Email collects the address used for password recovery. Registration has no email confirmation screen, and code-based recovery needs no authentication callback route. Configure the Auth provider and email template in Supabase; no SQL migration is needed for these settings. Email ownership is not checked at registration, so a mistyped address can prevent delivery of a recovery code.
+
+#### Brevo SMTP setup
+
+For another development Supabase project, configure its sender separately:
+
+1. In Brevo, verify the sender under **Settings -> Senders, Domains, IPs -> Senders**. Authenticate a domain you control for reliable delivery; the current project's domain-authentication status is not recorded here.
+2. Open **Settings -> SMTP & API -> SMTP**. Copy the displayed SMTP login and generate an SMTP key.
+3. In Supabase, open **Authentication -> Emails -> SMTP Settings**, enable custom SMTP, and enter:
+
+| Field | Value |
+|---|---|
+| Sender email | The sender address verified in Brevo |
+| Sender name | `RebyuIT` |
+| Host | `smtp-relay.brevo.com` |
+| Port | `587` (STARTTLS) |
+| Username | The SMTP login displayed in Brevo; it may differ from your account email |
+| Password | A Brevo SMTP key, not an API key or account password |
+
+4. Save, configure the six-digit code and Reset Password template above, then request recovery for an existing Auth account. Check inbox and spam; use **Brevo -> Transactional -> Email logs** and Supabase Auth logs for failures.
+
+Keep SMTP credentials only in the hosted SMTP configuration, never in mobile code, `EXPO_PUBLIC_` variables, Markdown, or Git. See [Brevo SMTP credentials](https://help.brevo.com/hc/en-us/articles/7924908994450-Send-transactional-emails-using-Brevo-SMTP) and [Brevo's Supabase setup](https://developers.brevo.com/docs/supabase-smtp-integration).
+
+Brevo's account sending allowance and Supabase's project/IP/per-user limits apply separately. The app's 60-second cooldown is not a daily per-user quota. Review actual account allowances and [Supabase rate limits](https://supabase.com/docs/guides/auth/rate-limits) before campus use. Delivery capacity, invalid/expired/reused codes, interrupted updates, and broader Android coverage remain unverified by the reported phone test.
 
 ### Apply the profiles and labels migration
 
@@ -91,7 +116,7 @@ The [profiles and labels migration](../supabase/migrations/0001_profiles_and_lab
 2. Paste the complete migration, including `begin;` and `commit;`, and run it once. Existing objects with the same names cause an error rather than being replaced. If a query fails and leaves a transaction open, run `rollback;` before retrying the corrected query.
 3. Open **Table Editor** and confirm that all three tables exist with Row Level Security enabled. Existing Auth accounts receive a profile; a missing full name becomes an empty string. `created_at` records when each profile or label is created, including profiles created by the backfill. No subjects or topics are preloaded.
 
-When registration is connected, send the full name as `options.data.full_name` in `supabase.auth.signUp`. The trigger creates the profile automatically; the mobile client must not insert a second profile. Authenticated users can read their own profile and update only `full_name`; they cannot change `id` or `created_at`, or insert/delete profiles directly. Privileged server access still requires API identity and ownership checks. See [Supabase user management](https://supabase.com/docs/guides/auth/managing-user-data) and [column privileges](https://supabase.com/docs/guides/database/postgres/column-level-security).
+Registration sends the full name as `options.data.full_name` in `supabase.auth.signUp`. The trigger creates the profile automatically; the mobile client must not insert a second profile. Authenticated users can read their own profile and update only `full_name`; they cannot change `id` or `created_at`, or insert/delete profiles directly. Privileged server access still requires API identity and ownership checks. See [Supabase user management](https://supabase.com/docs/guides/auth/managing-user-data) and [column privileges](https://supabase.com/docs/guides/database/postgres/column-level-security).
 
 Subjects contain `id`, `owner_id`, `name`, and `created_at`; topics have those fields plus `subject_id`. IDs and timestamps are generated by the database. `owner_id` defaults to the authenticated account, and a composite foreign key requires the topic and its subject to have the same owner, including for privileged server writes. Owners can create/read/rename/delete their labels; clients cannot change IDs, ownership, timestamps, or a topic's subject. Names must be 1–120 characters without leading/trailing whitespace. Duplicate names are rejected case-insensitively within an account for subjects and within an account/subject for topics. Separate accounts can reuse names, and the same topic name can appear under different subjects. Deleting a subject removes its topics; deleting an Auth account removes its profile and labels. Future material/history migrations must define their own references and deletion rules before exposing label deletion alongside study content.
 
@@ -146,7 +171,7 @@ On later sessions, start Metro from `mobile/` with:
 npm.cmd start -- --dev-client
 ```
 
-Open the installed development app and connect to Metro, or press `a` for the emulator. For a phone connecting over LAN, keep the PC and phone on the same reachable network. Installing the package or starting Metro alone does not install the app. The expected app screen is still a placeholder.
+Open the installed development app and connect to Metro, or press `a` for the emulator. For a phone connecting over LAN, keep the PC and phone on the same reachable network. Installing the package or starting Metro alone does not install the app. The app currently opens Login; protected navigation remains planned.
 
 JavaScript/JSX and styling edits, such as changing the login screen, use Fast Refresh without rebuilding the APK. Adding or updating a native dependency, upgrading the Expo SDK, or changing native settings in `app.json` requires a new build. Regenerate the native project and rebuild from `mobile/`:
 
@@ -207,6 +232,6 @@ If you run Reusables doctor, CLI 0.7.1 reports missing layout, theme, and helper
 | Styling changes are not picked up | Stop Expo, then run `npx.cmd expo start --clear` from `mobile/`. |
 | An environment template or source file is missing | Confirm you have the branch and commits shared by the maintainer. |
 
-The [folder guide](../folder-structure.md) explains where files belong. The [roadmap](../planning/ai-powered-reviewer-roadmap.md) covers the planned features. Authentication, document imports, quizzes, flashcards, progress, and PDF reports are not implemented yet.
+The [folder guide](../folder-structure.md) explains where files belong. The [roadmap](../planning/ai-powered-reviewer-roadmap.md) covers the planned features. Login, registration, and recovery call Supabase; protected navigation, general sign-out UI, document imports, quizzes, flashcards, progress, and in-app reports remain planned.
 
-This guide reflects the maintainer's local checkout. Fresh-clone installation on a collaborator's computer, live service connections, and Android device behavior remain unverified.
+This guide reflects the maintainer's local checkout. Fresh-clone installation and broader live-service/device checks remain unverified; the recovery phone test above was reported by the maintainer.

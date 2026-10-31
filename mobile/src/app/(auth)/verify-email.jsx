@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     Keyboard,
     Image,
@@ -11,14 +11,19 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconArrowLeft } from "@tabler/icons-react-native";
 import { router } from "expo-router";
+import { usePreventRemove } from "expo-router/react-navigation";
 import { validateEmail } from "@/lib/auth";
 import FormField from "@/components/FormField";
 import AuthButton from "@/components/AuthButton";
 import AuthMessage from "@/components/AuthMessage";
+import { supabase } from "@/lib/supabase";
 
 export default function VerifyEmailPage() {
     const [email, setEmail] = useState("");
     const [message, setMessage] = useState("");
+    const [loading, setLoading] = useState(false);
+    const sending = useRef(false);
+    usePreventRemove(loading, () => {});
     const [emailFocused, setEmailFocused] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
@@ -34,15 +39,35 @@ export default function VerifyEmailPage() {
         };
     }, []);
 
-    function handleSubmit() {
+    async function handleSubmit() {
+        if (sending.current) return;
+
         setSubmitted(true);
-        if (Object.keys(validateEmail(email)).length) {
-            setMessage("");
-            return;
-        }
+        setMessage("");
+        if (Object.keys(validateEmail(email)).length) return;
+
         Keyboard.dismiss();
-        // setMessage("Password reset isn't connected yet.");
-        router.push("/(auth)/otp");
+        sending.current = true;
+        setLoading(true);
+        const recoveryEmail = email.trim();
+
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(recoveryEmail);
+            if (error) {
+                setMessage(error.message);
+                return;
+            }
+
+            router.push({
+                pathname: "/(auth)/otp",
+                params: { email: recoveryEmail },
+            });
+        } catch {
+            setMessage("Could not send the code. Check your connection and try again.");
+        } finally {
+            sending.current = false;
+            setLoading(false);
+        }
     }
 
     return (
@@ -63,7 +88,7 @@ export default function VerifyEmailPage() {
                             className="min-h-12 min-w-12 self-start justify-center rounded-lg active:opacity-70 focus:bg-secondary"
                             accessibilityRole="button"
                             accessibilityLabel="Go back"
-                            onPress={() => router.back()}
+                            onPress={() => { if (!sending.current) router.back(); }}
                         >
                             <IconArrowLeft
                                 style={{ minHeight: 24 * fontScale, minWidth: 24 * fontScale }}
@@ -107,10 +132,11 @@ export default function VerifyEmailPage() {
                             }}
                         />
                         <View className="mt-auto w-full max-w-sm self-center">
-                            <AuthMessage message={message} />
+                            <AuthMessage message={message} isError />
                             <AuthButton
-                                submitLabel="Send reset link"
+                                submitLabel={loading ? "Sending..." : "Send code"}
                                 onSubmit={handleSubmit}
+                                disabled={loading}
                             />
                         </View>
                     </View>

@@ -3,11 +3,14 @@ import { Image, Keyboard, KeyboardAvoidingView, Pressable, ScrollView, Text, Tex
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconArrowLeft, IconLock } from "@tabler/icons-react-native";
 import { router } from "expo-router";
+import { usePreventRemove } from "expo-router/react-navigation";
 import AuthButton from "@/components/AuthButton";
 import AuthMessage from "@/components/AuthMessage";
 import FormField from "@/components/FormField";
 import { validateSetPassword } from "@/lib/auth";
 import { THEME as theme } from "@/lib/theme";
+import { supabase } from "@/lib/supabase";
+import { clearRecoverySession, isRecoverySession } from "@/lib/recovery-session";
 
 export default function SetPasswordPage() {
     const scrollView = useRef(/** @type {ScrollView | null} */(null));
@@ -19,7 +22,39 @@ export default function SetPasswordPage() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [message, setMessage] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [ready, setReady] = useState(false);
+    const [saved, setSaved] = useState(false);
+    const [returnToLogin, setReturnToLogin] = useState(false);
+    const pending = useRef(false);
+    usePreventRemove(loading, () => {});
     const errors = submitted ? validateSetPassword(password, confirmPassword) : {};
+
+    useEffect(() => {
+        let active = true;
+        supabase.auth.getSession().then(({ data, error }) => {
+            if (!active) return;
+            if (error || !isRecoverySession(data.session)) {
+                router.replace("/(auth)/verify-email");
+                return;
+            }
+            setReady(true);
+        }).catch(() => {
+            if (active) setMessage("Could not check your recovery session. Go back and try again.");
+        });
+        return () => {
+            active = false;
+            if (clearRecoverySession()) {
+                supabase.auth.signOut({ scope: "local" }).then(({ error }) => {
+                    if (error) console.warn("Could not clear the recovery session.");
+                }).catch(() => console.warn("Could not clear the recovery session."));
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        if (returnToLogin && !loading) router.replace("/(auth)/login");
+    }, [returnToLogin, loading]);
 
     const scrollToFocusedInput = useCallback(() => {
         const input = TextInput.State.currentlyFocusedInput();
@@ -36,22 +71,49 @@ export default function SetPasswordPage() {
         return () => shown.remove();
     }, [scrollToFocusedInput]);
 
-    function handleSubmit() {
+    async function handleSubmit() {
+        if (pending.current || !ready) return;
         setSubmitted(true);
-        if (Object.keys(validateSetPassword(password, confirmPassword)).length) {
-            setMessage("");
-            return;
-        }
+        setMessage("");
+        if (!saved && Object.keys(validateSetPassword(password, confirmPassword)).length) return;
         Keyboard.dismiss();
-        setMessage("Password reset isn't connected yet.");
+        pending.current = true;
+        setLoading(true);
+        let passwordSaved = saved;
+        try {
+            if (!passwordSaved) {
+                const { data, error: sessionError } = await supabase.auth.getSession();
+                if (sessionError) throw sessionError;
+                if (!isRecoverySession(data.session)) {
+                    clearRecoverySession();
+                    setMessage("Your recovery session ended. Request a new code.");
+                    setReady(false);
+                    return;
+                }
+                const { error } = await supabase.auth.updateUser({ password });
+                if (error) throw error;
+                passwordSaved = true;
+                setSaved(true);
+                setPassword("");
+                setConfirmPassword("");
+                setSubmitted(false);
+            }
+            const { error } = await supabase.auth.signOut({ scope: "local" });
+            if (error) throw error;
+            clearRecoverySession();
+            setReturnToLogin(true);
+        } catch (error) {
+            setMessage(passwordSaved
+                ? "Password updated. Could not sign out. Tap Return to sign in to retry."
+                : error instanceof Error ? error.message : "Could not save your password. Check your connection and try again.");
+        } finally {
+            pending.current = false;
+            setLoading(false);
+        }
     }
 
     function handleBack() {
-        if (router.canGoBack()) {
-            router.back();
-        } else {
-            router.replace("/(auth)/otp");
-        }
+        if (!pending.current) router.replace("/(auth)/verify-email");
     }
 
     return (
@@ -116,6 +178,7 @@ export default function SetPasswordPage() {
                             onSubmitEditing={() => confirmPasswordInput.current?.focus()}
                             placeholder="Enter your new password"
                             value={password}
+                            editable={!loading && !saved}
                             onChangeText={(value) => {
                                 setPassword(value);
                                 setMessage("");
@@ -141,16 +204,18 @@ export default function SetPasswordPage() {
                             onSubmitEditing={handleSubmit}
                             placeholder="Re-enter your new password"
                             value={confirmPassword}
+                            editable={!loading && !saved}
                             onChangeText={(value) => {
                                 setConfirmPassword(value);
                                 setMessage("");
                             }}
                         />
                         <View className="mt-auto w-full max-w-sm self-center">
-                            <AuthMessage message={message} />
+                            <AuthMessage message={message} isError />
                             <AuthButton
-                                submitLabel="Set password"
+                                submitLabel={loading ? "Please wait..." : saved ? "Return to sign in" : "Set password"}
                                 onSubmit={handleSubmit}
+                                disabled={loading || !ready}
                             />
                         </View>
                     </View>
