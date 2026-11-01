@@ -11,6 +11,7 @@ import StartupSplash from '@/components/StartupSplash';
 import { NAV_THEME } from '@/lib/theme';
 import { AppState } from 'react-native';
 import { supabase } from '@/lib/supabase';
+import SessionProvider from '@/providers/session-provider';
 
 SplashScreen.preventAutoHideAsync().catch((error) => {
   console.warn('Could not hold the native splash screen.', error);
@@ -51,8 +52,10 @@ export default function RootLayout() {
     <ThemeProvider value={NAV_THEME}>
       <StatusBar style="dark" />
       <StartupSplash>
-        <Stack screenOptions={{ headerShown: false }} />
-        <PortalHost />
+        <SessionProvider>
+          <Stack screenOptions={{ headerShown: false }} />
+          <PortalHost />
+        </SessionProvider>
       </StartupSplash>
     </ThemeProvider>
     

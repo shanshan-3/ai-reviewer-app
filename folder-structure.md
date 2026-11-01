@@ -234,7 +234,7 @@ ai-reviewer-app/
 |   |   |   `-- (main)/
 |   |   |       |-- _layout.jsx             # Signed-in stack and session checks
 |   |   |       |-- (tabs)/
-|   |   |       |   |-- _layout.jsx         # Four bottom tabs
+|   |   |       |   |-- _layout.jsx         # Bottom tabs and shared logo/tab-title header
 |   |   |       |   |-- dashboard.jsx
 |   |   |       |   |-- quizzes.jsx         # History and interrupted sessions
 |   |   |       |   |-- flashcards.jsx      # Saved flashcard sets
