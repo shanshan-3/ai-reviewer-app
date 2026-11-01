@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Image, Keyboard, KeyboardAvoidingView, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { IconArrowLeft, IconLock } from "@tabler/icons-react-native";
+import IconArrowLeft from "@tabler/icons-react-native/IconArrowLeft";
+import IconLock from "@tabler/icons-react-native/IconLock";
 import { router } from "expo-router";
 import { usePreventRemove } from "expo-router/react-navigation";
 import AuthButton from "@/components/AuthButton";

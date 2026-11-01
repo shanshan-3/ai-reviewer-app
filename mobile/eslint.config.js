@@ -8,7 +8,11 @@ module.exports = defineConfig([
     ignores: ["dist/*"],
     settings: {
       'import/resolver': {
-        typescript: { project: './jsconfig.json' },
+        typescript: {
+          project: './jsconfig.json',
+          // Resolve JavaScript exports; Tabler's per-icon type paths are missing.
+          conditionNames: ['react-native', 'import', 'default'],
+        },
       },
     },
   }

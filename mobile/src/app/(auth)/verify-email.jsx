@@ -9,7 +9,7 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { IconArrowLeft } from "@tabler/icons-react-native";
+import IconArrowLeft from "@tabler/icons-react-native/IconArrowLeft";
 import { router } from "expo-router";
 import { usePreventRemove } from "expo-router/react-navigation";
 import { validateEmail } from "@/lib/auth";

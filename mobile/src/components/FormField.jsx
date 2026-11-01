@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
-import { IconEye, IconEyeOff } from "@tabler/icons-react-native";
+import IconEye from "@tabler/icons-react-native/IconEye";
+import IconEyeOff from "@tabler/icons-react-native/IconEyeOff";
 import { THEME as theme } from "@/lib/theme";
 
 /**

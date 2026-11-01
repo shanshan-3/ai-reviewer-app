@@ -10,7 +10,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { IconLock, IconMail, IconUser, IconArrowLeft } from "@tabler/icons-react-native";
+import IconLock from "@tabler/icons-react-native/IconLock";
+import IconMail from "@tabler/icons-react-native/IconMail";
+import IconUser from "@tabler/icons-react-native/IconUser";
+import IconArrowLeft from "@tabler/icons-react-native/IconArrowLeft";
 import { validateRegister } from "@/lib/auth";
 import FormField from "@/components/FormField";
 import PasswordStrength from "@/components/PasswordStrength";

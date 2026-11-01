@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Image, Keyboard, KeyboardAvoidingView, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { IconArrowLeft } from "@tabler/icons-react-native";
+import IconArrowLeft from "@tabler/icons-react-native/IconArrowLeft";
 import { router, useLocalSearchParams } from "expo-router";
 import { usePreventRemove } from "expo-router/react-navigation";
 import AuthButton from "@/components/AuthButton";

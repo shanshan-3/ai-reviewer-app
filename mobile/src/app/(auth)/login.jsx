@@ -8,7 +8,9 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { IconCheck, IconLock, IconMail } from "@tabler/icons-react-native";
+import IconCheck from "@tabler/icons-react-native/IconCheck";
+import IconLock from "@tabler/icons-react-native/IconLock";
+import IconMail from "@tabler/icons-react-native/IconMail";
 import { THEME as theme } from "@/lib/theme";
 import { validateLogin } from "@/lib/auth";
 import { router } from "expo-router";
