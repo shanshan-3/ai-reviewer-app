@@ -46,6 +46,7 @@ ai-reviewer-app/
 |   |   |-- components/
 |   |   |   |-- AuthButton.jsx               # Submit button, disabled/busy state, footer
 |   |   |   |-- AuthMessage.jsx              # Feedback directly above authentication submit buttons
+|   |   |   |-- MaterialScreenHeader.jsx      # In-app back header for material screens
 |   |   |   |-- FormField.jsx                # Labeled input with icons, error border, password toggle
 |   |   |   |-- PasswordStrength.jsx         # Visual 4-bar password complexity indicator
 |   |   |   `-- StartupSplash.jsx            # Animated splash coordinator and motion detection
@@ -96,11 +97,6 @@ ai-reviewer-app/
 |   |   |   `-- materialValidation.js        # Filename, MIME, size, signature, and ID checks
 |   |   |-- app.js                           # Express, health, profile, and material route mounts
 |   |   `-- server.js                        # Recover pending imports before listening
-|   |-- test/
-|   |   |-- extraction.test.js               # Real worker extraction and rejection tests
-|   |   |-- fixtures.js                      # Generated PDF/DOCX test inputs
-|   |   |-- materialService.test.js          # Isolated failure and recovery tests
-|   |   `-- materials.live.js                # Two-account API/Storage and recovery checks
 |   |-- .node-version                        # Render Node 24 runtime
 |   |-- .env.example
 |   |-- package.json                         # Dependencies and start/dev commands
@@ -138,7 +134,6 @@ ai-reviewer-app/
 | `mobile/src/components/` | Shared UI and screen components. | Auth button, form, password feedback, and splash components exist; Reusables UI planned |
 | `mobile/src/lib/` | Shared mobile helpers, theme values, and client validators. | Auth validation, theme, utils, public Supabase client, session storage, and recovery-session marker exist; Express API helper planned |
 | `server/` | The Express API for document processing, AI requests, and scoring. | Health, protected profile, module import/preview, and durable recovery implemented; generation planned |
-| `server/test/` | Local worker/service tests and live API checks. | Current tests replace the deleted scripts harness |
 | `server/src/` | Server application code. | Profile/material MVC, extraction worker, startup recovery, and listener exist |
 | `supabase/` | Database migrations, access policies, and development data. | Profiles/labels migration exists; remaining migrations planned; live database state not established by this guide |
 | `docs/` | Developer onboarding, setup instructions, commands, and technical decisions. | Installation, commands, validation, development, and ADR docs exist |
@@ -293,11 +288,6 @@ ai-reviewer-app/
 |   |       |-- flashcards.js               # Generate, list, review
 |   |       |-- progress.js                 # Dashboard/report data requests
 |   |       `-- study-date.js               # Device timezone and local study date
-|   |-- test/
-|   |   |-- auth-flow.test.jsx
-|   |   |-- material-import.test.jsx
-|   |   |-- quiz-session.test.jsx
-|   |   `-- flashcard-review.test.jsx
 |   |-- .env.example                        # Public URL/key placeholders
 |   |-- .gitignore
 |   |-- AGENTS.md

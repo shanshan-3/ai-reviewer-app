@@ -61,10 +61,8 @@ Each script has a full command entry below.
 | Mobile | lint | expo lint |
 | Server | start | node src/server.js |
 | Server | dev | node --env-file=.env --watch src/server.js |
-| Server | test | node --experimental-test-module-mocks --test test/*.test.js |
-| Server | check:materials | node --env-file=.env test/materials.live.js |
 
-The server test commands are described in the [material API guide](api.md#verification); the mobile helper check is described in [installation](installation.md#try-the-mobile-module-upload). Neither package declares migration or deployment scripts. Apply the SQL migrations through Supabase SQL Editor. EAS examples are conditional because their configuration does not exist yet.
+Neither package declares automated test, migration, or deployment scripts. Apply the SQL migrations through Supabase SQL Editor. EAS examples are conditional because their configuration does not exist yet.
 
 ## How to read the commands
 

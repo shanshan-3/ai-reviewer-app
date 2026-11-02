@@ -136,7 +136,7 @@ Sections contain `material_id`, matching `owner_id`, positive unique `section_or
 
 Deleting a material cascades to its sections. SQL cascades do not remove Storage objects. A future deletion service must clean up files and derived study content; this migration does not implement uploads, review confirmation, capacity accounting, or deletion endpoints.
 
-Historical full ownership/constraint results are recorded in [validation](validation.md). The deleted ownership harness is not a current command. After all four implemented migrations are applied, `npm.cmd run check:materials` runs the current two-account API, material ownership, private file, and recovery checks; it does not repeat every historical label/constraint assertion.
+Historical full ownership/constraint results are recorded in [validation](validation.md). Automated check scripts were removed at the user's request. These checks can be repeated manually using disposable accounts.
 
 ### Apply private module Storage policies
 
@@ -148,11 +148,7 @@ These bucket checks do not validate document contents or implement extraction, m
 
 From `server/`, run:
 
-```powershell
-npm.cmd run check:materials
-```
-
-The command uses `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and server-only `SUPABASE_SECRET_KEY` from `server/.env`. It creates two unique disposable accounts with confirmed emails, uses their user tokens for API/database/Storage checks, and cleans up only their objects and accounts. The secret key is used for test setup, recovery, administrative verification, and cleanup. It does not use `TEST_EMAIL` or change existing users.
+The previous automated ownership and Storage checks are documented in [validation](validation.md). Repeat them manually with two disposable accounts when needed. Never share or commit the server secret key.
 
 The check starts the real Express app on an ephemeral local port. Stop other backend instances first because recovery assumes a single server. Missing migrations/bucket or failed assertions return nonzero. Cleanup failure prints the disposable account ID: remove only its objects before deleting that account. The check does not apply migrations or repair policies automatically.
 
@@ -160,7 +156,7 @@ The check starts the real Express app on an ephemeral local port. Stop other bac
 
 Start Express with `npm.cmd run dev` from `server/`. The authenticated [material API](api.md) accepts a raw PDF/DOCX file body at `POST /api/materials` and returns a persisted `needs_review` record. Use `GET /api/materials/:id` to retrieve its extracted preview with the same user's Bearer token. Supabase's configured secret key must remain server-only because material writes are privileged.
 
-Use Node 24 and `npm.cmd test` for local worker and failure/recovery tests; use `npm.cmd run check:materials` for live two-account upload/extraction checks. The latter requires migrations 0001/0002/0007/0010 and creates/cleans disposable data. Runtime extraction is a Node child process with no PowerShell dependency. See [limits](api.md) for the Linux RSS monitor and the Windows heap/time-only development limit.
+Use Node 24 to run the backend. Runtime extraction is a Node child process with no PowerShell dependency. Historical automated test results are recorded in [validation](validation.md); the test scripts and npm commands have been removed.
 
 Stop the old backend, then apply [0010 material import recovery](../supabase/migrations/0010_material_import_recovery.sql) in Supabase SQL Editor. It adds `cleanup_pending` and flags existing processing/failed rows for reconciliation. Startup removes incomplete sections/private objects before clearing those markers; committed previews are preserved. Do not delete old `.material-local/` records until reconciliation is complete. Startup fails safely if recovery cannot reach Supabase or the migration is missing. Restart with `npm.cmd start` after fixing the cause.
 
@@ -172,7 +168,7 @@ On Dashboard, choose **Upload material**, then select one PDF/DOCX. The screen v
 
 The preview shows warnings, text, page/paragraph references, and loading/error/retry states. It does not approve text, assign labels, enable generation, or populate the dashboard module list. FileSystem, DocumentPicker, and `expo/fetch` are already installed; a development APK missing these native modules needs rebuilding.
 
-Run `npm.cmd run check:materials` from `mobile/` for the isolated helper tests. This command is separate from the live backend command of the same name in `server/`.
+The mobile test script has been removed. The import flow still requires Android device verification.
 
 ### Render backend hosting (selected; deployment pending)
 

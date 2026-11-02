@@ -50,4 +50,4 @@ Stop the old server before applying migration 0010: it marks existing processing
 
 ## Verification
 
-From `server/` on Node 24, run `npm.cmd test` for real worker extraction and isolated service failure/recovery tests. Service tests use Node's experimental module mocks. Run `npm.cmd run check:materials` for real API, Supabase Storage, extraction, two-account ownership, and fresh-process database recovery checks after migrations 0001/0002/0007/0010 are applied. Stop other API instances first: recovery assumes a single server. The live check creates disposable users and removes their objects before deleting their accounts; any cleanup failure prints the remaining account ID. It does not apply migrations. No privileged key belongs in the mobile app.
+Previous verification appears in [validation.md](validation.md). The test harness and commands have been removed. Manual API checks require the migrations listed above and two disposable accounts. Never put privileged keys in the mobile app.

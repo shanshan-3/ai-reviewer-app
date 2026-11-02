@@ -1,5 +1,7 @@
 # Phase 1: PDF/DOCX extraction validation
 
+Earlier sections record automated checks run before the maintainer requested removal of mobile and server test files. Those tests and npm commands are no longer present. The results remain as historical evidence.
+
 ## Node runtime and durable recovery - 2026-11-02
 
 Replaced deleted runtime imports with server-owned Node extraction code using installed PDF.js 6.4.299 and Mammoth 1.13.0. No dependencies were added. The maintainer reported migration `0010_material_import_recovery.sql` applied; the live check confirmed `cleanup_pending` exists and is writable only through privileged material operations. Successful imports clear it with the final preview commit; failed cleanup leaves it for startup/next-upload recovery. Local journals are no longer required.
