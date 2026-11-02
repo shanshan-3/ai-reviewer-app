@@ -1,6 +1,8 @@
 import { Tabs } from 'expo-router';
-import { Image, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import IconLayoutDashboard from '@tabler/icons-react-native/IconLayoutDashboard';
+import IconHelp from '@tabler/icons-react-native/IconHelp';
+import IconCards from '@tabler/icons-react-native/IconCards';
 import IconUser from '@tabler/icons-react-native/IconUser';
 import { THEME } from '@/lib/theme';
 
@@ -16,7 +18,7 @@ function TabHeaderTitle({ children }) {
             <Text
                 accessibilityRole="header"
                 numberOfLines={1}
-                className="shrink font-geist-semibold text-xl text-foreground"
+                className="shrink font-geist-semibold text-xl text-[#001428]"
             >
                 {children}
             </Text>
@@ -32,7 +34,11 @@ export default function TabsLayout() {
                 headerShown: true,
                 headerTitle: TabHeaderTitle,
                 headerTitleAlign: 'left',
-                headerStyle: { backgroundColor: THEME.background },
+                headerStyle: {
+                    backgroundColor: THEME.card,
+                    borderBottomColor: THEME.border,
+                    borderBottomWidth: StyleSheet.hairlineWidth,
+                },
                 headerShadowVisible: false,
                 tabBarActiveTintColor: THEME.primary,
             }}
@@ -45,9 +51,27 @@ export default function TabsLayout() {
                         <IconLayoutDashboard color={color} size={size} />
                     ),
                 }}
-                />
+            />
 
-                <Tabs.Screen
+            <Tabs.Screen
+                name="quizzes"
+                options={{
+                    title: 'Quizzes',
+                    tabBarIcon: ({ color, size }) => (
+                        <IconHelp color={color} size={size} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="flashcards"
+                options={{
+                    title: 'Flashcards',
+                    tabBarIcon: ({ color, size }) => (
+                        <IconCards color={color} size={size} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
                 name="profile"
                 options={{
                     title: 'Profile',
