@@ -1,5 +1,68 @@
 # Phase 1: PDF/DOCX extraction validation
 
+## Node runtime and durable recovery - 2026-11-02
+
+Replaced deleted runtime imports with server-owned Node extraction code using installed PDF.js 6.4.299 and Mammoth 1.13.0. No dependencies were added. The maintainer reported migration `0010_material_import_recovery.sql` applied; the live check confirmed `cleanup_pending` exists and is writable only through privileged material operations. Successful imports clear it with the final preview commit; failed cleanup leaves it for startup/next-upload recovery. Local journals are no longer required.
+
+`npm.cmd test` passed 19 tests on Windows: real PDF/DOCX workers, page/paragraph references, code symbols, review warnings/generation gate, password/corrupt/scanned files, file/page/text/archive/expanded-byte limits (including falsified ZIP sizes), parent timeout, reported peak memory, validation, ambiguous metadata creation, partial failure cleanup, lost final acknowledgement, persistent cleanup retry, and database-only recovery. Service failure tests use mocks, not real outages. The new tests replace the deleted harness commands; older results below are historical.
+
+`npm.cmd run check:materials` passed 6 live groups against the configured Supabase project: health/auth and both API identities; PDF and DOCX persisted previews with two-account database/Storage isolation and denied client marker updates; corrupt/scanned PDF rejection and cleanup; HTTP size/MIME limits; and interrupted import cleanup during real server startup in a fresh Node process, before `/health` responds. Both disposable users and their private objects were removed; exit code 0. This seeds interrupted state rather than killing an active server or causing a real network outage.
+
+Linux and Render were not available locally. Linux RSS polling, host/container memory, full API memory use, cold starts, actual crash/redeploy recovery, overlapping deployments, and physical Android remain unverified. Windows workers run with a V8 heap limit; tests verify the deadline and final reported peak RSS, not heap exhaustion or live RSS enforcement. One server instance with no overlapping deployments is the current boundary. Render deployment remains pending.
+
+## Mobile material import — 2026-11-02
+
+The dashboard upload button now opens the protected `materials/import` screen; successful uploads replace it with `materials/[materialId]`. The existing dashboard styling and Quick Review shortcuts remain. The helper sends the cached File as the raw body using a current session token. It does not send privileged keys or retry uploads automatically.
+
+`npm.cmd run check:materials` from `mobile/` passed 7 isolated helper tests: actual cached-file size and boundaries, PDF/DOCX File bodies and encoded names, fresh session tokens, absent session/configuration, safe server/network/timeout handling without retries, malformed responses, and encoded preview IDs. The tests execute the Babel-transformed helper with mocked Expo File/fetch/session boundaries; they do not exercise native file picking, Back handling, rendering, or a live mobile upload. Mobile lint and JavaScript/JSX validation passed.
+
+The deleted extractor imports previously blocked fresh startup. The Node runtime replacement above resolves that import blocker while preserving those deletions. Physical Android and native-module availability remain unverified.
+
+Android bundle export passed with `npx.cmd expo export --platform android --output-dir .expo/material-import-check --max-workers 2` (1,825 modules). This verifies bundling of the new routes and installed Expo imports; it does not verify file picking, native navigation, or device-to-server connectivity.
+
+## Material upload API verification — 2026-11-02
+
+`npm.cmd run check:materials:unit` passed 9 isolated tests using mocked filesystem/service boundaries: unsafe header and byte validation, successful `needs_review`, ambiguous database creation and Storage upload, partial section-save failure, final status failure, extraction-monitor failure, lost final acknowledgement, and failed cleanup retried by the next import. These mocks do not establish live outage or restart behavior.
+
+`npm.cmd run check:materials` passed all 9 live groups against the configured Supabase project on Windows. The real Express app ran on an ephemeral local port and the real bounded extractor processed generated PDF/DOCX fixtures. Checks covered missing/invalid tokens, owner-only persisted previews, source references with generation disabled, format/size/name/signature/compression rejection, corrupt/scanned PDF failure records with file/section cleanup, and 429 admission while another import was running. Successful and failed imports left no temporary directories or recovery journals for their records. Both disposable accounts and their Storage objects were removed.
+
+Report: `server/.ownership-local/materials-467277ef-2f76-4742-8b74-f737f9117358.json`, exit code 0, no remaining test account IDs. JavaScript syntax checks passed. These are synthetic document tests, not real-module quality validation. See [API contract](api.md).
+
+Still unverified: Android uploads, physical-device previews, real DOCX modules, actual process/network outage recovery, multiple-server admission, campus capacity, and Linux deployment. The current endpoint does not approve text, assign labels, mark material ready, or implement confirmed user deletion. It does not establish the full Phase 2 upload acceptance criteria.
+
+## Ownership verification — 2026-11-02
+
+The maintainer applied `0002_materials_and_sections.sql` in Supabase SQL Editor. The expanded `check:ownership` command then passed all 15 groups, including the new material assertions, against the configured project. JavaScript syntax validation also passed. Only disposable test accounts and their records/files were used.
+
+Ran `npm.cmd run check:ownership` against the project configured in `server/.env`, using two newly created, unrelated disposable accounts. Requests exercised the real Express app on an ephemeral local port and the live Supabase database. Test assertions used the publishable key and user tokens; privileged access was confined to setup, bucket inspection, and cleanup.
+
+| Check | Result |
+|---|---|
+| API missing/invalid Bearer token | PASS: 401 |
+| API own-profile identity, including another user's ID in query parameters | PASS for both accounts |
+| Profiles: own read/update, hidden cross-account read/update, forbidden deletion/ID changes, original row unchanged | PASS for both accounts |
+| Subjects/topics: own create/read/rename/delete | PASS for both accounts |
+| Subjects/topics: cross-account read/update/delete, spoofed owner, topic linked to another owner's subject | PASS: hidden or rejected in both directions, original names preserved |
+| Anonymous database reads | PASS: hidden or permission denied |
+| Materials/sections: own reads, hidden cross-account reads, anonymous denial, server-only writes | PASS for both accounts; clients could not forge readiness or section approval |
+| Material metadata, matching label ownership, section ownership/order and source-reference constraints | PASS: invalid fixtures rejected; valid PDF/DOCX metadata accepted, including the 5 MiB boundary |
+| Material states, referenced-label deletion, section cascade | PASS: defaults and valid status writes accepted; unlabelled readiness blocked; referenced labels protected; sections removed with their material |
+| Private bucket configuration | PASS: private `modules` bucket, 5 MiB limit, PDF/DOCX MIME types |
+| Storage owner upload/list/download/update/move/delete | PASS for both accounts; updated file contents verified with fresh download nonces |
+| Cross-account Storage listing/download/signed URL/upload/overwrite/delete/move | PASS: hidden or rejected in both directions; original bytes preserved |
+| Anonymous Storage listing/download/upload/overwrite/delete and public file URL | PASS: hidden or rejected |
+| Move into another owner's folder | PASS: rejected in both directions |
+| PDF/DOCX uploads and unsupported/oversized files | PASS: supported fixtures accepted; text/plain and 5 MiB + 1 byte rejected |
+| Temporary file and account cleanup | PASS: test folders empty, both accounts deleted; no outstanding account IDs or file paths |
+
+Final expanded local report: `server/.ownership-local/806993dd-2386-4b41-972a-536f9f3e498c.json`. The command returned exit code 0, with no outstanding account IDs or file paths after cleanup. This run includes material tables and repeats the existing API/database/Storage checks. The earlier Storage-only passing report remains at `server/.ownership-local/8f54e54c-60db-4eda-a3f5-ddbb08e3ed8f.json`. The maintainer applied both migrations through Supabase SQL Editor; no correction to the existing database ownership policies was needed.
+
+The first run was blocked by the absent bucket. Two subsequent runs failed immediate read-after-update content assertions; all their test data was cleaned up. Verification downloads now use the installed Storage client's `cacheNonce` option to avoid cached bytes; both final Storage groups passed. Reports for these attempts remain in the Git-ignored local report directory.
+
+This establishes the tested API/database/Storage boundaries on the configured project. It does not establish Android upload behavior, document-content validation, extraction integration, capacity accounting, or module dependency deletion. See [setup and cleanup instructions](installation.md#apply-private-module-storage-policies).
+
+---
+
 ## Status and reproduction
 
 Measured locally on 2026-10-23. This is a standalone Windows benchmark, not an upload API or an Android import implementation. No source file is uploaded, sent to an AI provider, or added to Git. The existing Express health endpoint is unchanged.
@@ -67,7 +130,7 @@ Real source SHA-256: `3391c580a375ec2f1652f75d0d92191e790c101a45c45901f5559a3bef
 
 ## Local processing limits
 
-These are the supported ceilings for this benchmark corpus on the measured Windows machine, not a guarantee for arbitrary documents or a production host. Values are enforced in `server/scripts/extraction/extract.mjs`.
+These were the supported ceilings for this historical benchmark corpus on the measured Windows machine, not a guarantee for arbitrary documents or a production host. The deleted harness enforced them in `server/scripts/extraction/extract.mjs`; current runtime limits live in `server/src/services/materialExtractionLimits.js`.
 
 | Limit | Ceiling and unit | Enforcement and evidence |
 |---|---|---|

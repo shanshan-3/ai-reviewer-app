@@ -2,7 +2,7 @@
 
 The project has separate mobile and server applications. Each keeps its own dependencies and lockfile.
 
-The mobile app has Supabase email/password sign-in, Remember me session storage, and shared authentication form components. Registration and password recovery also call Supabase. Brevo delivers recovery emails; the maintainer reported a successful recovery test on their phone. The Express API implements health and authenticated own-profile reads. The first database migration is prepared. Standalone scripts measure PDF and DOCX extraction; module import, AI generation, and study features remain planned.
+The mobile app has Supabase email/password sign-in, Remember me session storage, and shared authentication form components. Registration and password recovery also call Supabase. Brevo delivers recovery emails; the maintainer reported a successful recovery test on their phone. Express implements health, authenticated own-profile reads, and Node module upload/extraction-preview endpoints. Profiles/labels, module metadata/sections, and private Storage migrations exist with recorded live ownership checks. A bounded Node child process extracts PDF and DOCX text; Supabase stores unfinished-import recovery markers. Mobile import screens are connected in code; device verification, text approval, AI generation, and study features remain planned.
 
 The server uses MVC with a service layer, grouped by responsibility. The own-profile endpoint runs through routes, authentication middleware, a controller, a service, and a model. Other feature endpoints remain planned.
 
@@ -51,6 +51,7 @@ ai-reviewer-app/
 |   |   |   `-- StartupSplash.jsx            # Animated splash coordinator and motion detection
 |   |   `-- lib/
 |   |       |-- auth.js                      # Login, registration, and recovery validation rules
+|   |       |-- materials.js                 # Authenticated raw upload and module preview requests
 |   |       |-- recovery-session.js          # In-memory verified recovery user ID
 |   |       |-- session-storage.js           # Remember me; memory or persistent session storage
 |   |       |-- supabase.js                  # Public Supabase client and shared auth storage
@@ -71,35 +72,47 @@ ai-reviewer-app/
 |   |-- package-lock.json
 |   `-- tailwind.config.js
 |-- server/
-|   |-- scripts/
-|   |   `-- extraction/
-|   |       |-- benchmark.mjs                # Extraction benchmark and performance harness
-|   |       |-- check.mjs                    # Extraction validation checks
-|   |       |-- extract.mjs                  # Standalone extractor runner
-|   |       |-- fixtures.mjs                 # Test document fixtures
-|   |       `-- memory-guard.ps1             # Process memory monitor script
 |   |-- src/
 |   |   |-- config/
 |   |   |   `-- supabase.js                  # Per-request client with caller token
 |   |   |-- controllers/
+|   |   |   |-- materialController.js        # Upload and owner-only preview responses
 |   |   |   `-- profileController.js         # Own-profile response and safe errors
 |   |   |-- middleware/
 |   |   |   `-- authMiddleware.js            # Verify Bearer token and attach identity
 |   |   |-- models/
+|   |   |   |-- materialModel.js             # Material/section persistence and private files
 |   |   |   `-- profileModel.js              # Read profile by authenticated user ID
 |   |   |-- routes/
+|   |   |   |-- materialRoutes.js            # Authenticated raw upload and preview endpoints
 |   |   |   `-- profileRoutes.js             # Protected GET /api/profile
 |   |   |-- services/
+|   |   |   |-- materialExtraction.js        # Node worker supervision, deadline, Linux RSS monitor
+|   |   |   |-- materialExtractionLimits.js  # Shared extraction ceilings and safe messages
+|   |   |   |-- materialExtractionWorker.js  # Isolated PDF.js/Mammoth parsing
+|   |   |   |-- materialService.js           # Import lifecycle and durable cleanup recovery
 |   |   |   `-- profileService.js            # Lookup and missing-profile handling
-|   |   |-- app.js                           # Express, health, and profile route mount
-|   |   `-- server.js                        # Port validation and listener startup
+|   |   |-- validation/
+|   |   |   `-- materialValidation.js        # Filename, MIME, size, signature, and ID checks
+|   |   |-- app.js                           # Express, health, profile, and material route mounts
+|   |   `-- server.js                        # Recover pending imports before listening
+|   |-- test/
+|   |   |-- extraction.test.js               # Real worker extraction and rejection tests
+|   |   |-- fixtures.js                      # Generated PDF/DOCX test inputs
+|   |   |-- materialService.test.js          # Isolated failure and recovery tests
+|   |   `-- materials.live.js                # Two-account API/Storage and recovery checks
+|   |-- .node-version                        # Render Node 24 runtime
 |   |-- .env.example
 |   |-- package.json                         # Dependencies and start/dev commands
 |   `-- package-lock.json
 |-- supabase/
 |   `-- migrations/
-|       `-- 0001_profiles_and_labels.sql      # Profiles and private subject/topic labels
+|       |-- 0001_profiles_and_labels.sql      # Profiles and private subject/topic labels
+|       |-- 0002_materials_and_sections.sql   # Private module metadata and extraction sections
+|       |-- 0007_private_storage.sql          # Owner-prefixed private module Storage policies
+|       `-- 0010_material_import_recovery.sql # Durable unfinished-import markers
 |-- docs/
+|   |-- api.md                               # Authenticated material import and preview contract
 |   |-- adr/
 |   |   `-- 0001-private-independent-preparation.md
 |   |-- commands.md                          # Comprehensive developer and command handbook
@@ -124,9 +137,9 @@ ai-reviewer-app/
 | `mobile/src/app/` | Expo Router screens and navigation layouts. Keep helpers outside this folder. | Login, registration, and recovery screens exist; authenticated navigation and main routes planned |
 | `mobile/src/components/` | Shared UI and screen components. | Auth button, form, password feedback, and splash components exist; Reusables UI planned |
 | `mobile/src/lib/` | Shared mobile helpers, theme values, and client validators. | Auth validation, theme, utils, public Supabase client, session storage, and recovery-session marker exist; Express API helper planned |
-| `server/` | The Express API for document processing, AI requests, and scoring. | Health and protected own-profile endpoint implemented; extraction harness exists; other feature APIs planned |
-| `server/scripts/` | Development, extraction benchmark, and diagnostic scripts. | Extraction harness and memory monitor exist |
-| `server/src/` | Server application code. | App, listener, and own-profile MVC implementation exist |
+| `server/` | The Express API for document processing, AI requests, and scoring. | Health, protected profile, module import/preview, and durable recovery implemented; generation planned |
+| `server/test/` | Local worker/service tests and live API checks. | Current tests replace the deleted scripts harness |
+| `server/src/` | Server application code. | Profile/material MVC, extraction worker, startup recovery, and listener exist |
 | `supabase/` | Database migrations, access policies, and development data. | Profiles/labels migration exists; remaining migrations planned; live database state not established by this guide |
 | `docs/` | Developer onboarding, setup instructions, commands, and technical decisions. | Installation, commands, validation, development, and ADR docs exist |
 | `docs/adr/` | Numbered records of architecture decisions and their reasons. | One decision recorded |
@@ -171,11 +184,6 @@ Paths in this table are relative to `mobile/` unless stated otherwise.
 | `LICENSE` | Contains the mobile starter license. |
 | `server/package.json` (from the repository root) | Lists server dependencies, enables ES modules, and defines startup and extraction commands. |
 | `server/package-lock.json` (from the repository root) | Records the server dependency versions. |
-| `server/scripts/extraction/benchmark.mjs` (from the repository root) | Measures PDF and DOCX extraction latency, throughput, and memory limits. |
-| `server/scripts/extraction/check.mjs` (from the repository root) | Checks synthetic fixtures and extraction limits. |
-| `server/scripts/extraction/extract.mjs` (from the repository root) | Runs bounded extraction in a child process and returns text, warnings, and metrics. |
-| `server/scripts/extraction/fixtures.mjs` (from the repository root) | Creates synthetic PDF and DOCX test documents. |
-| `server/scripts/extraction/memory-guard.ps1` (from the repository root) | Monitors extraction processes against memory and time limits on Windows. |
 | `server/src/app.js` (from the repository root) | Configures Express, the health endpoint, and `/api/profile` without opening a port. |
 | `server/src/config/supabase.js` (from the repository root) | Creates a Supabase client using the caller's access token, with server session persistence disabled. |
 | `server/src/middleware/authMiddleware.js` (from the repository root) | Verifies Bearer tokens and attaches the authenticated user and Supabase client to the request. |

@@ -44,7 +44,7 @@ RebyuIT has two applications: an Expo Android app in `mobile/` and an Express AP
 
 The complete dependency names and requested versions are in [mobile/package.json](../mobile/package.json) and [server/package.json](../server/package.json). There is no PHP/Composer, Python application, Vite frontend, or MySQL project to run here.
 
-Use Node.js compatible with both packages. The [installation guide](installation.md) records Node.js 24.20.0 and npm 11.19.0 as its tested reference; this handbook does not repeat that runtime validation. Node 20 alone is insufficient for the installed PDF library, whose package requires Node >=22.13.0 or >=24.
+Use Node.js 24, matching `server/.node-version`. Current backend verification used Node.js 24.22.1; see [validation](validation.md). Node 20 alone is insufficient for the installed PDF library, whose package requires Node >=22.13.0 or >=24.
 
 For local native builds, install a compatible JDK and Android SDK using the [Expo Android environment guide](https://docs.expo.dev/workflow/android-studio-emulator/). Android Studio provides SDK and emulator management. Cloud EAS builds supply their own native build tools. ADB still needs local Android platform-tools when you want USB installation or debugging.
 
@@ -59,10 +59,12 @@ Each script has a full command entry below.
 | Mobile | ios | expo run:ios |
 | Mobile | web | expo start --web |
 | Mobile | lint | expo lint |
-| Server | start | node --env-file=.env src/server.js |
+| Server | start | node src/server.js |
 | Server | dev | node --env-file=.env --watch src/server.js |
+| Server | test | node --experimental-test-module-mocks --test test/*.test.js |
+| Server | check:materials | node --env-file=.env test/materials.live.js |
 
-Neither package declares build, test, typecheck, migration, or deployment scripts. Supabase management commands are omitted until a database workflow is configured. EAS examples are explicitly conditional because their configuration does not exist yet.
+The server test commands are described in the [material API guide](api.md#verification); the mobile helper check is described in [installation](installation.md#try-the-mobile-module-upload). Neither package declares migration or deployment scripts. Apply the SQL migrations through Supabase SQL Editor. EAS examples are conditional because their configuration does not exist yet.
 
 ## How to read the commands
 
@@ -723,13 +725,13 @@ npm.cmd run dev
 
 **Important notes:**
 
-- Requires server/.env. PORT defaults to 3000. A successful startup does not verify Supabase or Groq.
+- Requires server/.env and applied migrations. PORT defaults to 3000. Startup runs Supabase import recovery before listening; it does not verify Groq or the full extraction workflow.
 
 ### Command: `npm.cmd start`
 
 **Purpose:** Start Express without file watching.
 
-**Explanation:** The server start script loads .env and launches src/server.js once.
+**Explanation:** The server start script launches src/server.js using the host's environment variables. For local development with server/.env, use npm.cmd run dev.
 
 **When to use:** When checking normal server startup or running a configured host's start command.
 
@@ -744,11 +746,11 @@ npm.cmd start
 **Command components:**
 
 - `npm.cmd`: Runs npm.
-- `start`: Executes node --env-file=.env src/server.js.
+- `start`: Executes node src/server.js.
 
 **Important notes:**
 
-- This is a different script from mobile/npm start. Stop and restart it to load source changes. Its .env file must exist.
+- This differs from mobile/npm start. Restart it to load source changes. Supabase credentials and migrations are required; startup refuses to listen when recovery fails.
 
 ## 3. Frontend configuration and exports
 
