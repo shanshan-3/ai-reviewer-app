@@ -1,40 +1,15 @@
-import { fork, spawn } from 'node:child_process';
 import { open, stat } from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
-export const LIMITS = Object.freeze({
-  fileBytes: 5 * 1024 * 1024,
-  pdfPages: 100,
-  textCharacters: 200_000,
-  docxExpandedBytes: 20 * 1024 * 1024,
-  docxEntries: 2048,
-  timeMs: 10_000,
-  memoryBytes: 384 * 1024 * 1024,
-});
-
-export const MESSAGES = Object.freeze({
-  UNSUPPORTED_TYPE: 'Choose a selectable-text PDF or a .docx file. Other formats are not supported.',
-  INVALID_FILE: 'This file could not be read as a valid PDF or DOCX. Export a new copy and try again.',
-  PASSWORD_REQUIRED: 'Password-protected documents are not supported. Upload an authorized, unprotected copy.',
-  NO_USABLE_TEXT: 'No usable selectable text was found. Upload a text-based PDF or DOCX; scanned images are not read.',
-  FILE_LIMIT: `The file exceeds ${LIMITS.fileBytes} bytes (5 MiB). Split it into smaller documents.`,
-  PAGE_LIMIT: `The PDF exceeds ${LIMITS.pdfPages} pages. Split it into smaller documents.`,
-  TEXT_LIMIT: `Extracted text exceeds ${LIMITS.textCharacters} characters. Split the document into smaller sections.`,
-  DOCX_EXPANDED_LIMIT: `Expanded DOCX content exceeds ${LIMITS.docxExpandedBytes} bytes (20 MiB). Remove large embedded content or split the document.`,
-  DOCX_ENTRY_LIMIT: `The DOCX contains more than ${LIMITS.docxEntries} archive entries. Export a simpler copy.`,
-  TIME_LIMIT: `Extraction exceeded ${LIMITS.timeMs / 1000} seconds. Split or simplify the document and try again.`,
-  MEMORY_LIMIT: `Extraction exceeded its ${LIMITS.memoryBytes / 1024 / 1024} MiB memory budget. Split or simplify the document.`,
-  WORKER_FAILED: 'Extraction stopped unexpectedly. Export a simpler copy and try again.',
-});
+import { LIMITS, MESSAGES } from './materialExtractionLimits.js';
 
 const IMAGE_WARNING = 'Only selectable text was extracted. Images and scanned content are excluded. Review the extracted text before continuing.';
 const FORMAT_WARNING = 'Some code or tables may have lost their layout. Affected content cannot support questions until verified.';
 const require = createRequire(import.meta.url);
 // Resolve the ZIP reader Mammoth itself uses, rather than adding a second ZIP dependency.
-export const JSZip = createRequire(require.resolve('mammoth'))('jszip');
-const scriptPath = fileURLToPath(import.meta.url);
+const JSZip = createRequire(require.resolve('mammoth'))('jszip');
+
 
 function reject(code) {
   throw Object.assign(new Error(MESSAGES[code]), { code });
@@ -148,7 +123,7 @@ async function extractInChild(file, limits) {
       if (length > limits.fileBytes) reject('FILE_LIMIT');
       buffer = storage.subarray(0, length);
     } finally { await handle.close(); }
-    if (extension === '.pdf' ? !buffer.subarray(0, 1024).includes(Buffer.from('%PDF-')) : buffer.readUInt32LE(0) !== 0x04034b50) reject('INVALID_FILE');
+    if (extension === '.pdf' ? !buffer.subarray(0, 1024).includes(Buffer.from('%PDF-')) : (buffer.length < 4 || buffer.readUInt32LE(0) !== 0x04034b50)) reject('INVALID_FILE');
     const sections = extension === '.pdf'
       ? await readPdf(buffer, limits, metrics, warnings)
       : await readDocx(buffer, limits, metrics, warnings);
@@ -163,71 +138,10 @@ async function extractInChild(file, limits) {
   }
 }
 
-export async function runExtraction(file, overrides = {}) {
-  const totalStarted = performance.now();
-  if (process.platform !== 'win32') throw new Error('This benchmark requires Windows PowerShell for independent memory monitoring.');
-  const limits = { ...LIMITS, ...overrides };
-  for (const [key, value] of Object.entries(limits)) {
-    if (!Object.hasOwn(LIMITS, key) || !Number.isSafeInteger(value) || value < 1 || value > LIMITS[key]) throw new Error(`Invalid or increased limit: ${key}`);
-  }
-  const worker = fork(scriptPath, ['--worker'], {
-    execArgv: ['--max-old-space-size=192'], stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
-  });
-  const guard = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File',
-    fileURLToPath(new URL('memory-guard.ps1', import.meta.url)),
-    '-TargetId', String(worker.pid), '-OwnerId', String(process.pid), '-LimitBytes', String(limits.memoryBytes)],
-  { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
-  let guardOutput = '';
-  let stderr = '';
-  let outcome;
-  let timedOut = false;
-  let started;
-  let timeout;
-  let guardError = '';
-  let guardClosed;
-  let ready = false;
-  const setupTimeout = setTimeout(() => { guardError = 'Memory monitor did not start.'; worker.kill(); guard.kill(); }, 10_000);
-  guard.stderr.on('data', chunk => { guardError = (guardError + chunk).slice(-2000); });
-  guard.stdout.on('data', chunk => {
-    guardOutput += chunk;
-    if (!ready && guardOutput.includes('ready')) {
-      ready = true;
-      clearTimeout(setupTimeout);
-      started = performance.now();
-      timeout = setTimeout(() => { timedOut = true; worker.kill(); }, limits.timeMs);
-      worker.send({ file: path.resolve(file), limits }, () => {});
-    }
-  });
-  worker.stderr.on('data', chunk => { stderr = (stderr + chunk).slice(-2000); });
-  worker.on('message', message => { outcome = message; });
-  const guardDone = new Promise(resolve => {
-    guard.on('error', error => { guardError = error.message; worker.kill(); });
-    guard.on('close', code => {
-      guardClosed = code;
-      if (!outcome && code !== 0) worker.kill();
-      resolve();
-    });
-  });
-  await new Promise((resolve, fail) => { worker.on('error', fail); worker.on('close', resolve); });
-  const elapsedMs = started ? performance.now() - started : 0;
-  clearTimeout(timeout);
-  clearTimeout(setupTimeout);
-  await guardDone;
-  if (guardError || guardClosed !== 0 || !guardOutput.includes('peak:')) throw new Error(`Memory monitor failed: ${guardError || guardClosed}`);
-  const peakMemoryBytes = Math.max(Number(guardOutput.match(/peak:(\d+)/)?.[1] || 0), (outcome?.metrics?.childMaxRssKiB || 0) * 1024);
-  const code = guardOutput.includes('MEMORY_LIMIT') || peakMemoryBytes > limits.memoryBytes || /heap out of memory/i.test(stderr)
-    ? 'MEMORY_LIMIT' : timedOut ? 'TIME_LIMIT' : !outcome ? 'WORKER_FAILED' : null;
-  if (code) outcome = { status: 'rejected', code, message: MESSAGES[code], sections: [], warnings: [], metrics: {} };
-  return { ...outcome, metrics: { ...outcome.metrics, elapsedMs: Math.round(elapsedMs),
-    totalElapsedMs: Math.round(performance.now() - totalStarted), peakMemoryBytes }, limits };
-}
 
-if (process.argv[2] === '--worker') {
-  process.once('message', async ({ file, limits }) => {
-    const outcome = await extractInChild(file, limits);
-    const usage = process.resourceUsage();
-    outcome.metrics.childMaxRssKiB = usage.maxRSS;
-    outcome.metrics.cpuMs = Math.round((usage.userCPUTime + usage.systemCPUTime) / 1000);
-    process.send(outcome, () => process.exit(0));
-  });
-}
+process.once('disconnect', () => process.exit(0));
+process.once('message', async ({ file, limits }) => {
+  const outcome = await extractInChild(file, limits);
+  outcome.metrics.childMaxRssKiB = process.resourceUsage().maxRSS;
+  process.send(outcome, () => process.exit(0));
+});

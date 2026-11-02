@@ -1,5 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 
+export function createSupabaseAdminClient() {
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SECRET_KEY;
+    if (!url || !key) throw new Error('Server Supabase credentials are required.');
+    return createClient(url, key, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+        global: { fetch: (url, options) => fetch(url, { ...options, signal: AbortSignal.timeout(20000) }) },
+    });
+}
+
 export function createSupabaseClient(accessToken) {
     const url = process.env.SUPABASE_URL;
     const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
@@ -20,6 +30,7 @@ export function createSupabaseClient(accessToken) {
         },
         global: {
             headers: { Authorization: `Bearer ${accessToken}` },
+            fetch: (url, options) => fetch(url, { ...options, signal: AbortSignal.timeout(20000) }),
         },
     });
 }

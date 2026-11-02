@@ -8,4 +8,6 @@
 *.jks
 *.keystore
 server/.extraction-local/
+server/.ownership-local/
+server/.material-local/
 .agents

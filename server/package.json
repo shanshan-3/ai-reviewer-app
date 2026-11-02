@@ -4,10 +4,10 @@
   "description": "",
   "main": "src/server.js",
   "scripts": {
-    "start": "node --env-file=.env src/server.js",
+    "start": "node src/server.js",
     "dev": "node --env-file=.env --watch src/server.js",
-    "benchmark:extraction": "node scripts/extraction/benchmark.mjs",
-    "check:extraction": "node scripts/extraction/check.mjs"
+    "test": "node --experimental-test-module-mocks --test test/*.test.js",
+    "check:materials": "node --env-file=.env test/materials.live.js"
   },
   "keywords": [],
   "author": "",
