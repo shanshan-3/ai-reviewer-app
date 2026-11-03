@@ -14,6 +14,11 @@ export async function getPendingImports(admin) {
 export async function getMaterial(client, id, ownerId) {
     return data(await client.from('materials').select(MATERIAL_FIELDS).eq('id', id).eq('owner_id', ownerId).maybeSingle());
 }
+export async function listMaterials(client, ownerId, offset) {
+    return data(await client.from('materials').select('id,title,original_filename,status,created_at')
+        .eq('owner_id', ownerId).order('created_at', { ascending: false }).order('id', { ascending: false })
+        .range(offset, offset + 20));
+}
 export async function getSections(client, id, ownerId) {
     return data(await client.from('material_sections').select('id,section_order,text,reference,eligible_for_generation')
         .eq('material_id', id).eq('owner_id', ownerId).order('section_order'));

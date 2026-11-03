@@ -99,6 +99,15 @@ export async function readMaterial({ userId, supabase, id }) {
     return { material, sections };
 }
 
+export async function listMaterials({ userId, supabase, offset = '0' }) {
+    if (typeof offset !== 'string' || !/^\d{1,10}$/.test(offset) || Number(offset) > 2147483627) {
+        throw materialError(400, 'INVALID_OFFSET', 'Provide a non-negative module list offset.');
+    }
+    const start = Number(offset);
+    const rows = await model.listMaterials(supabase, userId, start);
+    return { materials: rows.slice(0, 20), nextOffset: rows.length > 20 ? start + 20 : null };
+}
+
 export async function approveMaterial({ userId, id, body }) {
     validateMaterialId(id);
     const review = validateMaterialReview(body);

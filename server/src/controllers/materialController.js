@@ -1,4 +1,4 @@
-import { importMaterial, readMaterial, approveMaterial as approve } from '../services/materialService.js';
+import { importMaterial, readMaterial, listMaterials as list, approveMaterial as approve } from '../services/materialService.js';
 
 export async function uploadMaterial(req, res) {
     const material = await importMaterial({ userId: req.user.id, supabase: req.supabase,
@@ -9,6 +9,10 @@ export async function uploadMaterial(req, res) {
 export async function getMaterial(req, res) {
     const result = await readMaterial({ userId: req.user.id, supabase: req.supabase, id: req.params.id });
     res.json(result);
+}
+
+export async function listMaterials(req, res) {
+    res.json(await list({ userId: req.user.id, supabase: req.supabase, offset: req.query.offset }));
 }
 
 export async function approveMaterial(req, res) {

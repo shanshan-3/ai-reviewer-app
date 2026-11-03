@@ -1,6 +1,6 @@
 import express, { Router } from 'express';
 import authMiddleware from '../middleware/authMiddleware.js';
-import { uploadMaterial, getMaterial, approveMaterial } from '../controllers/materialController.js';
+import { uploadMaterial, getMaterial, listMaterials, approveMaterial } from '../controllers/materialController.js';
 import labelRoutes from './labelRoutes.js';
 import { validateMaterialHeaders, MATERIAL_TYPES } from '../validation/materialValidation.js';
 import { LIMITS, MESSAGES } from '../services/materialExtraction.js';
@@ -23,6 +23,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
     finally { importing = false; req.setTimeout(0); }
 });
 const parseJson = express.json({ limit: '512kb' });
+router.get('/', authMiddleware, listMaterials);
 router.use('/labels', labelRoutes);
 router.post('/:id/approve', authMiddleware, parseJson, approveMaterial);
 router.get('/:id', authMiddleware, getMaterial);
