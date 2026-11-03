@@ -1,6 +1,6 @@
 # Material import API
 
-The Node Express API implements authenticated module import and extracted-text preview. Existing `GET /health` and `GET /api/profile` are unchanged. Mobile upload and preview screens are connected in code; native Android behavior still needs device verification.
+The Node Express API implements authenticated module import, extracted-text preview, personal labels, and review approval. Existing `GET /health` and `GET /api/profile` are unchanged. The module review flow is connected in code; its new controls still need physical Android verification.
 
 ## Hosting target: Render
 
@@ -46,7 +46,26 @@ Server-only credentials write the material tables; user-scoped credentials uploa
 
 If import fails, cleanup marks the material failed, removes partial sections and the private object, then clears the database marker. An outage leaves the marker set for retry. Startup and each admitted upload drain pending records in batches of 50. Startup refuses to listen if recovery fails. Interrupted `processing` rows become `failed` with `IMPORT_INTERRUPTED`; committed `needs_review`/`ready` data is preserved, including when the final database acknowledgement was lost.
 
-Stop the old server before applying migration 0010: it marks existing processing/failed materials for reconciliation. Preserve any old `.material-local/` directory until database recovery has completed and its records are reconciled. Hard termination can leave OS temporary files; Render discards these on restart. Only one server instance is supported, with no overlapping deploys or concurrent recovery commands; multiple instances require shared admission and recovery leases. This API does not yet enforce campus-wide capacity, provide idempotent upload retries, approve text, assign labels, or implement user-confirmed module deletion.
+Stop the old server before applying migration 0010: it marks existing processing/failed materials for reconciliation. Preserve any old `.material-local/` directory until database recovery has completed and its records are reconciled. Hard termination can leave OS temporary files; Render discards these on restart. Only one server instance is supported, with no overlapping deploys or concurrent recovery commands; multiple instances require shared admission and recovery leases. This API does not yet enforce campus-wide capacity, provide idempotent upload retries, or implement user-confirmed module deletion.
+
+## Personal labels and review approval
+
+Apply `0011_material_review.sql` after the existing migrations before using approval. All endpoints require a Bearer token. JSON bodies are limited to 512 KiB; upload limits are unchanged.
+
+Label requests use the dedicated `labelRoutes` -> `labelController` -> `labelService` -> `labelModel` files. The label router is mounted under the existing material URL prefix before `/:id`; URLs and response shapes are unchanged. Module approval remains in the material layers. On mobile, `label-picker.jsx` renders controlled selection/creation inputs, while `MaterialReviewForm.jsx` owns loading, selected values, saving, and approval.
+
+| Endpoint | Request | Response |
+|---|---|---|
+| `GET /api/materials/labels` | None | `{ subjects: [{ id, name }], topics: [{ id, subject_id, name }] }` for the caller only |
+| `POST /api/materials/labels/subjects` | `{ name }` | HTTP 201, `{ label: { id, name } }` |
+| `POST /api/materials/labels/topics` | `{ subjectId, name }` | HTTP 201, `{ label: { id, subject_id, name } }` |
+| `POST /api/materials/:id/approve` | `{ subjectId, topicId, sectionIds: [uuid, ...] }` | `{ status: "ready" }` |
+
+Label names are trimmed, limited to 120 characters, and cannot contain control characters. Case-insensitive duplicates return 409; choose the existing label. Topics must belong to the caller's subject. Approval accepts 1–10,000 unique section IDs and only changes a module owned by the caller. Owner IDs come from authentication, never the request body.
+
+The service-only `approve_material` function locks the module, validates labels and selected sections, sets selected sections eligible, excludes all others, and marks the module ready in one transaction. Selection must contain at least 20 letters/digits in total and no empty or punctuation-only sections. Processing/failed imports and pending cleanup cannot be approved. Repeating the same approval succeeds; a changed selection after approval returns 409. No authenticated client can call this function directly. Extracted text and source references remain unchanged.
+
+The mobile preview starts with no selected sections. Users choose/create labels, select usable sections, and confirm they reviewed meaning/formatting before approval. Changing sections clears confirmation. Saved modules display their labels and included/excluded sections when reopened. Approval does not generate a quiz; AI generation remains planned.
 
 ## Verification
 

@@ -176,6 +176,8 @@ Render is the selected Express backend host. Start with a Free Web Service for d
 
 The Node extractor and Supabase cleanup marker now replace the deleted runtime scripts and local recovery journals. Apply migration 0010 before startup. Linux `/proc` memory monitoring is implemented but not exercised on this Windows machine; verify memory/time limits and total API memory on the chosen instance. Keep one backend instance, stop old instances before cutover, and avoid overlapping deployments until shared recovery leases/admission are implemented.
 
+For subject/topic selection and module approval, apply [0011_material_review.sql](../supabase/migrations/0011_material_review.sql) once in Supabase SQL Editor after migrations 0001, 0002, 0007, and 0010. It adds a service-role-only approval function; it does not rewrite existing material or label data. Deploy the updated backend after the migration, then reload the mobile app. The review endpoints are documented in [api.md](api.md#personal-labels-and-review-approval). The maintainer reported applying migration 0011; the agent has not independently verified its hosted execution. The label folder refactor does not require rerunning it.
+
 Create a Render **Web Service** connected to the repository using these settings:
 
 | Setting | Value |

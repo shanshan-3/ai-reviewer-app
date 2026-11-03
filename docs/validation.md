@@ -2,6 +2,18 @@
 
 Earlier sections record automated checks run before the maintainer requested removal of mobile and server test files. Those tests and npm commands are no longer present. The results remain as historical evidence.
 
+## Module review flow - 2026-11-03
+
+Added personal subject/topic list/create endpoints, mobile label selection and creation, explicit section selection and review confirmation, and approval through the service-only `approve_material` function in migration 0011. Approval preserves extracted text/references, excludes unselected sections, and saves labels/eligibility/ready status in one database transaction. Repeating the same approval is supported after a lost response; changed reviews of ready material are rejected.
+
+Mobile lint, the JavaScript project check (`tsc --noEmit -p jsconfig.json`), server syntax checks, and `git diff --check` passed. Temporary assertion checks passed against actual validation/service/controller/route code with mocked database/auth boundaries, and the Babel-transformed review component with mocked React Native/hooks and request helpers. Covered invalid IDs/selection/labels, caller identity propagation, duplicate/ownership error handling, label load retry/reuse/create, subject-change topic reset, explicit section/confirmation gating, empty-section exclusion, failed save/retry, duplicate-tap prevention, ready display, and unmount cleanup. Local HTTP checks covered route ordering, auth rejection, malformed/oversized JSON, create/approve payloads, and the existing preview route. The temporary harness was removed; no test scripts or dependencies were added.
+
+The maintainer subsequently reported applying migration 0011; the agent has not independently verified its hosted execution. Transaction rollback, locking/concurrency, repeated approval, function grants, two-account label/section ownership and RLS, and persisted ready-state retrieval still need live checks. Physical Android rendering, keyboard behavior, accessibility, and the full deployed review flow remain unverified. No AI generation, dashboard module listing, or module deletion was added.
+
+### Planned folder structure correction
+
+Moved labels into the planned server route/controller/service/model files and extracted the controlled mobile `label-picker.jsx`. Material approval remains in the material files, and migration 0011 is unchanged. Mobile lint, the JavaScript project check, server syntax checks, and diff checks passed. Temporary comparisons of the previous and refactored code passed with identical HTTP responses/database arguments for label list/create, input errors, caller ownership propagation, route ordering, approval, and preview. Mocked mobile output matched through loading/retry, creation/reuse, subject/topic reset, section selection/confirmation, save failure/retry, and ready state. These checks used mocked authentication/database/native boundaries and do not verify real RLS, the SQL transaction, or Android. Temporary baseline/check files were removed; no dependencies or test commands were added.
+
 ## Node runtime and durable recovery - 2026-11-02
 
 Replaced deleted runtime imports with server-owned Node extraction code using installed PDF.js 6.4.299 and Mammoth 1.13.0. No dependencies were added. The maintainer reported migration `0010_material_import_recovery.sql` applied; the live check confirmed `cleanup_pending` exists and is writable only through privileged material operations. Successful imports clear it with the final preview commit; failed cleanup leaves it for startup/next-upload recovery. Local journals are no longer required.

@@ -2,7 +2,7 @@
 
 The project has separate mobile and server applications. Each keeps its own dependencies and lockfile.
 
-The mobile app has Supabase email/password sign-in, Remember me session storage, and shared authentication form components. Registration and password recovery also call Supabase. Brevo delivers recovery emails; the maintainer reported a successful recovery test on their phone. Express implements health, authenticated own-profile reads, and Node module upload/extraction-preview endpoints. Profiles/labels, module metadata/sections, and private Storage migrations exist with recorded live ownership checks. A bounded Node child process extracts PDF and DOCX text; Supabase stores unfinished-import recovery markers. Mobile import screens are connected in code; device verification, text approval, AI generation, and study features remain planned.
+The mobile app has Supabase email/password sign-in, Remember me session storage, and shared authentication form components. Registration and password recovery also call Supabase. Brevo delivers recovery emails; the maintainer reported a successful recovery test on their phone. Express implements health, authenticated own-profile reads, Node module upload/extraction-preview, personal labels, and review approval. Profiles/labels, module metadata/sections, and private Storage migrations exist with recorded live ownership checks. A bounded Node child process extracts PDF and DOCX text; Supabase stores unfinished-import recovery markers. Mobile import and review screens are connected in code. Migration 0011 adds transactional approval; its live SQL/ownership checks and the new Android review controls remain unverified. AI generation and study features remain planned.
 
 The server uses MVC with a service layer, grouped by responsibility. The own-profile endpoint runs through routes, authentication middleware, a controller, a service, and a model. Other feature endpoints remain planned.
 
@@ -47,6 +47,8 @@ ai-reviewer-app/
 |   |   |   |-- AuthButton.jsx               # Submit button, disabled/busy state, footer
 |   |   |   |-- AuthMessage.jsx              # Feedback directly above authentication submit buttons
 |   |   |   |-- MaterialScreenHeader.jsx      # In-app back header for material screens
+|   |   |   |-- MaterialReviewForm.jsx        # Personal labels, section review, and approval
+|   |   |   |-- label-picker.jsx             # Controlled subject/topic selection and creation UI
 |   |   |   |-- FormField.jsx                # Labeled input with icons, error border, password toggle
 |   |   |   |-- PasswordStrength.jsx         # Visual 4-bar password complexity indicator
 |   |   |   `-- StartupSplash.jsx            # Animated splash coordinator and motion detection
@@ -77,17 +79,21 @@ ai-reviewer-app/
 |   |   |-- config/
 |   |   |   `-- supabase.js                  # Per-request client with caller token
 |   |   |-- controllers/
+|   |   |   |-- labelController.js           # Personal label list/create responses
 |   |   |   |-- materialController.js        # Upload and owner-only preview responses
 |   |   |   `-- profileController.js         # Own-profile response and safe errors
 |   |   |-- middleware/
 |   |   |   `-- authMiddleware.js            # Verify Bearer token and attach identity
 |   |   |-- models/
+|   |   |   |-- labelModel.js                # Owner-scoped subject/topic persistence
 |   |   |   |-- materialModel.js             # Material/section persistence and private files
 |   |   |   `-- profileModel.js              # Read profile by authenticated user ID
 |   |   |-- routes/
+|   |   |   |-- labelRoutes.js               # Label endpoints mounted at /api/materials/labels
 |   |   |   |-- materialRoutes.js            # Authenticated raw upload and preview endpoints
 |   |   |   `-- profileRoutes.js             # Protected GET /api/profile
 |   |   |-- services/
+|   |   |   |-- labelService.js              # Personal label validation and ownership rules
 |   |   |   |-- materialExtraction.js        # Node worker supervision, deadline, Linux RSS monitor
 |   |   |   |-- materialExtractionLimits.js  # Shared extraction ceilings and safe messages
 |   |   |   |-- materialExtractionWorker.js  # Isolated PDF.js/Mammoth parsing
@@ -106,7 +112,8 @@ ai-reviewer-app/
 |       |-- 0001_profiles_and_labels.sql      # Profiles and private subject/topic labels
 |       |-- 0002_materials_and_sections.sql   # Private module metadata and extraction sections
 |       |-- 0007_private_storage.sql          # Owner-prefixed private module Storage policies
-|       `-- 0010_material_import_recovery.sql # Durable unfinished-import markers
+|       |-- 0010_material_import_recovery.sql # Durable unfinished-import markers
+|       `-- 0011_material_review.sql          # Atomic module approval; service-role-only function
 |-- docs/
 |   |-- api.md                               # Authenticated material import and preview contract
 |   |-- adr/
