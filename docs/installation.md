@@ -312,3 +312,9 @@ If you run Reusables doctor, CLI 0.7.1 reports missing layout, theme, and helper
 The [folder guide](../folder-structure.md) explains where files belong. The [roadmap](../planning/ai-powered-reviewer-roadmap.md) covers the planned features. Login, registration, and recovery call Supabase; protected navigation, general sign-out UI, document imports, quizzes, flashcards, progress, and in-app reports remain planned.
 
 This guide reflects the maintainer's local checkout. Fresh-clone installation and broader live-service/device checks remain unverified; the recovery phone test above was reported by the maintainer.
+
+### Enable confirmed module deletion
+
+Apply `supabase/migrations/0009_material_deletion.sql` once before deploying deletion. This uses the reserved deletion migration name from the planned folder structure. Existing installations already using migrations 0010 and 0011 should apply only 0009 now; do not rerun 0010 or 0011. Fresh installations apply all existing migrations before starting the server; the deletion function uses the cleanup marker added by 0010 when called.
+
+Stop old server instances, apply 0009 in Supabase SQL Editor, deploy one updated backend, then reload the mobile app. The new deleting status and service-role-only marker function support cleanup retries. Verify deletion with disposable modules in two accounts, including Storage removal, section cascades, interrupted cleanup/restart, and the native confirmation. This migration has not been applied by the agent.

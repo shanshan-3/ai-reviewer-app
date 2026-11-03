@@ -2,6 +2,14 @@
 
 Earlier sections record automated checks run before the maintainer requested removal of mobile and server test files. Those tests and npm commands are no longer present. The results remain as historical evidence.
 
+## Confirmed module deletion - 2026-11-03
+
+Implemented the planned `materialDeletion.js` service and `0009_material_deletion.sql` migration, owner-scoped DELETE endpoint, recovery before startup/import, native named confirmation, separate card Delete action with press feedback, duplicate-tap/navigation protection, pending-delete retry, and Dashboard refresh after confirmed success. Sections cascade from the module; personal subject/topic labels remain. Approval is blocked by the new deleting status without editing migration 0011. Capacity handling and future derived-study-content cleanup remain separate work.
+
+Mobile lint, the JavaScript project check, server syntax checks and diff checks passed. Temporary checks covered deletion-service ordering (file before record), caller identity, Storage/database failure retention, recovery retry, missing/foreign IDs, processing conflicts, invalid IDs and unsafe path rejection. Mocked native checks covered confirmation/cancel, duplicate taps, saving/navigation state, failed deletion retaining the card, successful retry/refresh, stale confirmation and processing/deleting actions. Local HTTP checks exercised the real deletion layers with mocked auth/Supabase: 401/400, owner propagation, foreign-row protection, processing 409, safe cleanup 503, success/retry and idempotency. Temporary checks were removed; no test dependency or command was added.
+
+Migration 0009 is not applied or executed against PostgreSQL by the agent. SQL locking, grants, section cascades, real two-account isolation, deleting an already removed Storage object, crash recovery, native confirmation/press feedback and deployed behavior require live checks. Stop old instances, apply the migration once, deploy one updated backend, then reload the mobile app. Existing 0010/0011 migrations do not need rerunning.
+
 ## Dashboard saved modules - 2026-11-03
 
 Implemented owner-scoped paginated module summaries in the existing material route/controller/service/model layers, the mobile list helper, planned `material-card.jsx`, and a FlatList Dashboard. The screen reloads on focus and pull refresh, opens the existing module preview, supports loading more, preserves loaded rows after page errors, and ignores responses after blur. Existing upload, review, label, and approval endpoints are unchanged. No dependencies or migrations were added.

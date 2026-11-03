@@ -98,6 +98,7 @@ ai-reviewer-app/
 |   |   |   |-- materialExtraction.js        # Node worker supervision, deadline, Linux RSS monitor
 |   |   |   |-- materialExtractionLimits.js  # Shared extraction ceilings and safe messages
 |   |   |   |-- materialExtractionWorker.js  # Isolated PDF.js/Mammoth parsing
+|   |   |   |-- materialDeletion.js          # Confirmed deletion and durable cleanup recovery
 |   |   |   |-- materialService.js           # Import lifecycle and durable cleanup recovery
 |   |   |   `-- profileService.js            # Lookup and missing-profile handling
 |   |   |-- validation/
@@ -113,6 +114,7 @@ ai-reviewer-app/
 |       |-- 0001_profiles_and_labels.sql      # Profiles and private subject/topic labels
 |       |-- 0002_materials_and_sections.sql   # Private module metadata and extraction sections
 |       |-- 0007_private_storage.sql          # Owner-prefixed private module Storage policies
+|       |-- 0009_material_deletion.sql        # Deleting status and service-role deletion marker
 |       |-- 0010_material_import_recovery.sql # Durable unfinished-import markers
 |       `-- 0011_material_review.sql          # Atomic module approval; service-role-only function
 |-- docs/

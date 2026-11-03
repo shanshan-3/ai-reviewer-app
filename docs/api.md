@@ -16,7 +16,7 @@ Requires a Bearer token. Lists only the authenticated user's modules through the
 { "materials": [{ "id": "uuid", "title": "Loops", "original_filename": "loops.pdf", "status": "ready", "created_at": "timestamp" }], "nextOffset": null }
 ```
 
-`nextOffset` is the next numeric offset when more rows exist, otherwise null. The query reads one extra row to determine whether another page exists. All four import statuses can appear. Source text, object paths, and extraction warnings are omitted; open the owner-only preview endpoint for details. Database failures use the existing safe 503 error response. An empty library returns `{ "materials": [], "nextOffset": null }`.
+`nextOffset` is the next numeric offset when more rows exist, otherwise null. The query reads one extra row to determine whether another page exists. All import statuses, including `deleting` for pending cleanup, can appear. Source text, object paths, and extraction warnings are omitted; open the owner-only preview endpoint for details. Database failures use the existing safe 503 error response. An empty library returns `{ "materials": [], "nextOffset": null }`.
 
 The Dashboard refreshes on focus and pull-to-refresh. Load more appends summaries and removes duplicate IDs; a full refresh replaces the loaded pages. Returning from upload or approval reloads the list. Requests finishing after blur are ignored. The list uses React Native FlatList and the planned `material-card.jsx`; no database migration is required.
 
@@ -58,7 +58,7 @@ Server-only credentials write the material tables; user-scoped credentials uploa
 
 If import fails, cleanup marks the material failed, removes partial sections and the private object, then clears the database marker. An outage leaves the marker set for retry. Startup and each admitted upload drain pending records in batches of 50. Startup refuses to listen if recovery fails. Interrupted `processing` rows become `failed` with `IMPORT_INTERRUPTED`; committed `needs_review`/`ready` data is preserved, including when the final database acknowledgement was lost.
 
-Stop the old server before applying migration 0010: it marks existing processing/failed materials for reconciliation. Preserve any old `.material-local/` directory until database recovery has completed and its records are reconciled. Hard termination can leave OS temporary files; Render discards these on restart. Only one server instance is supported, with no overlapping deploys or concurrent recovery commands; multiple instances require shared admission and recovery leases. This API does not yet enforce campus-wide capacity, provide idempotent upload retries, or implement user-confirmed module deletion.
+Stop the old server before applying migration 0010: it marks existing processing/failed materials for reconciliation. Preserve any old `.material-local/` directory until database recovery has completed and its records are reconciled. Hard termination can leave OS temporary files; Render discards these on restart. Only one server instance is supported, with no overlapping deploys or concurrent recovery commands; multiple instances require shared admission and recovery leases. This API does not yet enforce campus-wide capacity or provide idempotent upload retries.
 
 ## Personal labels and review approval
 
@@ -78,6 +78,16 @@ Label names are trimmed, limited to 120 characters, and cannot contain control c
 The service-only `approve_material` function locks the module, validates labels and selected sections, sets selected sections eligible, excludes all others, and marks the module ready in one transaction. Selection must contain at least 20 letters/digits in total and no empty or punctuation-only sections. Processing/failed imports and pending cleanup cannot be approved. Repeating the same approval succeeds; a changed selection after approval returns 409. No authenticated client can call this function directly. Extracted text and source references remain unchanged.
 
 The mobile preview starts with no selected sections. Users choose/create labels, select usable sections, and confirm they reviewed meaning/formatting before approval. Changing sections clears confirmation. Saved modules display their labels and included/excluded sections when reopened. Approval does not generate a quiz; AI generation remains planned.
+
+## DELETE /api/materials/:id
+
+Apply the planned `0009_material_deletion.sql` migration once before deploying deletion. Existing installations that already applied 0010/0011 apply only 0009 now; do not rerun those migrations. DELETE requires a Bearer token and returns `{ "status": "deleted" }` after cleanup. Invalid UUIDs return 400. Missing or other users' module IDs return the same success without changing data, making retries safe without exposing ownership.
+
+The service-role-only `begin_material_deletion` function locks the owner-scoped row, rejects processing or import-recovery work with 409, and commits `status=deleting` before external cleanup. Existing approval rejects this status. The service validates the expected owner/module source path, removes the private Storage file, then deletes the module row; existing foreign keys cascade its extracted sections. Reusable subject/topic labels remain. A module marked deleting cannot be previewed or opened from its card, but its Delete action supports retry.
+
+Storage/database failures return a safe 503 with `DELETION_PENDING`; the deletion marker remains. Startup and the next admitted upload retry pending deletions before import recovery. Failed recovery prevents startup. This retains the existing single-instance/no-overlapping-deployments restriction. Confirmed deletion has no undo and cannot be cancelled after the request starts. The native confirmation names the module and warns about source and linked study-content loss; cancellation sends no request. Only successful server confirmation removes the card, then the Dashboard refreshes to reset pagination.
+
+Only materials and extracted sections exist as persisted study content today. Future quizzes, flashcards, answers/results, and derived progress must extend deletion and its verification when those schemas are introduced; this implementation does not claim cleanup of unimplemented features. Upload capacity handling remains separate.
 
 ## Verification
 
