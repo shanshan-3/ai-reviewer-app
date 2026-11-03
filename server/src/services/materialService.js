@@ -5,7 +5,7 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { createSupabaseAdminClient } from '../config/supabase.js';
 import * as model from '../models/materialModel.js';
 import { extractMaterial, MESSAGES } from './materialExtraction.js';
-import { materialError, validateMaterialBytes, validateMaterialId } from '../validation/materialValidation.js';
+import { materialError, validateMaterialBytes, validateMaterialId, validateMaterialReview } from '../validation/materialValidation.js';
 
 async function removeTemp(directory) {
     if (!directory) return;
@@ -97,4 +97,22 @@ export async function readMaterial({ userId, supabase, id }) {
     const sections = material.status === 'needs_review' || material.status === 'ready'
         ? await model.getSections(supabase, id, userId) : [];
     return { material, sections };
+}
+
+export async function approveMaterial({ userId, id, body }) {
+    validateMaterialId(id);
+    const review = validateMaterialReview(body);
+    try { await model.approveMaterial(createSupabaseAdminClient(), userId, id, review); }
+    catch (error) {
+        const failures = {
+            MATERIAL_NOT_FOUND: [404, 'Module not found.'],
+            MATERIAL_NOT_REVIEWABLE: [409, 'This module is not awaiting review. Reload the preview.'],
+            INVALID_LABELS: [400, 'Choose your own subject and a topic belonging to it.'],
+            INVALID_SECTIONS: [400, 'Choose usable sections from this module.'],
+            REVIEW_CONFLICT: [409, 'This module has already been approved with a different selection. Reload the preview.'],
+        };
+        const failure = failures[error.message];
+        if (failure) throw materialError(failure[0], error.message, failure[1]);
+        throw error;
+    }
 }

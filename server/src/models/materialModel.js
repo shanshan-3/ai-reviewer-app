@@ -37,3 +37,10 @@ export async function uploadFile(client, storagePath, bytes, mime) {
 export async function removeFile(admin, storagePath) {
     data(await admin.storage.from('modules').remove([storagePath]));
 }
+
+export async function approveMaterial(admin, ownerId, id, review) {
+    return data(await admin.rpc('approve_material', {
+        p_owner_id: ownerId, p_material_id: id, p_subject_id: review.subjectId,
+        p_topic_id: review.topicId, p_section_ids: review.sectionIds,
+    }));
+}

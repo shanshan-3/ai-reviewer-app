@@ -36,7 +36,17 @@ export function validateMaterialBytes(bytes, extension) {
 }
 
 export function validateMaterialId(id) {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    if (typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
         throw materialError(400, 'INVALID_ID', 'Provide a valid material ID.');
     }
+}
+
+export function validateMaterialReview(body) {
+    if (!body || typeof body !== 'object' || !Array.isArray(body.sectionIds)
+        || body.sectionIds.length === 0 || body.sectionIds.length > 10000
+        || new Set(body.sectionIds).size !== body.sectionIds.length) {
+        throw materialError(400, 'INVALID_REVIEW', 'Choose a subject, topic, and at least one usable section.');
+    }
+    for (const id of [body.subjectId, body.topicId, ...body.sectionIds]) validateMaterialId(id);
+    return { subjectId: body.subjectId, topicId: body.topicId, sectionIds: body.sectionIds };
 }
