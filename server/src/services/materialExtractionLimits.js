@@ -4,7 +4,7 @@ export const LIMITS = Object.freeze({
   textCharacters: 200_000,
   docxExpandedBytes: 20 * 1024 * 1024,
   docxEntries: 2048,
-  timeMs: 10_000,
+  timeMs: 30_000,
   memoryBytes: 384 * 1024 * 1024,
 });
 

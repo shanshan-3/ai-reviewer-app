@@ -15,6 +15,7 @@ export default function ImportMaterialPage() {
     const [size, setSize] = useState(0);
     const [picking, setPicking] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [takingLong, setTakingLong] = useState(false);
     const [uploadedId, setUploadedId] = useState(null);
     const [message, setMessage] = useState('');
     const working = useRef(false);
@@ -32,6 +33,12 @@ export default function ImportMaterialPage() {
     useEffect(() => {
         if (uploadedId) router.replace({ pathname: '/(main)/materials/[materialId]', params: { materialId: uploadedId } });
     }, [uploadedId]);
+
+    useEffect(() => {
+        if (!uploading) return;
+        const timeout = setTimeout(() => setTakingLong(true), 5000);
+        return () => clearTimeout(timeout);
+    }, [uploading]);
 
     async function chooseFile() {
         if (working.current) return;
@@ -60,6 +67,7 @@ export default function ImportMaterialPage() {
         if (!asset || working.current || uploadedId) return;
         working.current = true;
         setUploading(true);
+        setTakingLong(false);
         setMessage('');
         try {
             const result = await uploadMaterial(asset);
@@ -68,7 +76,10 @@ export default function ImportMaterialPage() {
             if (active.current) setMessage(error.message || 'Upload failed.');
         } finally {
             working.current = false;
-            if (active.current) setUploading(false);
+            if (active.current) {
+                setUploading(false);
+                setTakingLong(false);
+            }
         }
     }
 
@@ -86,6 +97,7 @@ export default function ImportMaterialPage() {
                     <AuthButton submitLabel={uploading ? 'Uploading and extracting…' : 'Upload material'} onSubmit={handleUpload} disabled={busy} />
                 </>}
                 {uploading && <ActivityIndicator className="mt-4" color={THEME.primary} accessibilityLabel="Uploading and extracting" />}
+                {uploading && takingLong && <AuthMessage message="Your module is still processing. Larger or complex documents may take longer. Please keep this screen open." />}
                 <AuthMessage message={message} isError />
             </ScrollView>
         </SafeAreaView>
