@@ -49,12 +49,13 @@ ai-reviewer-app/
 |   |   |   |-- MaterialScreenHeader.jsx      # In-app back header for material screens
 |   |   |   |-- MaterialReviewForm.jsx        # Personal labels, section review, and approval
 |   |   |   |-- label-picker.jsx             # Controlled subject/topic selection and creation UI
+|   |   |   |-- material-card.jsx            # Saved module title, filename, status, and preview action
 |   |   |   |-- FormField.jsx                # Labeled input with icons, error border, password toggle
 |   |   |   |-- PasswordStrength.jsx         # Visual 4-bar password complexity indicator
 |   |   |   `-- StartupSplash.jsx            # Animated splash coordinator and motion detection
 |   |   `-- lib/
 |   |       |-- auth.js                      # Login, registration, and recovery validation rules
-|   |       |-- materials.js                 # Authenticated raw upload and module preview requests
+|   |       |-- materials.js                 # Authenticated module list, upload, preview, labels, and approval
 |   |       |-- recovery-session.js          # In-memory verified recovery user ID
 |   |       |-- session-storage.js           # Remember me; memory or persistent session storage
 |   |       |-- supabase.js                  # Public Supabase client and shared auth storage

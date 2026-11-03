@@ -8,6 +8,18 @@ Render Web Service is selected for the Express backend, initially using Free for
 
 Runtime extraction now uses a Node child process and the installed PDF.js/Mammoth libraries, with no PowerShell dependency. Migration `0010_material_import_recovery.sql` stores pending cleanup in Supabase. Linux and Render resource measurements, restart checks, and cold starts remain unverified. Render's local filesystem is used only for temporary source files. [Render filesystem and Free limitations](https://render.com/docs/free).
 
+## GET /api/materials
+
+Requires a Bearer token. Lists only the authenticated user's modules through their Supabase client and an explicit owner filter. Optional `offset` defaults to `0`; it must be an integer from 0 to 2,147,483,627. Invalid offsets return 400. The endpoint returns at most 20 summaries in descending `created_at`, then descending `id` order:
+
+```json
+{ "materials": [{ "id": "uuid", "title": "Loops", "original_filename": "loops.pdf", "status": "ready", "created_at": "timestamp" }], "nextOffset": null }
+```
+
+`nextOffset` is the next numeric offset when more rows exist, otherwise null. The query reads one extra row to determine whether another page exists. All four import statuses can appear. Source text, object paths, and extraction warnings are omitted; open the owner-only preview endpoint for details. Database failures use the existing safe 503 error response. An empty library returns `{ "materials": [], "nextOffset": null }`.
+
+The Dashboard refreshes on focus and pull-to-refresh. Load more appends summaries and removes duplicate IDs; a full refresh replaces the loaded pages. Returning from upload or approval reloads the list. Requests finishing after blur are ignored. The list uses React Native FlatList and the planned `material-card.jsx`; no database migration is required.
+
 ## POST /api/materials
 
 Send one file as the raw request body, not JSON, Base64, or multipart FormData.

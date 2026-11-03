@@ -2,6 +2,14 @@
 
 Earlier sections record automated checks run before the maintainer requested removal of mobile and server test files. Those tests and npm commands are no longer present. The results remain as historical evidence.
 
+## Dashboard saved modules - 2026-11-03
+
+Implemented owner-scoped paginated module summaries in the existing material route/controller/service/model layers, the mobile list helper, planned `material-card.jsx`, and a FlatList Dashboard. The screen reloads on focus and pull refresh, opens the existing module preview, supports loading more, preserves loaded rows after page errors, and ignores responses after blur. Existing upload, review, label, and approval endpoints are unchanged. No dependencies or migrations were added.
+
+Mobile lint, the JavaScript project check, server syntax checks, and diff checks passed. Temporary local HTTP checks used actual route/controller/service/model code with mocked auth/database boundaries: auth rejection, explicit owner filtering, summary field selection, newest-first query ordering, pagination, invalid offsets, empty responses, and safe database errors. Mocked Dashboard checks covered loading/empty/error/retry, page failure/retry, duplicate requests/rows, preview navigation, refocus after approval, pull refresh, and stale-response rejection. Helper checks covered authenticated/encoded requests and malformed response rejection. Temporary checks were removed; no permanent test harness was restored.
+
+These checks do not prove hosted database RLS, real API ownership isolation, native rendering/scrolling, physical Android navigation, or deployed upload/approval-to-Dashboard refresh. Those remain manual verification steps after deployment.
+
 ## Module review flow - 2026-11-03
 
 Added personal subject/topic list/create endpoints, mobile label selection and creation, explicit section selection and review confirmation, and approval through the service-only `approve_material` function in migration 0011. Approval preserves extracted text/references, excludes unselected sections, and saves labels/eligibility/ready status in one database transaction. Repeating the same approval is supported after a lost response; changed reviews of ready material are rejected.
