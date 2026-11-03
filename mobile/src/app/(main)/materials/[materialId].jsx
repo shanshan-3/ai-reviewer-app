@@ -5,6 +5,7 @@ import { useLocalSearchParams } from 'expo-router';
 import AuthButton from '@/components/AuthButton';
 import AuthMessage from '@/components/AuthMessage';
 import MaterialScreenHeader from '@/components/MaterialScreenHeader';
+import MaterialReviewForm from '@/components/MaterialReviewForm';
 import { getMaterial } from '@/lib/materials';
 import { THEME } from '@/lib/theme';
 
@@ -38,7 +39,7 @@ export default function MaterialPreviewPage() {
     return (
         <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right', 'bottom']}>
             <MaterialScreenHeader title="Module preview" />
-            <ScrollView contentContainerStyle={{ padding: 24, gap: 20 }}>
+            <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 24, gap: 20 }}>
                 {loading && <ActivityIndicator color={THEME.primary} accessibilityLabel="Loading module" />}
                 <AuthMessage message={message} isError />
                 {!loading && Boolean(message) && <AuthButton submitLabel="Retry" onSubmit={() => setAttempt(value => value + 1)} />}
@@ -52,13 +53,11 @@ export default function MaterialPreviewPage() {
                     </View>
                     {result.material.warnings.map((warning, index) => <Text key={`${warning.code}-${index}`} className="font-geist text-sm leading-6 text-foreground/70">{warning.message}</Text>)}
                     {result.material.status === 'failed' && <Text className="font-geist text-sm text-destructive">This import failed: {result.material.error_code}</Text>}
-                    {result.sections.map(section => <View key={section.id} className="gap-3 rounded-lg bg-card p-4">
-                        <Text accessibilityRole="header" className="font-geist-semibold text-base text-foreground">
-                            {section.reference.page ? `Page ${section.reference.page}` : `Paragraph ${section.reference.paragraph}`}
-                        </Text>
-                        <Text selectable className="font-geist text-base leading-7 text-foreground">{section.text || 'No selectable text in this section.'}</Text>
-                    </View>)}
-                    <Text className="font-geist text-sm leading-6 text-foreground/70">Check the extracted text and formatting. Subject selection and approval are not available yet.</Text>
+                    {['needs_review', 'ready'].includes(result.material.status) && <MaterialReviewForm key={result.material.id}
+                        material={result.material} sections={result.sections} onApproved={({ subjectId, topicId, sectionIds }) => setResult(value => ({
+                            ...value, material: { ...value.material, status: 'ready', subject_id: subjectId, topic_id: topicId },
+                            sections: value.sections.map(section => ({ ...section, eligible_for_generation: sectionIds.includes(section.id) })),
+                        }))} />}
                 </>}
             </ScrollView>
         </SafeAreaView>

@@ -42,9 +42,9 @@ async function request(path, options = {}) {
         return result;
     } catch (error) {
         if (error.name === 'AbortError') {
-            throw new Error(options.method === 'POST'
+            throw new Error(path === '/api/materials' && options.method === 'POST'
                 ? 'The upload timed out and may still have completed. Avoid immediately uploading the same file again.'
-                : 'Loading the module timed out. Try again.');
+                : 'The request timed out. Reload to check whether your changes were saved.');
         }
         if (error instanceof TypeError) throw new Error('Could not reach the server. Check your connection.');
         throw error;
@@ -66,4 +66,26 @@ export async function getMaterial(id) {
         throw new Error('The server returned an unreadable response.');
     }
     return result;
+}
+
+export async function getMaterialLabels() {
+    const result = await request('/api/materials/labels');
+    if (!Array.isArray(result.subjects) || !Array.isArray(result.topics)) throw new Error('The server returned unreadable labels.');
+    return result;
+}
+
+export async function createMaterialLabel(kind, body) {
+    if (!['subjects', 'topics'].includes(kind)) throw new Error('Invalid label type.');
+    const result = await request(`/api/materials/labels/${kind}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    if (typeof result.label?.id !== 'string') throw new Error('The server returned an unreadable label.');
+    return result.label;
+}
+
+export async function approveMaterial(id, review) {
+    const result = await request(`/api/materials/${encodeURIComponent(id)}/approve`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(review),
+    });
+    if (result.status !== 'ready') throw new Error('The server did not confirm approval. Reload the preview.');
 }
