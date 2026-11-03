@@ -10,7 +10,7 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
   try {
     await recoverPendingImports();
   } catch {
-    console.error('Import recovery failed. Check Supabase credentials, migrations, and Storage before restarting.');
+    console.error('Material cleanup recovery failed. Check Supabase credentials, migrations, and Storage before restarting.');
     process.exit(1);
   }
   app.listen(port, '0.0.0.0', (error) => {

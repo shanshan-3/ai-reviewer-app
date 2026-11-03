@@ -5,6 +5,7 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { createSupabaseAdminClient } from '../config/supabase.js';
 import * as model from '../models/materialModel.js';
 import { extractMaterial, MESSAGES } from './materialExtraction.js';
+import { recoverPendingDeletions } from './materialDeletion.js';
 import { materialError, validateMaterialBytes, validateMaterialId, validateMaterialReview } from '../validation/materialValidation.js';
 
 async function removeTemp(directory) {
@@ -37,6 +38,7 @@ async function recoverImport(admin, record, errorCode = 'IMPORT_INTERRUPTED') {
 
 // shortcut: recovery assumes one server instance; add shared admission before scaling.
 export async function recoverPendingImports(admin = createSupabaseAdminClient()) {
+    await recoverPendingDeletions(admin);
     for (;;) {
         const records = await model.getPendingImports(admin);
         if (!records.length) return;
@@ -94,6 +96,7 @@ export async function readMaterial({ userId, supabase, id }) {
     validateMaterialId(id);
     const material = await model.getMaterial(supabase, id, userId);
     if (!material) throw materialError(404, 'MATERIAL_NOT_FOUND', 'Module not found.');
+    if (material.status === 'deleting') throw materialError(409, 'DELETION_PENDING', 'This module is being deleted. Return to your modules to retry cleanup.');
     const sections = material.status === 'needs_review' || material.status === 'ready'
         ? await model.getSections(supabase, id, userId) : [];
     return { material, sections };

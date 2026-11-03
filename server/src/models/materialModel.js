@@ -49,3 +49,16 @@ export async function approveMaterial(admin, ownerId, id, review) {
         p_topic_id: review.topicId, p_section_ids: review.sectionIds,
     }));
 }
+
+export async function beginMaterialDeletion(admin, ownerId, id) {
+    return data(await admin.rpc('begin_material_deletion', { p_owner_id: ownerId, p_material_id: id }).maybeSingle());
+}
+
+export async function getPendingDeletions(admin) {
+    return data(await admin.from('materials').select('id,owner_id,storage_path')
+        .eq('status', 'deleting').order('id').limit(50));
+}
+
+export async function deleteMaterial(admin, id, ownerId) {
+    data(await admin.from('materials').delete().eq('id', id).eq('owner_id', ownerId).eq('status', 'deleting'));
+}
