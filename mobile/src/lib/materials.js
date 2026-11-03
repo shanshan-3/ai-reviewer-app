@@ -68,6 +68,18 @@ export async function getMaterial(id) {
     return result;
 }
 
+export async function listMaterials(offset = 0) {
+    const result = await request(`/api/materials?offset=${encodeURIComponent(offset)}`);
+    if (!Array.isArray(result.materials) || !result.materials.every(material =>
+        typeof material?.id === 'string' && typeof material.title === 'string'
+        && typeof material.original_filename === 'string'
+        && ['processing', 'needs_review', 'ready', 'failed'].includes(material.status))
+        || !(result.nextOffset === null || (Number.isSafeInteger(result.nextOffset) && result.nextOffset > offset))) {
+        throw new Error('The server returned an unreadable module list.');
+    }
+    return result;
+}
+
 export async function getMaterialLabels() {
     const result = await request('/api/materials/labels');
     if (!Array.isArray(result.subjects) || !Array.isArray(result.topics)) throw new Error('The server returned unreadable labels.');
