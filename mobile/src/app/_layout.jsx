@@ -51,12 +51,12 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={NAV_THEME}>
       <StatusBar style="dark" />
-      <StartupSplash>
-        <SessionProvider>
+      <SessionProvider>
+        <StartupSplash>
           <Stack screenOptions={{ headerShown: false }} />
           <PortalHost />
-        </SessionProvider>
-      </StartupSplash>
+        </StartupSplash>
+      </SessionProvider>
     </ThemeProvider>
     
   );

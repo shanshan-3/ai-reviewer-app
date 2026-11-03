@@ -1,22 +1,40 @@
 import { useEffect, useState } from 'react';
 import {
   AccessibilityInfo,
-  Animated,
-  Easing,
   StyleSheet,
   View,
 } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  ReduceMotion,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { useSession } from '@/providers/session-provider';
+import { THEME } from '@/lib/theme';
+
+const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
 
 /** @param {{ children: import('react').ReactNode }} props */
 export default function StartupSplash({ children }) {
+  const { loading } = useSession();
   const [complete, setComplete] = useState(false);
+  const [revealed, setRevealed] = useState(false);
   const [laidOut, setLaidOut] = useState(false);
   const [imageState, setImageState] = useState('loading');
   const [reduceMotion, setReduceMotion] = useState(/** @type {boolean | null} */ (null));
-  const [opacity] = useState(() => new Animated.Value(1));
-  const [scale] = useState(() => new Animated.Value(0.8));
+  const opacity = useSharedValue(1);
+  const reveal = useSharedValue(0);
+  const overlayStyle = useAnimatedStyle(() => ({ opacity: opacity.get() }));
+  const logoStyle = useAnimatedStyle(() => ({
+    opacity: reveal.get(),
+    transform: [{ scale: 0.96 + reveal.get() * 0.04 }],
+  }));
 
   useEffect(() => {
     let cancelled = false;
@@ -41,8 +59,9 @@ export default function StartupSplash({ children }) {
     if (complete || !laidOut || imageState === 'loading' || reduceMotion === null) return;
 
     let cancelled = false;
-    /** @type {import('react-native').Animated.CompositeAnimation | undefined} */
-    let animation;
+    function finishReveal() {
+      if (!cancelled) setRevealed(true);
+    }
 
     async function start() {
       try {
@@ -52,38 +71,46 @@ export default function StartupSplash({ children }) {
       }
       if (cancelled) return;
       if (reduceMotion || imageState === 'error') {
-        setComplete(true);
+        reveal.set(1);
+        finishReveal();
         return;
       }
 
-      scale.setValue(0.8);
-      opacity.setValue(1);
-
-      animation = Animated.sequence([
-        Animated.spring(scale, {
-          toValue: 1,
-          bounciness: 11,
-          speed: 10,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacity, {
-          toValue: 0,
-          duration: 300,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-      ]);
-      animation.start(({ finished }) => {
-        if (finished && !cancelled) setComplete(true);
-      });
+      reveal.set(withTiming(1, {
+        duration: 240,
+        easing: EASE_OUT,
+        reduceMotion: ReduceMotion.System,
+      }, (finished) => {
+        if (finished) scheduleOnRN(finishReveal);
+      }));
     }
 
     start();
     return () => {
       cancelled = true;
-      animation?.stop();
+      cancelAnimation(reveal);
     };
-  }, [complete, imageState, laidOut, opacity, reduceMotion, scale]);
+  }, [complete, imageState, laidOut, reduceMotion, reveal]);
+
+  useEffect(() => {
+    if (complete || !revealed || loading) return;
+
+    let cancelled = false;
+    function finish() {
+      if (!cancelled) setComplete(true);
+    }
+    opacity.set(withTiming(0, {
+      duration: reduceMotion || imageState === 'error' ? 0 : 180,
+      easing: EASE_OUT,
+      reduceMotion: ReduceMotion.System,
+    }, (finished) => {
+      if (finished) scheduleOnRN(finish);
+    }));
+    return () => {
+      cancelled = true;
+      cancelAnimation(opacity);
+    };
+  }, [complete, imageState, loading, opacity, reduceMotion, revealed]);
 
   return (
     <View style={styles.container}>
@@ -99,7 +126,7 @@ export default function StartupSplash({ children }) {
       </View>
       {!complete && (
         <Animated.View
-          style={[styles.overlay, { opacity }]}
+          style={[styles.overlay, overlayStyle]}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
           aria-hidden
@@ -107,7 +134,7 @@ export default function StartupSplash({ children }) {
           <StatusBar style="dark" />
           <Animated.Image
             source={require('../../assets/logo/logo-with-name-transparent.png')}
-            style={[styles.logo, { transform: [{ scale }] }]}
+            style={[styles.logo, logoStyle]}
             resizeMode="contain"
             fadeDuration={0}
             onLoad={() => setImageState('ready')}
@@ -120,10 +147,10 @@ export default function StartupSplash({ children }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: THEME.background },
   overlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: '#F8F8FF',
+    backgroundColor: THEME.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
