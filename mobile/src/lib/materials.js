@@ -73,7 +73,7 @@ export async function listMaterials(offset = 0) {
     if (!Array.isArray(result.materials) || !result.materials.every(material =>
         typeof material?.id === 'string' && typeof material.title === 'string'
         && typeof material.original_filename === 'string'
-        && ['processing', 'needs_review', 'ready', 'failed'].includes(material.status))
+        && ['processing', 'needs_review', 'ready', 'failed', 'deleting'].includes(material.status))
         || !(result.nextOffset === null || (Number.isSafeInteger(result.nextOffset) && result.nextOffset > offset))) {
         throw new Error('The server returned an unreadable module list.');
     }
@@ -84,6 +84,11 @@ export async function getMaterialLabels() {
     const result = await request('/api/materials/labels');
     if (!Array.isArray(result.subjects) || !Array.isArray(result.topics)) throw new Error('The server returned unreadable labels.');
     return result;
+}
+
+export async function deleteMaterial(id) {
+    const result = await request(`/api/materials/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (result.status !== 'deleted') throw new Error('Deletion was not confirmed. Refresh your modules before retrying.');
 }
 
 export async function createMaterialLabel(kind, body) {

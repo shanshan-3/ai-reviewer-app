@@ -1,10 +1,11 @@
 import { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Image, Pressable, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
+import { usePreventRemove } from 'expo-router/react-navigation';
 import AuthButton from '@/components/AuthButton';
 import AuthMessage from '@/components/AuthMessage';
 import MaterialCard from '@/components/material-card';
-import { listMaterials } from '@/lib/materials';
+import { deleteMaterial, listMaterials } from '@/lib/materials';
 import { useSession } from '@/providers/session-provider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import IconBolt from '@tabler/icons-react-native/IconBolt';
@@ -19,9 +20,14 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
     const [nextOffset, setNextOffset] = useState(null);
+    const [deletingId, setDeletingId] = useState(null);
+    const [notice, setNotice] = useState('');
+    const confirmationOpen = useRef(false);
     const requestId = useRef(0);
     const working = useRef(false);
     const failedOffset = useRef(0);
+
+    usePreventRemove(Boolean(deletingId), () => Alert.alert('Deletion in progress', 'Wait for deletion to finish before leaving this screen.'));
 
     const load = useCallback(async (offset = 0) => {
         if (!userId || working.current) return;
@@ -45,13 +51,49 @@ export default function DashboardPage() {
     useFocusEffect(useCallback(() => {
         setMaterials([]);
         setNextOffset(null);
+        setDeletingId(null);
+        setNotice('');
         void load();
-        return () => { requestId.current++; working.current = false; };
+        return () => { requestId.current++; working.current = false; confirmationOpen.current = false; };
     }, [load]));
+
+    function confirmDeletion(material) {
+        if (working.current || confirmationOpen.current || material.status === 'processing') return;
+        confirmationOpen.current = true;
+        const epoch = requestId.current;
+        Alert.alert('Delete module?', `Permanently delete "${material.title}"? Its uploaded file, extracted text, and any linked quizzes, flashcards, and study results will be lost. This cannot be undone.`, [
+            { text: 'Cancel', style: 'cancel', onPress: () => { confirmationOpen.current = false; } },
+            { text: 'Delete', style: 'destructive', onPress: async () => {
+                confirmationOpen.current = false;
+                if (epoch !== requestId.current || working.current) return;
+                working.current = true;
+                const id = ++requestId.current;
+                setDeletingId(material.id);
+                setNotice('');
+                setMessage('');
+                try {
+                    await deleteMaterial(material.id);
+                    if (id !== requestId.current) return;
+                    setMaterials(value => value.filter(item => item.id !== material.id));
+                    setNotice('Module deleted.');
+                    working.current = false;
+                    setDeletingId(null);
+                    await load();
+                } catch (error) {
+                    if (id !== requestId.current) return;
+                    failedOffset.current = 0;
+                    setMessage(error.message || 'Could not delete this module. Refresh and try again.');
+                    working.current = false;
+                    setDeletingId(null);
+                }
+            } },
+        ], { cancelable: false });
+    }
     return (
         <SafeAreaView className="flex-1 bg-background" edges={['left', 'right']}>
             <FlatList data={materials} keyExtractor={material => material.id}
-                renderItem={({ item }) => <MaterialCard material={item} onPress={() => router.push({ pathname: '/(main)/materials/[materialId]', params: { materialId: item.id } })} />}
+                renderItem={({ item }) => <MaterialCard material={item} deleting={deletingId === item.id} disabled={Boolean(deletingId) || loading}
+                    onDelete={() => confirmDeletion(item)} onPress={() => router.push({ pathname: '/(main)/materials/[materialId]', params: { materialId: item.id } })} />}
                 contentContainerStyle={{ flexGrow: 1, padding: 24, gap: 16 }}
                 refreshing={loading && materials.length > 0} onRefresh={() => load()}
                 ListHeaderComponent={<View className="gap-7">
@@ -135,10 +177,11 @@ export default function DashboardPage() {
                     <Text className="font-geist text-sm leading-6 text-foreground/70">Your uploaded study materials will appear here.</Text>
                 </View> : null}
                 ListFooterComponent={<View>
+                    <AuthMessage message={notice} />
                     {loading && <ActivityIndicator className="py-4" color={THEME.primary} accessibilityLabel="Loading your modules" />}
                     <AuthMessage message={message} isError />
-                    {!loading && Boolean(message) && <AuthButton submitLabel="Retry" onSubmit={() => load(failedOffset.current)} />}
-                    {!loading && !message && nextOffset !== null && <AuthButton submitLabel="Load more modules" onSubmit={() => load(nextOffset)} />}
+                    {!loading && Boolean(message) && <AuthButton submitLabel="Retry" disabled={Boolean(deletingId)} onSubmit={() => load(failedOffset.current)} />}
+                    {!loading && !message && nextOffset !== null && <AuthButton submitLabel="Load more modules" disabled={Boolean(deletingId)} onSubmit={() => load(nextOffset)} />}
                 </View>}
             />
         </SafeAreaView>
