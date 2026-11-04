@@ -28,8 +28,9 @@ async function request(path, options = {}) {
     if (error || !data.session?.access_token) throw new Error('Please sign in again.');
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 90000);
+    let response;
     try {
-        const response = await fetch(`${baseUrl}${path}`, {
+        response = await fetch(`${baseUrl}${path}`, {
             ...options, signal: controller.signal,
             headers: { ...options.headers, Authorization: `Bearer ${data.session.access_token}` },
         });
@@ -41,12 +42,17 @@ async function request(path, options = {}) {
         if (!result) throw new Error('The server returned an unreadable response.');
         return result;
     } catch (error) {
-        if (error.name === 'AbortError') {
+        if (controller.signal.aborted) {
             throw new Error(path === '/api/materials' && options.method === 'POST'
                 ? 'The upload timed out and may still have completed. Avoid immediately uploading the same file again.'
                 : 'The request timed out. Reload to check whether your changes were saved.');
         }
-        if (error instanceof TypeError) throw new Error('Could not reach the server. Check your connection.');
+        if (error?.name === 'AbortError' || (!response && /\b(cancell?ed|aborted)\b/i.test(error?.message ?? ''))) {
+            throw new Error(path === '/api/materials' && options.method === 'POST'
+                ? 'The upload was interrupted and may still have completed. Check your modules before uploading the same file again.'
+                : 'The request was interrupted. Reload to check whether your changes were saved.');
+        }
+        if (!response) throw new Error('Could not reach the server. Check your connection and retry.');
         throw error;
     } finally { clearTimeout(timeout); }
 }
