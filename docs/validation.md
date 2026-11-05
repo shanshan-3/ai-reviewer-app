@@ -1,5 +1,13 @@
 # Phase 1: PDF/DOCX extraction validation
 
+## Hosted PDF restart persistence - 2026-11-05
+
+Run `280bb9a4-0b09-4f2c-b88d-fd4728b0839b` imported a locally validated synthetic 694-byte PDF through the deployed Render API in a disposable account. Health returned HTTP 200 and no cleanup/deletion markers were pending before import. The owner preview and private-original SHA-256 were saved at `2026-11-05T11:09:28.377Z`. The maintainer confirmed the current deployment was live before preparation and subsequently reported completing a Render restart. The agent did not independently inspect Render's control plane, deployed SHA or overlap state.
+
+After the reported restart, health returned HTTP 200, a fresh fixture sign-in succeeded, and the full owner preview matched the baseline exactly at `2026-11-05T11:12:44.190Z`. This includes material metadata, needs-review status, section text/references and generation-disabled flags; the cleanup marker remained false. The downloaded private original matched its pre-restart SHA-256, `cd0ff79ea84653f7c92a1787f673e6df6de81a5ecbdfd10c361f31a959f7fc7e`. This passes bounded PDF persistence and reauthentication across the maintainer-reported restart, complementing the earlier DOCX check.
+
+The fixture original, material/section rows and disposable account were removed and absence checked by `2026-11-05T11:12:47.457Z`. Temporary local script, source PDF and private state were removed; maintainer-owned modules were not modified. No application code, dependency, migration or ADB/device behavior changed in this check. Genuinely signed expired-token rejection, independent deployment-overlap assurance, hosted interrupted-deletion recovery and broader Android/release checks remain open; Phase 2 is not fully accepted.
+
 ## Linux extraction worker shutdown fix - 2026-11-05
 
 The maintainer supplied the diagnostic log for the deployed PDF failure: `stage: rss-unavailable`, `exitCode: 0`, `exitSignal: null`, `receivedOutcome: true`, 3,795 ms elapsed and 115,240,960 bytes peak memory on Node v24.22.2/Linux. No heap/module-load failure was indicated. This points to the parent RSS monitor overriding a returned result during normal worker shutdown.
