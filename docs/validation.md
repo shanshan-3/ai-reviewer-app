@@ -1,5 +1,21 @@
 # Phase 1: PDF/DOCX extraction validation
 
+## Extraction worker failure diagnostics - 2026-11-05
+
+The parent extractor now emits one structured `Material extraction failed` log for infrastructure failures. It records the failure code/stage, child exit code/signal, whether an outcome arrived, elapsed time, peak memory, Node version/platform and boolean stderr/heap/module-load indicators. It does not log document text, file paths, credentials or raw stderr. Existing rejection codes, resource limits and API payloads are preserved.
+
+Syntax and `git diff --check` passed. A temporary assertion harness exercised the actual parent extractor with child-process and Linux `/proc` reads substituted: 12 cases covered success, ordinary invalid-document rejection, worker exit/error, IPC failure, timeout, heap/module indicators, missing RSS, RSS read failure, memory excess and a disappearing process. Checks verified infrastructure logging, unchanged success/document-rejection behavior and exclusion of private text/paths/stderr. This is local simulated-boundary evidence, not a real Linux or hosted reproduction. The temporary harness was removed; no permanent test suite, dependency or migration was added. Deployment and a new failing hosted PDF request are still required to identify the actual cause.
+
+## Hosted DOCX restart persistence - 2026-11-05
+
+Run `3b22632a-0df9-4c3c-8d07-a70696b571c9` exercised the deployed Render API and configured Supabase project with one disposable account. The maintainer confirmed readiness after checking the service's single-instance/no-active-deployment state and subsequently reported restarting Render. The agent has no Render control-plane access; the restart, deployed SHA and absence of deployment overlap were not independently observed.
+
+A synthetic DOCX uploaded through `POST /api/materials` and produced one needs-review section. Before the restart, the authenticated owner preview, section text/references, generation-disabled state and private original were captured at `2026-11-05T10:45:33.675Z`. After the reported restart, health returned HTTP 200, a fresh owner sign-in succeeded, and the complete preview plus original SHA-256 matched the baseline exactly at `2026-11-05T10:47:55.990Z`. The cleanup marker remained false. Original SHA-256: `c6b03524de053a09896af6ecc159a233179f6cb7117c650886e043a148c8f84c`. This establishes bounded DOCX persistence across the maintainer-reported restart and reauthentication, not hosted interrupted-deletion recovery or Android behavior.
+
+Two earlier uploads of the same synthetic 694-byte selectable-text PDF returned HTTP 422 `WORKER_FAILED` on Render. The exact PDF passed the local runtime extractor with one section; the synthetic DOCX also passed locally before its successful hosted upload. The first failed PDF row was inspected as failed with `cleanup_pending: false`. These results identify a repeated hosted PDF extraction failure, but do not establish its cause; PDF restart persistence remains unverified. No application fix or deployment change was made by the agent.
+
+After comparison, all three fixture material rows (two failed PDFs and one DOCX), their Storage paths, cascading sections and the disposable account were removed. Checks confirmed the original paths were no longer downloadable, section/material queries returned no fixture rows, and the account was absent. Temporary scripts, local synthetic files and private state were removed. Maintainer-owned modules were not modified. No application code, dependency or migration changed; no permanent test harness was restored and no ADB/device test ran. Genuinely signed expired-token rejection, PDF extraction diagnosis/persistence, independently verified deployment-overlap controls, interrupted-cleanup recovery and remaining Android/release checks are still open.
+
 ## Material network feedback fix - 2026-11-04
 
 The shared mobile material request helper now maps native fetch failures before a response arrives to a friendly connection/retry message. Expo's installed fetch implementation wraps native failures in an ordinary Error subclass with a `fetch failed:` prefix; checking only TypeError missed the Java/DNS messages seen on the device. Response presence now separates transport failures from safe HTTP/API error messages, preserving server validation/auth/conflict feedback.
