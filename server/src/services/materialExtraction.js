@@ -28,7 +28,12 @@ export async function extractMaterial(file, overrides = {}) {
         try {
             const status = await readFile(`/proc/${worker.pid}/status`, 'utf8');
             const rss = Number(status.match(/^VmRSS:\s+(\d+) kB/m)?.[1]);
-            if (!Number.isFinite(rss)) { stop('WORKER_FAILED', 'rss-unavailable'); return; }
+            if (!Number.isFinite(rss)) {
+                // Exited workers have no RSS while their final IPC message/close event is still arriving.
+                if (/^State:\s+[ZX]\b/m.test(status)) return;
+                stop('WORKER_FAILED', 'rss-unavailable');
+                return;
+            }
             peakMemoryBytes = Math.max(peakMemoryBytes, rss * 1024);
             if (peakMemoryBytes > limits.memoryBytes) stop('MEMORY_LIMIT', 'rss-limit');
         } catch (error) {
