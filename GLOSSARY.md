@@ -10,9 +10,11 @@ _Avoid_: Course, class
 
 **Subject**:
 A personal label for an IT area that groups a user's review topics; it does not establish an official curriculum category.
+Module review now chooses from the supplied 31-subject BSIT list, storing each choice privately per user.
 
 **Topic**:
-A specific area of review within a subject, named and reused by the user for generation and progress tracking.
+A review category within a subject; new module subject selections use `General` automatically, without a topic picker.
+Earlier approved modules retain their existing topics; topic-based generation and progress tracking remain planned.
 
 **Question**:
 A multiple-choice practice item with answer options, a correct answer, and an explanation, using either conceptual content or a coding-syntax snippet.

@@ -47,8 +47,8 @@ ai-reviewer-app/
 |   |   |   |-- AuthButton.jsx               # Submit button, disabled/busy state, footer
 |   |   |   |-- AuthMessage.jsx              # Feedback directly above authentication submit buttons
 |   |   |   |-- MaterialScreenHeader.jsx      # In-app back header for material screens
-|   |   |   |-- MaterialReviewForm.jsx        # Personal labels, section review, and approval
-|   |   |   |-- label-picker.jsx             # Controlled subject/topic selection and creation UI
+|   |   |   |-- MaterialReviewForm.jsx        # Subject selection, hidden General topic, page review, and approval
+|   |   |   |-- label-picker.jsx             # Searchable BSIT subject picker grouped by year; no topic picker
 |   |   |   |-- material-card.jsx            # Saved module title, filename, status, and preview action
 |   |   |   |-- FormField.jsx                # Labeled input with icons, error border, password toggle
 |   |   |   |-- PasswordStrength.jsx         # Visual 4-bar password complexity indicator
@@ -56,6 +56,7 @@ ai-reviewer-app/
 |   |   `-- lib/
 |   |       |-- auth.js                      # Login, registration, and recovery validation rules
 |   |       |-- materials.js                 # Authenticated module list, upload, preview, labels, and approval
+|   |       |-- curriculum.js                # Supplied BSIT subjects grouped by year, with search
 |   |       |-- recovery-session.js          # In-memory verified recovery user ID
 |   |       |-- session-storage.js           # Remember me; memory or persistent session storage
 |   |       |-- supabase.js                  # Public Supabase client and shared auth storage
@@ -78,6 +79,7 @@ ai-reviewer-app/
 |-- server/
 |   |-- src/
 |   |   |-- config/
+|   |   |   |-- curriculum.js                # Allowed BSIT subject names and validation
 |   |   |   `-- supabase.js                  # Per-request client with caller token
 |   |   |-- controllers/
 |   |   |   |-- labelController.js           # Personal label list/create responses
