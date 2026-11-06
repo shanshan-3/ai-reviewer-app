@@ -11,7 +11,7 @@ export default function MaterialScreenHeader({ title }) {
                 accessibilityLabel="Go back"
                 hitSlop={8}
                 onPress={() => router.back()}
-                className="h-10 w-10 items-center justify-center rounded-lg"
+                className="h-12 w-12 items-center justify-center rounded-lg active:bg-secondary focus:bg-secondary"
             >
                 <IconArrowLeft size={22} color={THEME.foreground} accessible={false} />
             </Pressable>

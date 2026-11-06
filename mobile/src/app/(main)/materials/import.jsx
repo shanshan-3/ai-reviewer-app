@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, Text } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import * as DocumentPicker from 'expo-document-picker';
-import AuthButton from '@/components/AuthButton';
+import IconFileText from '@tabler/icons-react-native/IconFileText';
 import AuthMessage from '@/components/AuthMessage';
 import MaterialScreenHeader from '@/components/MaterialScreenHeader';
 import { uploadMaterial, validateSelectedFile } from '@/lib/materials';
@@ -86,20 +86,46 @@ export default function ImportMaterialPage() {
     const busy = picking || uploading || Boolean(uploadedId);
     return (
         <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right', 'bottom']}>
-            <MaterialScreenHeader title="Upload material" />
-            <ScrollView contentContainerStyle={{ padding: 24 }}>
-                <Text accessibilityRole="header" className="font-geist-semibold text-2xl text-foreground">Add your study material</Text>
-                <Text className="mt-2 font-geist text-sm leading-6 text-foreground/70">Choose a text-based PDF or DOCX. Maximum size: 5 MiB.</Text>
-                <AuthButton submitLabel={picking ? 'Opening files…' : 'Choose file'} onSubmit={chooseFile} disabled={busy} />
-                {asset && <>
-                    <Text className="mt-6 font-geist-medium text-base text-foreground">{asset.name}</Text>
-                    <Text className="mt-1 font-geist text-sm text-foreground/70">{(size / 1024 / 1024).toFixed(2)} MiB</Text>
-                    <AuthButton submitLabel={uploading ? 'Uploading and extracting…' : 'Upload material'} onSubmit={handleUpload} disabled={busy} />
-                </>}
-                {uploading && <ActivityIndicator className="mt-4" color={THEME.primary} accessibilityLabel="Uploading and extracting" />}
-                {uploading && takingLong && <AuthMessage message="Your module is still processing. Larger or complex documents may take longer. Please keep this screen open." />}
-                <AuthMessage message={message} isError />
+            <MaterialScreenHeader title="Upload module" />
+            <ScrollView className="flex-1" contentInsetAdjustmentBehavior="automatic"
+                contentContainerStyle={{ padding: 24, gap: 24, width: '100%', maxWidth: 720, alignSelf: 'center' }}>
+                <View className="gap-2">
+                    <Text accessibilityRole="header" className="font-geist-semibold text-3xl leading-10 text-[#001428]">Bring your notes.</Text>
+                    <Text className="font-geist text-base leading-7 text-muted-foreground">Upload a module, then review its extracted text before using it for questions.</Text>
+                </View>
+                <View className="gap-5 rounded-xl border border-border bg-card p-6" style={{ borderCurve: 'continuous' }}>
+                    <View className="h-12 w-12 items-center justify-center rounded-lg bg-background">
+                        <IconFileText size={24} color={THEME.foreground} accessible={false} />
+                    </View>
+                    <View className="gap-2">
+                        <Text accessibilityRole="header" className="font-geist-semibold text-lg text-[#001428]">{asset ? 'Selected document' : 'Choose your document'}</Text>
+                        {asset ? <>
+                            <Text selectable className="font-geist-medium text-base leading-7 text-foreground">{asset.name}</Text>
+                            <Text className="font-geist text-sm text-muted-foreground">{asset.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'DOCX'} · {(size / 1024 / 1024).toFixed(2)} MiB</Text>
+                        </> : <Text className="font-geist text-sm leading-6 text-muted-foreground">A text-based PDF or DOCX, up to 5 MiB.</Text>}
+                    </View>
+                    <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy, busy: picking }} disabled={busy} onPress={chooseFile}
+                        className={`min-h-12 items-center justify-center rounded-lg border border-muted-foreground px-4 py-3 active:bg-secondary focus:border-foreground ${busy ? 'opacity-40' : ''}`}>
+                        <Text className="font-geist-semibold text-base text-[#001428]">{picking ? 'Opening files…' : asset ? 'Change file' : 'Choose file'}</Text>
+                    </Pressable>
+                </View>
+                <View className="gap-2">
+                    <Text className="font-geist-medium text-sm text-foreground">Before you upload</Text>
+                    <Text className="font-geist text-sm leading-6 text-muted-foreground">Use a document with selectable text. Scanned pages and images cannot be read as text.</Text>
+                    <Text className="font-geist text-sm leading-6 text-muted-foreground">You can choose a subject after uploading.</Text>
+                </View>
             </ScrollView>
+            <View className="border-t border-border bg-card px-6 py-4">
+                <View className="w-full max-w-[672px] self-center gap-3">
+                    <AuthMessage message={message} isError />
+                    {uploading && takingLong && <Text accessibilityLiveRegion="polite" className="font-geist text-sm leading-6 text-muted-foreground">Your module is still processing. Larger or complex documents may take longer. Please keep this screen open.</Text>}
+                    <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy || !asset, busy: uploading }} disabled={busy || !asset} onPress={handleUpload}
+                        className={`min-h-14 flex-row items-center justify-center gap-3 rounded-lg bg-[#001428] px-4 py-4 active:opacity-80 focus:border-2 focus:border-muted-foreground ${busy || !asset ? 'opacity-40' : ''}`}>
+                        {uploading && <ActivityIndicator color={THEME.primaryForeground} accessible={false} />}
+                        <Text className="shrink text-center font-geist-semibold text-base text-primary-foreground">{uploading ? 'Uploading and extracting…' : uploadedId ? 'Opening preview…' : 'Upload module'}</Text>
+                    </Pressable>
+                </View>
+            </View>
         </SafeAreaView>
     );
 }
