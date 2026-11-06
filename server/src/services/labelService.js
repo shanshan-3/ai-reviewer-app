@@ -1,5 +1,6 @@
 import * as model from '../models/labelModel.js';
 import { materialError, validateMaterialId } from '../validation/materialValidation.js';
+import { BSIT_SUBJECTS, isCurriculumSubject } from '../config/curriculum.js';
 
 export async function readLabels({ userId, supabase }) {
     return model.getLabels(supabase, userId);
@@ -10,7 +11,11 @@ export async function addLabel({ userId, supabase, kind, body }) {
     if (!name || [...name].length > 120 || /\p{Cc}/u.test(name)) {
         throw materialError(400, 'INVALID_LABEL', 'Use a label between 1 and 120 characters.');
     }
-    const row = { owner_id: userId, name };
+    if (kind === 'subjects' && !isCurriculumSubject(name)) {
+        throw materialError(400, 'INVALID_LABEL', 'Please choose a subject from the BSIT curriculum.');
+    }
+    const row = { owner_id: userId, name: kind === 'subjects'
+        ? BSIT_SUBJECTS.find(subject => subject.toLowerCase() === name.toLowerCase()) : name };
     if (kind === 'topics') {
         validateMaterialId(body.subjectId);
         row.subject_id = body.subjectId;
