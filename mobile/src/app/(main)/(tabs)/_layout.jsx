@@ -1,10 +1,12 @@
 import { Tabs } from 'expo-router';
+import { BottomTabBar } from 'expo-router/js-tabs';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import IconLayoutDashboard from '@tabler/icons-react-native/IconLayoutDashboard';
 import IconHelp from '@tabler/icons-react-native/IconHelp';
 import IconCards from '@tabler/icons-react-native/IconCards';
 import IconUser from '@tabler/icons-react-native/IconUser';
 import { THEME } from '@/lib/theme';
+import { useToastTabBarHeight } from '@/providers/toast-provider';
 
 function TabHeaderTitle({ children }) {
     return (
@@ -27,9 +29,13 @@ function TabHeaderTitle({ children }) {
 }
 
 export default function TabsLayout() {
+    const setTabBarHeight = useToastTabBarHeight();
     return (
         <Tabs
             initialRouteName="dashboard"
+            tabBar={props => <View onLayout={event => setTabBarHeight(event.nativeEvent.layout.height)}>
+                <BottomTabBar {...props} />
+            </View>}
             screenOptions={{
                 headerShown: true,
                 headerTitle: TabHeaderTitle,

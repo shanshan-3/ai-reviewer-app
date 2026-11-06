@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Image, Pressable, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
@@ -7,6 +7,7 @@ import AuthMessage from '@/components/AuthMessage';
 import MaterialCard from '@/components/material-card';
 import { deleteMaterial, listMaterials } from '@/lib/materials';
 import { useSession } from '@/providers/session-provider';
+import { useToast } from '@/providers/toast-provider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import IconBolt from '@tabler/icons-react-native/IconBolt';
 import IconCards from '@tabler/icons-react-native/IconCards';
@@ -16,23 +17,17 @@ import { THEME } from '@/lib/theme';
 
 export default function DashboardPage() {
     const { session } = useSession();
+    const showToast = useToast();
     const userId = session?.user.id;
     const [materials, setMaterials] = useState([]);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
     const [nextOffset, setNextOffset] = useState(null);
     const [deletingId, setDeletingId] = useState(null);
-    const [notice, setNotice] = useState('');
     const confirmationOpen = useRef(false);
     const requestId = useRef(0);
     const working = useRef(false);
     const failedOffset = useRef(0);
-
-    useEffect(() => {
-        if (!notice) return;
-        const timeout = setTimeout(() => setNotice(''), 3000);
-        return () => clearTimeout(timeout);
-    }, [notice]);
 
     usePreventRemove(Boolean(deletingId), () => Alert.alert('Deletion in progress', 'Wait for deletion to finish before leaving this screen.'));
 
@@ -59,7 +54,6 @@ export default function DashboardPage() {
         setMaterials([]);
         setNextOffset(null);
         setDeletingId(null);
-        setNotice('');
         void load();
         return () => { requestId.current++; working.current = false; confirmationOpen.current = false; };
     }, [load]));
@@ -76,13 +70,12 @@ export default function DashboardPage() {
                 working.current = true;
                 const id = ++requestId.current;
                 setDeletingId(material.id);
-                setNotice('');
                 setMessage('');
                 try {
                     await deleteMaterial(material.id);
                     if (id !== requestId.current) return;
                     setMaterials(value => value.filter(item => item.id !== material.id));
-                    setNotice('Module deleted.');
+                    showToast('Module deleted');
                     working.current = false;
                     setDeletingId(null);
                     await load();
@@ -152,7 +145,6 @@ export default function DashboardPage() {
                 </View>
 
                 <View className="gap-1">
-                    <AuthMessage message={notice} />
                     <Text accessibilityRole="header" className="font-geist-semibold text-lg text-[#001428]">
                         Your modules
                     </Text>
