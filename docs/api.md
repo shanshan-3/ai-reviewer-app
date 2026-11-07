@@ -1,6 +1,8 @@
-# Material import API
+# API contracts
 
 The Node Express API implements authenticated module import, extracted-text preview, personal labels, and review approval. Existing `GET /health` and `GET /api/profile` are unchanged. The module review flow is connected in code; its new controls still need physical Android verification.
+
+The [Phase 3 quiz contract](#phase-3-quiz-contract-planned) below includes the implemented generation/status/metadata backend and the still-planned session/answer endpoints. Source implementation does not establish deployment, applied migrations or Android verification.
 
 ## Hosting target: Render
 
@@ -90,6 +92,164 @@ The service-role-only `begin_material_deletion` function locks the owner-scoped 
 Storage/database failures return a safe 503 with `DELETION_PENDING`; the deletion marker remains. Startup and the next admitted upload retry pending deletions before import recovery. Failed recovery prevents startup. This retains the existing single-instance/no-overlapping-deployments restriction. Confirmed deletion has no undo and cannot be cancelled after the request starts. The native confirmation names the module and warns about source and linked study-content loss; cancellation sends no request. Only successful server confirmation removes the card, then the Dashboard refreshes to reset pagination.
 
 Only materials and extracted sections exist as persisted study content today. Future quizzes, flashcards, answers/results, and derived progress must extend deletion and its verification when those schemas are introduced; this implementation does not claim cleanup of unimplemented features. Upload capacity handling remains separate.
+
+## Phase 3 quiz contract (planned)
+
+Defined on 2026-11-07 against [Phase 3 of the roadmap](../planning/ai-powered-reviewer-roadmap.md#phase-3-generate-complete-and-score-a-quiz). This is the implementation contract for a private quiz generation and study flow. The generation/status/quiz-metadata endpoints are implemented in source; study-session/answer/result endpoints remain planned. Every endpoint requires a verified Bearer token. Ownership comes from authentication, never a client-supplied owner ID. Students and instructors use the same private flow; there is no publishing or privileged instructor answer-key endpoint.
+
+### Quiz choices and source
+
+| Field | Contract |
+|---|---|
+| `source` | Exactly `{ "kind": "module", "materialId": "uuid" }` or `{ "kind": "topic", "topicId": "uuid" }` |
+| `questionType` | `conceptual` (Multiple Choice, default), `true_false`, or `coding_syntax` (code with four choices); one type per quiz |
+| `questionCount` | `5` or `10` (default `10`); requested session length, not the pool size |
+| `startingDifficulty` | `easy`, `medium` (default), or `hard` |
+| `requestId` | Client-generated UUID, retained across retries of the same generation request |
+
+A module must belong to the caller, be `ready`, and have meaningful sections marked `eligible_for_generation`. Derive its subject/topic from the saved module. Supply only approved sections to Groq. A topic must belong to the caller and resolve to its owned subject; its saved name supplies the topic-only context. Reject unsupported/non-IT or insufficient context. Do not treat the account's topic labels as detected document content.
+
+Module-based coding questions require usable code in the approved source. Missing code produces an insufficient-source outcome without switching question types. Topic-only quizzes are labeled as topic practice and carry no invented module citations. Gemini remains disabled. Current provider configuration and its evaluation boundary are described below.
+
+### Generation backend configuration and rollout
+
+The implementation follows `quizRoutes` -> `quizController` -> `quizService` -> `quizModel`, with context/provider work in `quizGeneration`, structured prompts in `quizPrompts`, request/output checks in `quizValidation`, and the installed Groq SDK in `config/ai.js`. No new application dependency is required.
+
+| Setting | Implemented value |
+|---|---|
+| Provider/model | Groq `openai/gpt-oss-120b`, matching the existing server configuration; other model IDs are rejected until evaluated |
+| Output | Strict JSON Schema requiring code objects in coding mode and null in Multiple Choice/True or False; non-streaming, low reasoning effort |
+| Input bound | 3,072 UTF-8 bytes for serialized messages plus output schema; context is truncated to this bound without splitting Unicode characters |
+| Completion bound | 4,096 tokens, including reasoning; incomplete/truncated output fails validation |
+| Provider timeout/retries | 45 seconds; SDK retries disabled |
+| Pool | At most the requested 5 or 10 distinct questions; full pools must cover easy/medium/hard; fewer are accepted with explicit actual count |
+| Admission | One active generation per API process and at most one provider attempt per 60 seconds; duplicates of an existing request bypass admission and return saved status |
+| Source selection | First 200 approved sections in source order, filled into the bounded context; coding mode considers sections containing common code markers |
+
+These are conservative development bounds, not measured campus capacity or a guarantee that any account's remaining quota is sufficient. Groq organization quotas may be shared with other applications. Published model/structured-output/rate-limit references: [models](https://console.groq.com/docs/models), [strict outputs](https://console.groq.com/docs/structured-outputs), [rate limits](https://console.groq.com/docs/rate-limits). The lexical coding filter is not a parser for every programming language. A code sample beyond the first 200 sections, or insufficient supported text within the byte budget, can yield insufficient source; retrieval ranking remains future evaluation work. Source checks verify exact excerpts/owned references, not semantic truth of every AI-authored explanation. Instructor/content-quality and broader module evaluation remain required.
+
+The maintainer reports [`0008_atomic_study_operations.sql`](../supabase/migrations/0008_atomic_study_operations.sql) is applied after 0003–0005. Do not rerun applied files. Its service-only `publish_quiz` RPC saves quiz/questions/citations and the ready status in one transaction, rechecks source readiness and returns an already committed quiz on retry. `recover_quiz_generations` fails interrupted processing records at startup without changing ready records. Startup recovery requires this migration; the server will refuse to listen if it is missing or recovery fails. This file implements generation publication/recovery only, not answering/scoring RPCs. Three-modality support additionally requires 0012 as described below.
+
+Use `GROQ_API_KEY` and `GROQ_MODEL=openai/gpt-oss-120b` on the server only. Generation remains unavailable without the key or with a different model setting; unrelated existing routes do not require a Groq call. `POST /api/quizzes/generations` authenticates before parsing an uncompressed JSON body capped at 8 KiB, saves a processing record and starts bounded background work before responding. Poll its saved status; do not automatically create another request ID after a timeout. Database errors and provider failures return/store safe messages without logging document content or credentials. The accepted single-active-API-process/no-overlapping-deployment restriction remains mandatory: startup recovery must not run beside another active generation worker.
+
+### Stored records and privacy
+
+These records are represented by the prepared schema files. The maintainer reported the seven table/RLS/read-privilege checks passed after applying 0003–0005; that is user-reported schema/access evidence, not independent hosted behavior verification. IDs are server-generated UUIDs except the client generation `requestId`; timestamps use server time.
+
+The schema files are prepared locally under the planned names:
+
+- [`0003_generations_and_usage.sql`](../supabase/migrations/0003_generations_and_usage.sql): generation identity, choices, lifecycle and source ownership; campus usage accounting remains deferred.
+- [`0004_quizzes_and_questions.sql`](../supabase/migrations/0004_quizzes_and_questions.sql): quizzes, private questions/keys, validated source references and transactional readiness checks.
+- [`0005_study_sessions_and_answers.sql`](../supabase/migrations/0005_study_sessions_and_answers.sql): sessions, saved candidate/option order, answer uniqueness and correctness derived from the matching stored key.
+
+These files passed [92 isolated PostgreSQL checks](validation.md#phase-3-quiz-schema-isolated-postgresql-checks---2026-11-07), covering fresh installation and an existing-schema upgrade. The maintainer subsequently reported successful hosted table/RLS/read-privilege checks; hosted constraints and concurrent behavior were not independently verified. Existing installations apply only missing files, not previously applied migrations. A fresh installation runs all existing migration files in filename order through 0012 before enabling three-modality generation (the generation guard also checks the import-recovery field introduced in 0010). Generation `quizId` and quiz source/settings are projected through the generation-to-quiz relationship, rather than duplicated in a circular foreign key. Option columns map to the public two- or four-option array, omitting null columns; citations and session candidate order use child tables. All seven tables enable RLS and deny direct anonymous/authenticated access; Express enforces ownership and returns safe projections through its server-only client. The implemented generation pipeline uses 0008 for atomic publication. Atomic answer submission, session advancement and idempotent answer responses still require later functions/services; table constraints alone do not implement those operations.
+
+| Record | Required stored information |
+|---|---|
+| Generation | `id`, `owner_id`, `request_id`, normalized source and quiz choices, `status`, nullable `quiz_id`, nullable safe `error_code`, `created_at`, `updated_at` |
+| Quiz | `id`, `owner_id`, unique `generation_id`, source module/topic and subject links, question type, requested count, achievable session count, starting difficulty, provider/model identity, `created_at` |
+| Question | `id`, `quiz_id`, stable pool position, prompt, optional code/language, options, difficulty, private correct option ID, private explanation and supporting sources |
+| Study session | `id`, `owner_id`, unique `quiz_id`, `status`, saved candidate question order and option orders, current question ID, starting/current difficulty, correct/incorrect streak counters, start/completion timestamps and final totals |
+| Submitted answer | `session_id`, `question_id`, selected option ID, difficulty actually used, correctness, answered sequence position and first-submission timestamp |
+
+Use owner-consistent foreign keys for module/topic, quiz and session relationships. There is at most one generation per `(owner_id, request_id)`, one session per quiz, and one answer per `(session_id, question_id)`. A new study attempt requires a new generation and quiz; it cannot create another session over a saved quiz.
+
+Private question rows include answer keys and must not be directly readable through anonymous/authenticated Supabase clients, even by the owner. Ownership RLS alone would expose those keys to the learner. Keep question/key writes, grading and session mutations server-only, with explicit owner-scoped safe projections through Express. Other records must also enforce ownership. Do not return full question rows, provider output or unused pool questions from public endpoints.
+
+### Provider question and public question
+
+Validate provider output before saving a complete quiz. Multiple Choice and Coding Syntax use four nonempty, distinct options with stable IDs `a`, `b`, `c`, `d`. True or False uses exactly `a = True`, `b = False`, with a factual statement as the prompt and `code: null`; persisted `option_c` and `option_d` are null. Every mode has exactly one matching correct option ID, one difficulty, a nonempty prompt and an explanation. Provider-local question identifiers are not database IDs. The server assigns question UUIDs after validation. Duplicate questions and invalid option mappings fail validation; structural checks cannot establish semantic correctness. Treat source documents as untrusted data, not instructions.
+
+### Three-modality migration and compatibility
+
+The maintainer reports 0008 is applied. Apply only the missing `0012_question_modalities.sql` before deploying three-modality support; do not rerun applied migrations. Fresh installations apply every migration in filename order through 0012. The new migration preserves existing rows and extends generation types, question option shapes, session option permutations and submitted-answer membership checks. It adds no answering endpoints. Existing `conceptual` and `coding_syntax` API values and the default remain unchanged; True or False adds `true_false` to generation requests and quiz metadata. Do not rename stored `conceptual` values to a new MC identifier.
+
+The existing publication RPC already supports null option columns and needs no replacement. New question triggers enforce modality-specific code and option shapes on inserts/updates. Saved session orders must contain precisely the question's two or four option IDs; future session creation must explicitly supply `['a', 'b']` (or its saved permutation) for True or False instead of using the four-option database default. Submitted answers outside that saved order are rejected. A new modality on an existing request ID remains a conflicting retry. Ownership, source evidence, atomic publication and private answer-key rules apply to all three modes.
+
+Persist each module question's supporting excerpt, owned `sectionId`, and the section's original reference. A PDF reference is `{ "page": 2 }`; DOCX uses `{ "kind": "extracted-paragraph", "paragraph": 7 }`. Validate section ownership/eligibility, reference equality and excerpt presence in the approved text. Multiple exact excerpts from one section merge into one contiguous original-text span, capped at 1,500 characters; invented excerpts or oversized spans fail validation. Question identity includes the code snippet so different snippets can share a prompt. These structural checks do not by themselves establish factual correctness; the accepted correct answer and explanation must also be supported by the source. Topic-only questions use an empty source list.
+
+An unanswered question sent to the app has this shape; content here is illustrative:
+
+```json
+{
+  "id": "question-uuid",
+  "questionType": "conceptual",
+  "difficulty": "medium",
+  "prompt": "Which loop checks its condition after running the body?",
+  "code": null,
+  "options": [
+    { "id": "a", "text": "for" },
+    { "id": "b", "text": "while" },
+    { "id": "c", "text": "do...while" },
+    { "id": "d", "text": "for...of" }
+  ]
+}
+```
+
+For coding-syntax questions, `code` is `{ "language": "javascript", "text": "..." }`; render it as inert text, never execute it. Correct option IDs, explanations and supporting excerpts stay private until that question has been answered. Option shuffling changes presentation order only; grade against the saved option ID and preserve option order across resume.
+
+### Generation endpoints and lifecycle
+
+`POST /api/quizzes/generations` accepts the source and choices above:
+
+```json
+{
+  "requestId": "client-request-uuid",
+  "source": { "kind": "module", "materialId": "material-uuid" },
+  "questionType": "conceptual",
+  "questionCount": 10,
+  "startingDifficulty": "medium"
+}
+```
+
+Persist a `processing` record before starting provider work. Return HTTP 202 with `{ "generation": { "id": "generation-uuid", "status": "processing", "quizId": null, "errorCode": null } }`. `GET /api/quizzes/generations/:id` returns the same safe status shape with HTTP 200 for an owned record, including terminal outcomes.
+
+Transitions are `processing -> ready | insufficient_source | failed`; terminal records do not restart. `ready` requires a fully validated quiz and a non-null `quizId`, saved atomically with the status change. Other terminal outcomes have no quiz. If the source supports fewer usable questions than requested, save a ready quiz with the achievable count and explicitly report requested versus available counts in quiz metadata. Zero usable questions yields `insufficient_source`, not an empty quiz.
+
+Repeating an owner's `requestId` with identical normalized input returns the existing record without another provider call: HTTP 202 while processing, otherwise HTTP 200. Different input with that ID returns HTTP 409 `REQUEST_CONFLICT`. Enforce uniqueness in the database so concurrent requests cannot start duplicate work. Provider execution itself is not guaranteed exactly once.
+
+Reconcile interrupted processing records under the accepted single-active-API-process restriction: preserve an atomically committed ready quiz; otherwise mark the interrupted generation failed with `GENERATION_INTERRUPTED`. Retrying a failed/insufficient request requires a deliberate user action and a new `requestId`. A lost network response is retried with the existing ID first. Do not silently regenerate after an API restart or provider timeout.
+
+### Study endpoints and answer submission
+
+| Endpoint (metadata implemented; study endpoints planned) | Input | Safe response |
+|---|---|---|
+| `GET /api/quizzes/:id` | Owned quiz ID | `{ quiz: { id, source, subjectId, topicId, questionType, requestedQuestionCount, questionCount, startingDifficulty } }`; no question bank or keys |
+| `POST /api/quizzes/:id/sessions` | No body | HTTP 201, `{ session, currentQuestion, answers: [] }` for a newly started session; HTTP 200 with current saved state on retry |
+| `GET /api/study-sessions/:id` | Owned session ID | `{ session, currentQuestion, answers }`; current unanswered question uses the public shape above; answers contain feedback for already answered questions only |
+| `POST /api/study-sessions/:id/answers` | `{ questionId, optionId }` | `{ feedback, session, currentQuestion }`, HTTP 200; null current question on completion |
+| `GET /api/study-sessions/:id/results` | Owned completed session ID | `{ sessionId, correctCount, answeredCount, questionCount, answers }`; HTTP 409 `SESSION_INCOMPLETE` while active |
+
+Public `session` includes `id`, `quizId`, `status`, `questionCount`, `answeredCount`, starting/current difficulty, and start/completion timestamps. Keep unused candidate IDs and adaptive counters server-side. Session states are `active -> completed`; there is no public reopen/reset operation. Save a candidate pool order and each question's option order when the session starts, and persist the current question before exposing it. Repeated start/resume requests return that same session and current question.
+
+Phase 3 initializes the selected starting difficulty and the durable current-difficulty/streak fields. The two-consecutive-answer adaptation algorithm belongs to Phase 4; defining its storage here does not implement it early. The saved candidate order provides deterministic selection and resume without another AI call. Difficulty selection uses an unused question at the current level, then the nearest available level; ties prefer the easier level. Preserve the actual question difficulty on its submitted answer. Phase 4 must reuse these records rather than regenerate a pool after each answer.
+
+Example feedback, returned only after accepting that question's answer:
+
+```json
+{
+  "questionId": "question-uuid",
+  "selectedOptionId": "b",
+  "correct": false,
+  "correctOptionId": "c",
+  "explanation": "A do...while loop evaluates its condition after executing the body.",
+  "sources": [
+    { "sectionId": "section-uuid", "reference": { "page": 2 }, "excerpt": "Supporting text from the approved section." }
+  ]
+}
+```
+
+Accept a new answer only for the session's current question and an option actually attached to it. One owner-scoped database transaction must lock the session, insert the answer, calculate correctness from the stored key, advance the current question and finalize totals/completion exactly once when the achievable count is reached. Client-supplied correctness, scores, keys and completion timestamps are rejected. No AI call is used for scoring.
+
+An identical retry of an answered `(sessionId, questionId, optionId)` returns stored feedback plus the latest authoritative session/current question, without changing totals, timestamps or difficulty counters. A different option for an answered question returns HTTP 409 `ANSWER_CONFLICT`. An unserved/out-of-order question returns HTTP 409 `QUESTION_NOT_CURRENT`; an invalid option returns HTTP 400. Identical answer retries remain valid after completion. A lost answer response must be resolved by retrying that answer or reading the session before proceeding. Reopening the app resumes the saved session; it never creates a fresh quiz automatically. Answering requires connectivity.
+
+### Failures, deletion and acceptance checks
+
+- Missing/invalid/expired identity returns HTTP 401. Missing or foreign quiz, generation, session and source IDs return the same HTTP 404. Invalid source combinations, UUIDs or choices return HTTP 400; an owned module not ready for generation returns HTTP 409 `MODULE_NOT_READY`.
+- Reject quota/admission failures before accepting work with HTTP 429 and a meaningful `Retry-After`. Failures discovered after accepting a generation remain visible through its saved status: use safe codes such as `QUOTA_EXCEEDED`, `PROVIDER_TIMEOUT`, `PROVIDER_REFUSED`, `INVALID_GENERATION` and `GENERATION_INTERRUPTED`. Return safe HTTP 503 errors for infrastructure failures. Never display tokens, keys, provider internals or source content in error messages/logs. Unsupported coding context yields `insufficient_source` with `CODE_SOURCE_REQUIRED`.
+- Module deletion must remove its generations, quizzes, private questions, sessions and answers when their migrations are introduced. Prevent an in-flight generation from saving a quiz after its source enters deletion. Preserve unrelated topic-only quizzes, personal labels and other users' data. Extend deletion verification in the same implementation milestone; progress/streak recalculation follows the phases that introduce those persisted effects.
+- Test both source kinds, all three modalities, the 5/10 choices and defaults; valid and invalid PDF/DOCX citations; missing code, fewer-question and empty-source outcomes; option shuffling; malformed/duplicate provider output; untrusted source instructions; and provider quota/refusal/timeout behavior.
+- Test two-account isolation through API and direct database access, key omission before answering, concurrent duplicate generation/answers, conflicting retries, final-answer idempotency, interrupted generation recovery, session resume with stable option order, and module deletion during generation. These are required future checks, not results claimed by this document.
 
 ## Verification
 

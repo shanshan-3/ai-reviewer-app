@@ -2,9 +2,9 @@
 
 The project has separate mobile and server applications. Each keeps its own dependencies and lockfile.
 
-The mobile app has Supabase email/password sign-in, Remember me session storage, and shared authentication form components. Registration and password recovery also call Supabase. Brevo delivers recovery emails; the maintainer reported a successful recovery test on their phone. Express implements health, authenticated own-profile reads, Node module upload/extraction-preview, personal labels, and review approval. Profiles/labels, module metadata/sections, and private Storage migrations exist with recorded live ownership checks. A bounded Node child process extracts PDF and DOCX text; Supabase stores unfinished-import recovery markers. Mobile import and review screens are connected in code. Migration 0011 adds transactional approval; its live SQL/ownership checks and the new Android review controls remain unverified. AI generation and study features remain planned.
+The mobile app has Supabase email/password sign-in, Remember me session storage, and shared authentication form components. Registration and password recovery also call Supabase. Brevo delivers recovery emails; the maintainer reported a successful recovery test on their phone. Express implements health, authenticated own-profile reads, Node module upload/extraction-preview, personal labels, review approval, and bounded quiz generation/status/metadata. Profiles/labels, module metadata/sections, and private Storage migrations exist with recorded live ownership checks. A bounded Node child process extracts PDF and DOCX text; Supabase stores unfinished-import recovery markers. Mobile import and review screens are connected in code. Migration 0011 adds transactional approval; its live SQL/ownership checks and the new Android review controls remain unverified. Quiz generation supports Multiple Choice, True or False and Coding Syntax with choices, with isolated integration and synthetic provider checks. The maintainer reports 0008 applied; apply the new 0012 migration before deploying three-modality support. Quiz screens, answering/scoring and other study features remain planned.
 
-The server uses MVC with a service layer, grouped by responsibility. The own-profile endpoint runs through routes, authentication middleware, a controller, a service, and a model. Other feature endpoints remain planned.
+The server uses MVC with a service layer, grouped by responsibility. Profile, material and quiz-generation endpoints run through routes, authentication middleware, controllers, services and models. Quiz answering, scoring and other study features remain planned.
 
 Follow the [installation guide](docs/installation.md) to install dependencies, configure local environment files, and run the app. The [development page](docs/development.md) links to the project guides. The [command handbook](docs/commands.md) covers Expo, Android, Gradle, ADB, and server commands.
 
@@ -79,23 +79,30 @@ ai-reviewer-app/
 |-- server/
 |   |-- src/
 |   |   |-- config/
+|   |   |   |-- ai.js                       # Pinned Groq client, timeout, context/output and admission bounds
 |   |   |   |-- curriculum.js                # Allowed BSIT subject names and validation
 |   |   |   `-- supabase.js                  # Per-request client with caller token
 |   |   |-- controllers/
+|   |   |   |-- quizController.js           # Generate quiz, poll generation status, read safe quiz metadata
 |   |   |   |-- labelController.js           # Personal label list/create responses
 |   |   |   |-- materialController.js        # Upload and owner-only preview responses
 |   |   |   `-- profileController.js         # Own-profile response and safe errors
 |   |   |-- middleware/
 |   |   |   `-- authMiddleware.js            # Verify Bearer token and attach identity
 |   |   |-- models/
+|   |   |   |-- quizModel.js                # Owner-scoped generation/source reads and atomic quiz publication
 |   |   |   |-- labelModel.js                # Owner-scoped subject/topic persistence
 |   |   |   |-- materialModel.js             # Material/section persistence and private files
 |   |   |   `-- profileModel.js              # Read profile by authenticated user ID
 |   |   |-- routes/
+|   |   |   |-- quizRoutes.js               # Authenticated /api/quizzes generation/status/metadata routes
 |   |   |   |-- labelRoutes.js               # Label endpoints mounted at /api/materials/labels
 |   |   |   |-- materialRoutes.js            # Authenticated raw upload and preview endpoints
 |   |   |   `-- profileRoutes.js             # Protected GET /api/profile
 |   |   |-- services/
+|   |   |   |-- quizService.js              # Generation lifecycle, admission, retries, source ownership, recovery
+|   |   |   |-- quizGeneration.js           # Bounded approved context, Groq calls and failure classification
+|   |   |   |-- quizPrompts.js              # Strict question JSON schema and grounded IT question prompts
 |   |   |   |-- labelService.js              # Personal label validation and ownership rules
 |   |   |   |-- materialExtraction.js        # Node worker supervision, deadline, Linux RSS monitor
 |   |   |   |-- materialExtractionLimits.js  # Shared extraction ceilings and safe messages
@@ -104,9 +111,10 @@ ai-reviewer-app/
 |   |   |   |-- materialService.js           # Import lifecycle and durable cleanup recovery
 |   |   |   `-- profileService.js            # Lookup and missing-profile handling
 |   |   |-- validation/
+|   |   |   |-- quizValidation.js           # Quiz choices, provider output, options and citations
 |   |   |   `-- materialValidation.js        # Filename, MIME, size, signature, and ID checks
-|   |   |-- app.js                           # Express, health, profile, and material route mounts
-|   |   `-- server.js                        # Recover pending imports before listening
+|   |   |-- app.js                           # Express, health, profile, material and quiz route mounts
+|   |   `-- server.js                        # Recover pending imports and quiz generations before listening
 |   |-- .node-version                        # Render Node 24 runtime
 |   |-- .env.example
 |   |-- package.json                         # Dependencies and start/dev commands
@@ -115,10 +123,15 @@ ai-reviewer-app/
 |   `-- migrations/
 |       |-- 0001_profiles_and_labels.sql      # Profiles and private subject/topic labels
 |       |-- 0002_materials_and_sections.sql   # Private module metadata and extraction sections
+|       |-- 0003_generations_and_usage.sql    # Generation schema; maintainer reports applied; usage accounting deferred
+|       |-- 0004_quizzes_and_questions.sql    # Private quiz/question/source schema; maintainer reports applied
+|       |-- 0005_study_sessions_and_answers.sql # Sessions/order/answers schema; maintainer reports applied
 |       |-- 0007_private_storage.sql          # Owner-prefixed private module Storage policies
+|       |-- 0008_atomic_study_operations.sql # Atomic quiz publication/recovery; maintainer reports applied
 |       |-- 0009_material_deletion.sql        # Deleting status and service-role deletion marker
 |       |-- 0010_material_import_recovery.sql # Durable unfinished-import markers
-|       `-- 0011_material_review.sql          # Atomic module approval; service-role-only function
+|       |-- 0011_material_review.sql          # Atomic module approval; service-role-only function
+|       `-- 0012_question_modalities.sql      # Three modalities, two/four options and answer membership; unapplied
 |-- docs/
 |   |-- api.md                               # Authenticated material import and preview contract
 |   |-- adr/
@@ -191,14 +204,14 @@ Paths in this table are relative to `mobile/` unless stated otherwise.
 | `LICENSE` | Contains the mobile starter license. |
 | `server/package.json` (from the repository root) | Lists server dependencies, enables ES modules, and defines startup and extraction commands. |
 | `server/package-lock.json` (from the repository root) | Records the server dependency versions. |
-| `server/src/app.js` (from the repository root) | Configures Express, the health endpoint, and `/api/profile` without opening a port. |
+| `server/src/app.js` (from the repository root) | Configures Express, health, profile, material and quiz routes without opening a port. |
 | `server/src/config/supabase.js` (from the repository root) | Creates a Supabase client using the caller's access token, with server session persistence disabled. |
 | `server/src/middleware/authMiddleware.js` (from the repository root) | Verifies Bearer tokens and attaches the authenticated user and Supabase client to the request. |
 | `server/src/routes/profileRoutes.js` (from the repository root) | Connects the protected own-profile GET route to its controller. |
 | `server/src/controllers/profileController.js` (from the repository root) | Returns the authenticated profile or safe not-found/server errors. |
 | `server/src/services/profileService.js` (from the repository root) | Loads the own profile and reports a missing profile. |
 | `server/src/models/profileModel.js` (from the repository root) | Reads profile ID, full name, and creation date using the authenticated user ID. |
-| `server/src/server.js` (from the repository root) | Validates the port and starts the listener, reporting startup errors. |
+| `server/src/server.js` (from the repository root) | Validates the port, recovers pending imports/generations and starts the listener; recovery failures prevent startup. |
 | `supabase/migrations/0001_profiles_and_labels.sql` (from the repository root) | Defines profiles, personal subject/topic labels, and ownership policies; file presence does not establish live database execution. |
 | `mobile/.env.example` and `server/.env.example` (from the repository root) | List required settings with placeholders. Local `.env` files are ignored and omitted from the tree. |
 | `docs/commands.md` (from the repository root) | Project command handbook covering Expo, Android, Gradle, ADB, Node, and Metro. |
@@ -355,7 +368,7 @@ ai-reviewer-app/
 |   |   |   |-- materialDeletion.js         # Source/derived-data cleanup
 |   |   |   |-- quizService.js              # Generation, scoring, session rules
 |   |   |   |-- quizGeneration.js           # Context selection and Groq requests
-|   |   |   |-- quizPrompts.js              # Conceptual/coding question prompts
+|   |   |   |-- quizPrompts.js              # Multiple Choice, True or False and Coding Syntax prompts
 |   |   |   |-- quizAdaptation.js           # Difficulty transitions/selection
 |   |   |   |-- flashcardService.js         # Generation and review completion
 |   |   |   |-- flashcardPrompts.js         # Flashcard generation prompts
@@ -384,7 +397,10 @@ ai-reviewer-app/
 |   |   |-- 0006_flashcards_and_reviews.sql
 |   |   |-- 0007_private_storage.sql
 |   |   |-- 0008_atomic_study_operations.sql
-|   |   `-- 0009_material_deletion.sql
+|   |   |-- 0009_material_deletion.sql
+|   |   |-- 0010_material_import_recovery.sql
+|   |   |-- 0011_material_review.sql
+|   |   `-- 0012_question_modalities.sql
 |   `-- seed.sql                            # Synthetic development data
 |-- docs/
 |   |-- development.md                      # Contributor guide links
