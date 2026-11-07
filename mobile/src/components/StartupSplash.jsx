@@ -33,7 +33,10 @@ export default function StartupSplash({ children }) {
   const overlayStyle = useAnimatedStyle(() => ({ opacity: opacity.get() }));
   const logoStyle = useAnimatedStyle(() => ({
     opacity: reveal.get(),
-    transform: [{ scale: 0.96 + reveal.get() * 0.04 }],
+    transform: reduceMotion ? [] : [
+      { translateY: (1 - reveal.get()) * 8 - (1 - opacity.get()) * 4 },
+      { scale: 0.94 + reveal.get() * 0.06 + (1 - opacity.get()) * 0.02 },
+    ],
   }));
 
   useEffect(() => {
@@ -77,7 +80,7 @@ export default function StartupSplash({ children }) {
       }
 
       reveal.set(withTiming(1, {
-        duration: 240,
+        duration: 520,
         easing: EASE_OUT,
         reduceMotion: ReduceMotion.System,
       }, (finished) => {
@@ -100,7 +103,7 @@ export default function StartupSplash({ children }) {
       if (!cancelled) setComplete(true);
     }
     opacity.set(withTiming(0, {
-      duration: reduceMotion || imageState === 'error' ? 0 : 180,
+      duration: reduceMotion || imageState === 'error' ? 0 : 260,
       easing: EASE_OUT,
       reduceMotion: ReduceMotion.System,
     }, (finished) => {
