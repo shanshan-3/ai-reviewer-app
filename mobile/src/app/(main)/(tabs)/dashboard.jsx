@@ -11,7 +11,6 @@ import { useToast } from '@/providers/toast-provider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import IconBolt from '@tabler/icons-react-native/IconBolt';
 import IconCards from '@tabler/icons-react-native/IconCards';
-import IconFileText from '@tabler/icons-react-native/IconFileText';
 import IconUpload from '@tabler/icons-react-native/IconUpload';
 import { THEME } from '@/lib/theme';
 
@@ -94,92 +93,77 @@ export default function DashboardPage() {
             <FlatList data={materials} keyExtractor={material => material.id}
                 renderItem={({ item }) => <MaterialCard material={item} deleting={deletingId === item.id} disabled={Boolean(deletingId) || loading}
                     onDelete={() => confirmDeletion(item)} onPress={() => router.push({ pathname: '/(main)/materials/[materialId]', params: { materialId: item.id } })} />}
-                contentContainerStyle={{ flexGrow: 1, width: '100%', maxWidth: 640, alignSelf: 'center', padding: 20, paddingBottom: 32, gap: 12 }}
+                contentContainerStyle={{ flexGrow: 1, width: '100%', maxWidth: 720, alignSelf: 'center', padding: 20, paddingTop: 28, paddingBottom: 32, gap: 12 }}
                 refreshing={loading && materials.length > 0} onRefresh={() => load()}
-                ListHeaderComponent={<View className="gap-6 pb-1">
-                <View className="gap-2">
-                    <Text accessibilityRole="header" className="font-geist-semibold text-3xl tracking-tight text-[#001428]">
-                        Your study space
-                    </Text>
-                    <Text className="font-geist text-sm leading-6 text-foreground/70">
-                        Keep your modules together, ready for review.
-                    </Text>
-                </View>
-
-                <View className="gap-4 rounded-xl border border-border bg-card p-5">
-                    <View className="flex-row flex-wrap items-center gap-3">
-                        <View className="min-w-0 flex-1 basis-40 gap-2">
-                            <Text accessibilityRole="header" className="font-geist-semibold text-xl text-[#001428]">
-                                Add a module
+                ListHeaderComponent={<View className="gap-8 pb-2">
+                <View className="gap-3">
+                    <View className="flex-row flex-wrap items-center gap-4">
+                        <View className="min-w-0 flex-1 basis-40 gap-3">
+                            <Text accessibilityRole="header" className="font-geist-semibold text-3xl leading-10 tracking-tight text-[#001428]">
+                                Your study space
                             </Text>
-                            <Text className="font-geist text-sm leading-6 text-foreground/70">
-                                Upload your notes. Review and organize their content.
+                            <Text className="font-geist text-base leading-7 text-[#526071]">
+                                Keep your modules together, ready for review.
                             </Text>
                         </View>
-                        <Image
-                            source={require('../../../../assets/illustrations/studying-amico-storyset-navy.png')}
-                            style={{ width: 88, height: 88 }}
-                            resizeMode="contain"
-                            accessible={false}
-                        />
+                        <Image source={require('../../../../assets/illustrations/studying-amico-storyset-navy.png')}
+                            style={{ width: 88, height: 88 }} resizeMode="contain" accessible={false} />
                     </View>
-                    <View className="gap-2">
+
+                    <View className="mt-2 gap-3">
                         <Pressable
                             accessibilityRole="button"
-                            accessibilityLabel="Upload material"
+                            accessibilityLabel="Upload module"
                             accessibilityHint="Choose a PDF or DOCX to import as a module."
                             accessibilityState={{ disabled: Boolean(deletingId) }}
                             disabled={Boolean(deletingId)}
                             onPress={() => router.push('/(main)/materials/import')}
-                            className="min-h-12 flex-row flex-wrap items-center justify-center gap-2 rounded-lg border-2 border-transparent bg-[#001428] px-4 py-3 active:opacity-80 disabled:opacity-50 focus:border-muted-foreground"
+                            className="min-h-14 flex-row items-center justify-center gap-3 rounded-2xl bg-[#001428] px-5 py-4 active:opacity-80 disabled:opacity-40 focus:bg-[#243447]"
                         >
                             <IconUpload size={20} color={THEME.primaryForeground} accessible={false} />
-                            <Text className="text-center font-geist-semibold text-sm text-primary-foreground">
-                                Upload material
+                            <Text className="shrink text-center font-geist-semibold text-base text-primary-foreground">
+                                Upload module
                             </Text>
                         </Pressable>
-                        <Text className="text-center font-geist text-xs leading-5 text-foreground/70">
+                        <Text className="text-center font-geist text-xs leading-5 text-[#526071]">
                             PDF or DOCX · Up to 5 MiB
                         </Text>
                     </View>
                 </View>
 
-                <View className="gap-1">
-                    <Text accessibilityRole="header" className="font-geist-semibold text-lg text-[#001428]">
+                <View className="gap-2">
+                    <Text accessibilityRole="header" className="font-geist-semibold text-2xl leading-8 tracking-tight text-[#001428]">
                         Your modules
                     </Text>
-                    <Text className="font-geist text-sm leading-6 text-foreground/70">
+                    <Text className="font-geist text-sm leading-6 text-[#526071]">
                         Open a module to review its content.
                     </Text>
                 </View>
                 </View>}
-                ListEmptyComponent={!loading && !message ? <View className="items-center gap-3 rounded-xl border border-border bg-card px-6 py-8">
-                    <View className="h-12 w-12 items-center justify-center rounded-full bg-background">
-                        <IconFileText size={24} color="#001428" accessible={false} />
-                    </View>
-                    <View className="gap-2">
-                        <Text className="text-center font-geist-semibold text-base text-foreground">No modules yet</Text>
-                        <Text className="text-center font-geist text-sm leading-6 text-foreground/70">Use Upload material above to add your first module.</Text>
+                ListEmptyComponent={!loading && !message ? <View className="items-center gap-5 px-5 py-8">
+                    <View className="max-w-xs gap-2">
+                        <Text className="text-center font-geist-semibold text-xl leading-7 tracking-tight text-[#001428]">No modules yet</Text>
+                        <Text className="text-center font-geist text-sm leading-6 text-[#526071]">Upload your first module to keep your notes here, ready to review.</Text>
                     </View>
                 </View> : null}
                 ListFooterComponent={<View className="gap-2">
                     {loading && <View className="items-center gap-2 py-5" accessibilityLiveRegion="polite">
                         <ActivityIndicator color={THEME.primary} accessibilityLabel="Loading your modules" />
-                        <Text className="font-geist text-sm text-foreground/70">Loading your modules…</Text>
+                        <Text className="font-geist text-sm leading-6 text-[#526071]">Loading your modules…</Text>
                     </View>}
                     <AuthMessage message={message} isError />
                     {!loading && Boolean(message) && <AuthButton submitLabel="Retry" disabled={Boolean(deletingId)} onSubmit={() => load(failedOffset.current)} />}
                     {!loading && !message && nextOffset !== null && <AuthButton submitLabel="Load more modules" disabled={Boolean(deletingId)} onSubmit={() => load(nextOffset)} />}
-                    <View className="mt-5 gap-3 border-t border-border pt-5">
-                        <Text className="font-geist-medium text-xs text-foreground/70">Coming soon</Text>
-                        <View className="flex-row flex-wrap gap-x-6 gap-y-3">
-                            <View className="flex-row items-center gap-2">
+                    <View className="mt-6 gap-4 rounded-2xl bg-[#EDF0F5] p-5" style={{ borderCurve: 'continuous' }}>
+                        <Text className="font-geist-medium text-xs leading-5 text-[#526071]">Coming soon</Text>
+                        <View className="flex-row flex-wrap gap-x-6 gap-y-4">
+                            <View className="max-w-full flex-row items-center gap-2">
                                 <IconBolt size={18} color={THEME.mutedForeground} accessible={false} />
-                                <Text className="font-geist text-sm text-foreground/70">Practice quizzes</Text>
+                                <Text className="shrink font-geist text-sm leading-6 text-[#526071]">Practice quizzes</Text>
                             </View>
-                            <View className="flex-row items-center gap-2">
+                            <View className="max-w-full flex-row items-center gap-2">
                                 <IconCards size={18} color={THEME.mutedForeground} accessible={false} />
-                                <Text className="font-geist text-sm text-foreground/70">Flashcards</Text>
+                                <Text className="shrink font-geist text-sm leading-6 text-[#526071]">Flashcards</Text>
                             </View>
                         </View>
                     </View>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Pressable, SectionList, Text, View, useWindowDimensions } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { useReducedMotion } from 'react-native-reanimated';
 import IconCheck from '@tabler/icons-react-native/IconCheck';
 import IconChevronRight from '@tabler/icons-react-native/IconChevronRight';
 import FormField from '@/components/FormField';
@@ -12,6 +13,7 @@ export default function LabelPicker({ labels, subjectId, selectSubject, busy, re
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState('');
     const { height } = useWindowDimensions();
+    const reduceMotion = useReducedMotion();
     const current = labels.subjects.find(label => label.id === subjectId);
     const sections = filterCurriculum(search);
 
@@ -24,24 +26,31 @@ export default function LabelPicker({ labels, subjectId, selectSubject, busy, re
     }
 
     return <>
-        <View className="overflow-hidden rounded-xl border border-border bg-card" style={{ borderCurve: 'continuous' }}>
-            {ready ? <Text selectable className="px-5 py-4 font-geist-medium text-base leading-6 text-foreground">{current?.name || 'Subject unavailable'}</Text>
+        <View className="overflow-hidden rounded-2xl bg-card" style={{ borderCurve: 'continuous' }}>
+            {ready ? <View className="gap-1 px-5 py-4">
+                <Text className="font-geist text-xs leading-5 text-[#526071]">Subject</Text>
+                <Text selectable className="font-geist-medium text-base leading-6 text-[#001428]">{current?.name || 'Subject unavailable'}</Text>
+            </View>
                 : <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy, expanded: open }} disabled={busy}
+                    accessibilityLabel={`Subject: ${current?.name || 'Choose a subject'}`} accessibilityHint="Opens the searchable subject list"
                     onPress={() => { onOpen(); setSearch(''); setOpen(true); }}
-                    className="min-h-14 flex-row items-center gap-3 px-5 py-4 active:bg-secondary focus:bg-secondary">
-                    <Text className="flex-1 font-geist-medium text-base leading-6 text-[#001428]">{current?.name || 'Choose a subject'}</Text>
+                    className={`min-h-14 flex-row items-center gap-3 px-5 py-4 active:bg-secondary focus:bg-secondary ${busy ? 'opacity-40' : ''}`}>
+                    <View className="flex-1 gap-1">
+                        <Text className="font-geist text-xs leading-5 text-[#526071]">Subject</Text>
+                        <Text className="font-geist-medium text-base leading-6 text-[#001428]">{current?.name || 'Choose a subject'}</Text>
+                    </View>
                     <IconChevronRight size={20} color={THEME.mutedForeground} accessible={false} />
                 </Pressable>}
         </View>
-        <Modal visible={open} transparent animationType="fade" presentationStyle="overFullScreen" onRequestClose={close}>
+        <Modal visible={open} transparent animationType={reduceMotion ? 'none' : 'fade'} presentationStyle="overFullScreen" onRequestClose={close}>
             <SafeAreaProvider>
                 <View className="flex-1">
                     <Pressable accessibilityRole="button" accessibilityLabel="Dismiss subject picker" disabled={busy}
                         accessibilityState={{ disabled: busy }} onPress={close} className="absolute inset-0 bg-black/50" />
                     <KeyboardAvoidingView className="flex-1 justify-end" pointerEvents="box-none" behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}>
                         <SafeAreaView edges={['bottom', 'left', 'right']} accessibilityViewIsModal
-                            style={{ maxHeight: height * 0.8, flexShrink: 1, borderCurve: 'continuous' }} className="overflow-hidden rounded-t-2xl bg-card">
-                            <View className="flex-row items-center gap-3 border-b border-border px-5 py-3">
+                            style={{ maxHeight: height * 0.8, flexShrink: 1, borderCurve: 'continuous' }} className="overflow-hidden rounded-t-3xl bg-card">
+                            <View className="flex-row items-center gap-3 px-5 py-2">
                                 <Text accessibilityRole="header" className="flex-1 font-geist-semibold text-lg text-[#001428]">Choose a subject</Text>
                                 <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy }} disabled={busy} onPress={close}
                                     className={`min-h-12 justify-center rounded-lg px-3 active:bg-secondary focus:bg-secondary ${busy ? 'opacity-40' : ''}`}>

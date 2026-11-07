@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import IconCheck from '@tabler/icons-react-native/IconCheck';
 import IconMinus from '@tabler/icons-react-native/IconMinus';
+import IconChevronLeft from '@tabler/icons-react-native/IconChevronLeft';
+import IconChevronRight from '@tabler/icons-react-native/IconChevronRight';
+import IconCircleCheck from '@tabler/icons-react-native/IconCircleCheck';
 import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import AuthButton from '@/components/AuthButton';
@@ -131,92 +134,109 @@ export default function MaterialReviewForm({ material, sections, onReaderPageCha
         }
     }
 
-    return <View className="gap-6">
-        <Text accessibilityRole="header" className="font-geist-semibold text-lg text-[#001428]">Subject</Text>
+    return <View className="gap-8">
         {!labels && !message && <ActivityIndicator color={THEME.primary} accessibilityLabel="Loading subjects" />}
         {!labels && Boolean(message) && <AuthButton submitLabel="Retry loading labels" onSubmit={() => { setMessage(''); setAttempt(value => value + 1); }} />}
         {labels && <LabelPicker labels={labels} subjectId={subjectId}
             selectSubject={selectSubject} message={message} onOpen={() => setMessage('')}
             busy={busy} ready={ready} />}
         <View className="gap-4" onLayout={event => { readerTop.current = event.nativeEvent.layout.y; }}>
-            <Text accessibilityRole="header" className="font-geist-semibold text-lg text-[#001428]">Extracted text</Text>
-            {pages.some(item => !item.sections[0].reference.page) && <Text className="font-geist text-xs leading-5 text-muted-foreground">DOCX reader pages group paragraphs. Numbering differs from Word.</Text>}
+            <View className="gap-2">
+                <Text accessibilityRole="header" className="font-geist-semibold text-2xl leading-8 tracking-tight text-[#001428]">Extracted text</Text>
+                {!ready && <Text className="font-geist text-sm leading-6 text-[#526071]">Select the text you want to use for questions.</Text>}
+                {pages.some(item => !item.sections[0].reference.page) && <Text className="font-geist text-xs leading-5 text-[#526071]">DOCX reader pages group paragraphs. Numbering differs from Word.</Text>}
+            </View>
             {!ready && <Pressable accessibilityRole="checkbox" accessibilityLabel="Select all pages"
                     accessibilityState={{ checked: allSelection.checked, disabled: busy || !allSelection.usableIds.length }}
                     disabled={busy || !allSelection.usableIds.length}
                     onPress={() => { setSelected(value => togglePageSelection({ sections }, value)); setConfirmed(false); }}
-                    className={`min-h-12 flex-row items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 active:bg-secondary focus:border-foreground ${busy || !allSelection.usableIds.length ? 'opacity-40' : ''}`}>
-                    <View className={`h-5 w-5 items-center justify-center rounded border ${allSelection.checked ? 'border-[#001428] bg-[#001428]' : 'border-muted-foreground'}`}>
+                    className={`min-h-12 flex-row items-center gap-3 rounded-xl px-2 py-3 active:bg-secondary focus:bg-secondary ${busy || !allSelection.usableIds.length ? 'opacity-40' : ''}`}>
+                    <View className={`h-6 w-6 items-center justify-center rounded-md border ${allSelection.checked ? 'border-[#001428] bg-[#001428]' : 'border-muted-foreground bg-card'}`}>
                         {allSelection.checked === true && <IconCheck size={16} color={THEME.primaryForeground} accessible={false} />}
                         {allSelection.checked === 'mixed' && <IconMinus size={16} color={THEME.primaryForeground} accessible={false} />}
                     </View>
-                    <Text className="flex-1 font-geist-medium text-sm text-[#001428]">Select all pages</Text>
+                    <Text className="flex-1 font-geist-medium text-sm leading-6 text-[#001428]">Select all pages</Text>
                 </Pressable>}
-            {!page && <Text className="font-geist text-base leading-7 text-muted-foreground">No extracted text is available.</Text>}
-            {page && <>
-                <View className="flex-row items-center gap-1 rounded-xl border border-border bg-card p-2">
-                    <Pressable accessibilityRole="button" accessibilityState={{ disabled: pageIndex === 0 }} disabled={pageIndex === 0}
-                        onPress={() => changePage(pageIndex - 1)} className={`min-h-12 justify-center rounded-lg px-3 active:bg-secondary focus:bg-secondary ${pageIndex === 0 ? 'opacity-40' : ''}`}>
-                        <Text className="font-geist-semibold text-sm text-[#001428]">Previous</Text>
-                    </Pressable>
-                    <Pressable accessibilityRole="button" accessibilityLabel="Go to page" accessibilityState={{ expanded: showJump }}
-                        onPress={() => { setShowJump(value => !value); setPageError(''); }} className="min-h-12 flex-1 items-center justify-center gap-1 rounded-lg px-2 active:bg-secondary focus:bg-secondary">
-                        <Text accessibilityLiveRegion="polite" style={{ fontVariant: ['tabular-nums'] }} className="text-center font-geist-medium text-sm text-[#001428]">{page.title.startsWith('Reader') ? 'Reader page' : 'Page'} {pageIndex + 1} of {pages.length}</Text>
-                        <Text className="text-center font-geist text-xs text-muted-foreground">{showJump ? 'Close page selector' : 'Tap to jump'}</Text>
-                    </Pressable>
-                    <Pressable accessibilityRole="button" accessibilityState={{ disabled: pageIndex === pages.length - 1 }} disabled={pageIndex === pages.length - 1}
-                        onPress={() => changePage(pageIndex + 1)} className={`min-h-12 justify-center rounded-lg px-3 active:bg-secondary focus:bg-secondary ${pageIndex === pages.length - 1 ? 'opacity-40' : ''}`}>
-                        <Text className="font-geist-semibold text-sm text-[#001428]">Next</Text>
-                    </Pressable>
+            {!page && <View className="rounded-2xl bg-card p-6">
+                <Text className="font-geist text-base leading-7 text-[#526071]">No extracted text is available.</Text>
+            </View>}
+            {page && <View className="overflow-hidden rounded-2xl border border-[#E4E8EE] bg-card"
+                style={{ borderCurve: 'continuous', boxShadow: '0 4px 20px rgba(0, 20, 40, 0.04)' }}>
+                <View className="gap-3 border-b border-[#E4E8EE] bg-[#F1F4F8] p-2">
+                    <View className="flex-row items-center gap-2">
+                        <Pressable accessibilityRole="button" accessibilityLabel="Previous page" accessibilityState={{ disabled: pageIndex === 0 }} disabled={pageIndex === 0}
+                            onPress={() => changePage(pageIndex - 1)} className={`h-12 w-12 items-center justify-center rounded-xl active:bg-[#E1E7EF] focus:bg-[#E1E7EF] ${pageIndex === 0 ? 'opacity-30' : ''}`}>
+                            <IconChevronLeft size={22} color="#001428" accessible={false} />
+                        </Pressable>
+                        <Pressable accessibilityRole="button" accessibilityLabel={`Go to page. ${page.title}, ${pageIndex + 1} of ${pages.length}`} accessibilityState={{ expanded: showJump }}
+                            onPress={() => { setShowJump(value => !value); setPageError(''); }} className="min-h-12 flex-1 items-center justify-center gap-1 rounded-xl px-2 py-2 active:bg-[#E1E7EF] focus:bg-[#E1E7EF]">
+                            <Text accessibilityLiveRegion="polite" style={{ fontVariant: ['tabular-nums'] }} className="text-center font-geist-semibold text-sm leading-5 text-[#001428]">{page.title.startsWith('Reader') ? 'Reader page' : 'Page'} {pageIndex + 1} of {pages.length}</Text>
+                            <Text className="text-center font-geist text-xs leading-4 text-[#526071]">{showJump ? 'Close page selector' : 'Go to page'}</Text>
+                        </Pressable>
+                        <Pressable accessibilityRole="button" accessibilityLabel="Next page" accessibilityState={{ disabled: pageIndex === pages.length - 1 }} disabled={pageIndex === pages.length - 1}
+                            onPress={() => changePage(pageIndex + 1)} className={`h-12 w-12 items-center justify-center rounded-xl active:bg-[#E1E7EF] focus:bg-[#E1E7EF] ${pageIndex === pages.length - 1 ? 'opacity-30' : ''}`}>
+                            <IconChevronRight size={22} color="#001428" accessible={false} />
+                        </Pressable>
+                    </View>
+                    {showJump && <View className="gap-2 px-3 pb-3">
+                        <View className="flex-row items-end gap-3">
+                            <FormField label="Go to page" labelId="reader-page" value={jump} onChangeText={setJump} autoFocus
+                                invalid={Boolean(pageError)} keyboardType="number-pad" returnKeyType="go" onSubmitEditing={jumpToPage} containerClassName="flex-1" />
+                            <Pressable accessibilityRole="button" onPress={jumpToPage} className="min-h-14 justify-center rounded-xl bg-[#001428] px-5 py-3 active:opacity-80 focus:bg-[#243447]">
+                                <Text className="font-geist-semibold text-base text-primary-foreground">Go</Text>
+                            </Pressable>
+                        </View>
+                        {Boolean(pageError) && <Text accessibilityLiveRegion="polite" className="font-geist text-sm leading-6 text-destructive">{pageError}</Text>}
+                    </View>}
                 </View>
-                {showJump && <View className="flex-row items-end gap-3">
-                    <FormField label="Go to page" labelId="reader-page" value={jump} onChangeText={setJump}
-                        keyboardType="number-pad" returnKeyType="go" onSubmitEditing={jumpToPage} containerClassName="flex-1" />
-                    <Pressable accessibilityRole="button" onPress={jumpToPage} className="min-h-14 justify-center rounded-lg border border-border bg-card px-5 py-3 active:bg-secondary focus:border-foreground">
-                        <Text className="font-geist-semibold text-base text-[#001428]">Go</Text>
-                    </Pressable>
-                </View>}
-                <AuthMessage message={pageError} isError />
-                <View className="gap-4 rounded-xl border border-border bg-card p-5" style={{ borderCurve: 'continuous' }}>
-                    {ready ? <Text className="font-geist text-sm text-muted-foreground">{selection.checked === true ? 'Approved for questions' : selection.checked === 'mixed' ? 'Some paragraphs approved' : 'Excluded from questions'}</Text>
+                <View className="px-5 pt-3">
+                    {ready ? <View className="min-h-12 flex-row items-center gap-2 py-3">
+                            {selection.checked === true && <IconCircleCheck size={18} color="#001428" accessible={false} />}
+                            <Text className="flex-1 font-geist-medium text-sm leading-6 text-[#526071]">{selection.checked === true ? 'Approved for questions' : selection.checked === 'mixed' ? 'Some paragraphs approved' : 'Excluded from questions'}</Text>
+                        </View>
                         : <Pressable accessibilityRole="checkbox" accessibilityLabel={`Include ${page.title} for questions`}
                             accessibilityState={{ checked: selection.checked, disabled: busy || !selection.usableIds.length }} disabled={busy || !selection.usableIds.length}
                             onPress={() => { setSelected(value => togglePageSelection(page, value)); setConfirmed(false); }}
-                            className="min-h-12 flex-row items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 active:bg-secondary focus:border-foreground">
-                            <View className={`h-5 w-5 items-center justify-center rounded border ${selection.checked ? 'border-[#001428] bg-[#001428]' : 'border-muted-foreground'}`}>
+                            className={`min-h-12 flex-row items-center gap-3 rounded-xl py-3 active:bg-secondary focus:bg-secondary ${busy || !selection.usableIds.length ? 'opacity-40' : ''}`}>
+                            <View className={`h-6 w-6 items-center justify-center rounded-md border ${selection.checked ? 'border-[#001428] bg-[#001428]' : 'border-muted-foreground'}`}>
                                 {selection.checked === true && <IconCheck size={16} color={THEME.primaryForeground} accessible={false} />}
                                 {selection.checked === 'mixed' && <IconMinus size={16} color={THEME.primaryForeground} accessible={false} />}
                             </View>
-                            <Text className="flex-1 font-geist text-sm leading-6 text-foreground">{!selection.usableIds.length ? 'No usable text to select' : selection.checked === 'mixed' ? 'Some paragraphs selected · Include all' : 'Include page for questions'}</Text>
+                            <Text className="flex-1 font-geist-medium text-sm leading-6 text-[#001428]">{!selection.usableIds.length ? 'No usable text to select' : selection.checked === 'mixed' ? 'Some paragraphs selected · Include all' : 'Include page for questions'}</Text>
                         </Pressable>}
-                    {page.sections.map(section => <Text key={section.id} selectable className="font-geist text-base leading-8 text-foreground">
+                </View>
+                <View className="gap-5 px-6 pb-8 pt-5">
+                    {page.sections.map(section => <Text key={section.id} selectable className="font-geist text-base leading-8 text-[#243447]">
                         {section.text || 'No selectable text on this page.'}
                     </Text>)}
                 </View>
-            </>}
+            </View>}
         </View>
-        {!ready && <View className="gap-4 border-t border-border pt-6">
-            <View className="gap-1">
-                <Text accessibilityRole="header" className="font-geist-semibold text-lg text-[#001428]">Finish review</Text>
-                <Text style={{ fontVariant: ['tabular-nums'] }} className="font-geist text-sm leading-6 text-muted-foreground">{selected.length} of {sections.length} sections selected</Text>
+        {!ready && <View className="gap-5">
+            <View className="gap-2">
+                <Text accessibilityRole="header" className="font-geist-semibold text-xl leading-7 tracking-tight text-[#001428]">Finish your review</Text>
+                <Text accessibilityLiveRegion="polite" style={{ fontVariant: ['tabular-nums'] }} className="font-geist text-sm leading-6 text-[#526071]">{selected.length} of {sections.length} sections selected</Text>
             </View>
             <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: confirmed, disabled: busy }} disabled={busy}
                 accessibilityLabel="I reviewed the selected text and its formatting. It preserves the meaning of my module."
-                onPress={() => setConfirmed(value => !value)} className="min-h-12 flex-row items-start gap-3 rounded-xl border border-border bg-card p-4 active:bg-secondary focus:border-foreground">
-                <View className={`mt-1 h-5 w-5 items-center justify-center rounded border ${confirmed ? 'border-[#001428] bg-[#001428]' : 'border-muted-foreground'}`}>
+                onPress={() => setConfirmed(value => !value)} className={`min-h-12 flex-row items-start gap-3 rounded-2xl bg-card p-5 active:bg-secondary focus:bg-secondary ${busy ? 'opacity-40' : ''}`}>
+                <View className={`mt-1 h-6 w-6 items-center justify-center rounded-md border ${confirmed ? 'border-[#001428] bg-[#001428]' : 'border-muted-foreground'}`}>
                     {confirmed && <IconCheck size={16} color={THEME.primaryForeground} accessible={false} />}
                 </View>
-                <Text className="flex-1 font-geist text-sm leading-6 text-foreground">I reviewed the selected text and its formatting. It preserves the meaning of my module.</Text>
+                <Text className="flex-1 font-geist text-sm leading-6 text-[#243447]">I reviewed the selected text and its formatting. It preserves the meaning of my module.</Text>
             </Pressable>
             <Pressable accessibilityRole="button" accessibilityState={{ disabled: approveDisabled, busy }} disabled={approveDisabled} onPress={submit}
-                className={`min-h-14 flex-row items-center justify-center gap-3 rounded-lg bg-[#001428] px-5 py-4 active:opacity-80 focus:border-2 focus:border-muted-foreground ${approveDisabled ? 'opacity-40' : ''}`}>
+                className={`min-h-14 flex-row items-center justify-center gap-3 rounded-2xl bg-[#001428] px-5 py-4 active:opacity-80 focus:bg-[#243447] ${approveDisabled ? 'opacity-40' : ''}`}>
                 {busy && <ActivityIndicator color={THEME.primaryForeground} accessible={false} />}
                 <Text className="font-geist-semibold text-base text-primary-foreground">{busy ? 'Saving…' : 'Approve module'}</Text>
             </Pressable>
         </View>}
-        {ready && <View className="gap-2 rounded-xl border border-border bg-card p-5">
-            <Text accessibilityRole="header" className="font-geist-semibold text-base text-[#001428]">Review complete</Text>
-            <Text className="font-geist text-sm leading-6 text-muted-foreground">Your selected text is approved. Quiz generation is not available yet.</Text>
+        {ready && <View className="flex-row items-start gap-3 rounded-2xl bg-[#EDF0F5] p-5">
+            <IconCircleCheck size={22} color="#001428" style={{ marginTop: 2 }} accessible={false} />
+            <View className="flex-1 gap-1">
+                <Text accessibilityRole="header" className="font-geist-semibold text-base leading-6 text-[#001428]">Review complete</Text>
+                <Text className="font-geist text-sm leading-6 text-[#526071]">Your selected text is approved. Quiz generation is not available yet.</Text>
+            </View>
         </View>}
         <AuthMessage message={message} isError />
     </View>;

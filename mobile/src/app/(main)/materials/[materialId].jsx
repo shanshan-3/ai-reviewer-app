@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
+import IconFileText from '@tabler/icons-react-native/IconFileText';
+import IconInfoCircle from '@tabler/icons-react-native/IconInfoCircle';
 import AuthButton from '@/components/AuthButton';
 import AuthMessage from '@/components/AuthMessage';
 import MaterialScreenHeader from '@/components/MaterialScreenHeader';
@@ -50,25 +52,32 @@ export default function MaterialPreviewPage() {
     return (
         <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right', 'bottom']}>
             <MaterialScreenHeader title="Module preview" />
-            <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic"
-                contentContainerStyle={{ padding: 20, gap: 24, paddingBottom: 40, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
-                {loading && <View className="items-center gap-3 rounded-xl border border-border bg-card p-8">
+            <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentInsetAdjustmentBehavior="automatic"
+                contentContainerStyle={{ padding: 20, gap: 28, paddingTop: 28, paddingBottom: 40, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
+                {loading && <View className="items-center gap-3 rounded-2xl bg-card px-6 py-12">
                     <ActivityIndicator color={THEME.primary} accessibilityLabel="Loading module" />
                     <Text className="font-geist text-sm text-muted-foreground">Opening your module…</Text>
                 </View>}
                 <AuthMessage message={message} isError />
                 {!loading && Boolean(message) && <AuthButton submitLabel="Retry" onSubmit={() => setAttempt(value => value + 1)} />}
                 {result && <>
-                        <View className="gap-3 border-b border-border pb-5">
-                            <View className="self-start rounded-md bg-secondary px-3 py-1">
-                                <Text className="font-geist-medium text-xs leading-5 text-foreground">{STATUS_LABELS[result.material.status] || 'Unavailable'}</Text>
+                        <View className="gap-4">
+                            <View className="flex-row items-center gap-2">
+                                <View className={`h-2 w-2 rounded-full ${result.material.status === 'ready' ? 'bg-[#15803D]' : 'bg-[#001428]'}`} />
+                                <Text className="font-geist-medium text-sm leading-5 text-[#526071]">{STATUS_LABELS[result.material.status] || 'Unavailable'}</Text>
                             </View>
-                            <Text selectable accessibilityRole="header" className="font-geist-semibold text-2xl leading-8 text-[#001428]">{result.material.title}</Text>
-                            <Text selectable className="font-geist text-sm leading-6 text-muted-foreground">{result.material.original_filename}</Text>
+                            <Text selectable accessibilityRole="header" className="font-geist-semibold text-3xl leading-10 tracking-tight text-[#001428]">{result.material.title}</Text>
+                            <View className="flex-row items-start gap-2">
+                                <IconFileText size={18} color="#526071" style={{ marginTop: 3 }} accessible={false} />
+                                <Text selectable className="flex-1 font-geist text-sm leading-6 text-[#526071]">{result.material.original_filename}</Text>
+                            </View>
                         </View>
-                        {extractionNotes.length > 0 && <View className="gap-2 border-l-2 border-border pl-4">
-                            <Text accessibilityRole="header" className="font-geist-medium text-sm text-foreground">Extraction notes</Text>
-                            {extractionNotes.map(note => <Text key={note} className="font-geist text-sm leading-6 text-muted-foreground">{note}</Text>)}
+                        {extractionNotes.length > 0 && <View className="flex-row items-start gap-3 rounded-2xl bg-[#EDF0F5] p-4" style={{ borderCurve: 'continuous' }}>
+                            <IconInfoCircle size={20} color="#526071" style={{ marginTop: 2 }} accessible={false} />
+                            <View className="flex-1 gap-1">
+                                <Text accessibilityRole="header" className="font-geist-semibold text-sm leading-6 text-[#001428]">Check the extraction</Text>
+                                {extractionNotes.map(note => <Text key={note} className="font-geist text-sm leading-6 text-[#526071]">{note}</Text>)}
+                            </View>
                         </View>}
                     {result.material.status === 'failed' && <Text className="font-geist text-sm text-destructive">This import failed: {result.material.error_code}</Text>}
                     {['needs_review', 'ready'].includes(result.material.status) && <View onLayout={event => { formTop.current = event.nativeEvent.layout.y; }}>
