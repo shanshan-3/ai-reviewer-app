@@ -11,3 +11,21 @@ server/.extraction-local/
 server/.ownership-local/
 server/.material-local/
 .agents
+.agent
+
+# Fullstack Audit local architecture maps (AI navigation only)
+docs/frontend-atlas/
+docs/backend-atlas/
+docs/llms.txt
+docs/llms-full.txt
+docs/graph.json
+docs/THEME_MIGRATION_PUNCHLIST.md
+
+# Fullstack Audit local architecture maps (AI navigation only)
+docs/adaptive-atlas/
+docs/reference-atlas/
+docs/cloned-repos/
+docs/clone-repo/
+docs/research/
+GLOSSARY.md
+docs/adr/
