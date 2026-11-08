@@ -1,5 +1,23 @@
 # Phase 1: PDF/DOCX extraction validation
 
+## Hosted quiz generation - 2026-11-08
+
+After the maintainer reported deploying `b0e148f` and applying 0008/0012, live checks reached `https://rebyuit-api.onrender.com`. An initial attempt returned safe HTTP 503 `AI_NOT_CONFIGURED`; all fixtures were removed. The maintainer corrected Render's Groq environment settings before the runs below. No backend source changes were made during these checks.
+
+Two subsequent hosted runs used four disposable Supabase accounts in total, real password sign-in/access tokens, real Express/Auth/PostgREST/Groq calls and directly seeded synthetic approved JavaScript notes. The module fixture had a synthetic PDF filename and page reference but no Storage object: this tests generation from approved database sections, not upload, extraction or the approval UI. Successful cases across the two runs:
+
+| Modality | Module requested / actual | Topic requested / actual |
+|---|---:|---:|
+| Multiple Choice (`conceptual`) | 5 / 5 | 10 / 10 |
+| True or False | 5 / 5 | 10 / 10 |
+| Coding Syntax with choices | 5 / 5 | 10 / 10 |
+
+Each successful case verified HTTP 202 admission, polling to ready, safe owned metadata, an in-flight/saved duplicate returning the same generation, conflicting retry settings returning 409, and a terminal retry returning the saved quiz. Database inspection found one generation per owner/request and the reported question count. Another account received 404 for the generation and quiz. Both the owner and the other account were denied direct private question-table reads. Public generation/metadata payloads omitted keys, explanations and the question bank. True/False rows contained exactly True/False with null option C/D; only Coding Syntax rows contained code. Health returned 200 and unauthenticated quiz status returned 401.
+
+The first module Coding Syntax request ended in saved `failed / INVALID_GENERATION`; its exact rejected provider response was not retained by the server, so the specific validation rule is unknown. This remains an observed intermittent generation failure, not a diagnosed or fixed defect. A separate local synthetic provider diagnostic passed, and a deliberate new hosted coding request subsequently passed; the second hosted run also passed topic Coding Syntax and exited 0. Thus seven hosted generation attempts produced six ready quizzes and one rejection. These results do not establish a rejection rate or general content correctness. Validation was not weakened and automatic provider retries were not added.
+
+All fixture generation/material rows and disposable accounts were removed after each run; absence was checked in Auth plus profiles, subjects, topics, materials, generations, quizzes and questions. No original Storage objects were created. Temporary scripts/reports were removed after recording this evidence, and no testing packages were installed for the live checks. Generation calls observed the one-minute admission spacing. Android quiz flows, scoring/session endpoints, crash/restart and overlapping-worker behavior, broad prompt-injection testing and instructor content review remain unverified. No new deployment or migration was performed by the checks.
+
 ## Three question modalities - 2026-11-07
 
 The new `0012_question_modalities.sql` and backend changes passed **40 isolated checks**, 20 in each independent PGlite 0.5.15 / PostgreSQL 18.6 database; both commands exited 0. Fresh installation applied all migrations before fixtures. Upgrade installation seeded existing Multiple Choice and Coding Syntax quizzes, sessions and submitted answers before applying only 0012; existing answer rows and quiz counts were preserved. Supabase Auth/Storage schemas and roles were local stand-ins.

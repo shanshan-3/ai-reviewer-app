@@ -1,13 +1,19 @@
 import express, { Router } from 'express';
 import authMiddleware from '../middleware/authMiddleware.js';
-import { generateQuiz, getGeneration, getQuiz } from '../controllers/quizController.js';
+import {
+    generateQuiz,
+    getGeneration,
+    getQuiz,
+    createSession,
+    getSession,
+    postAnswer,
+    getResults,
+    getUserQuizzes,
+} from '../controllers/quizController.js';
 
-const router = Router();
-router.use(authMiddleware);
-router.post('/generations', express.json({ limit: '8kb', inflate: false }), generateQuiz);
-router.get('/generations/:id', getGeneration);
-router.get('/:id', getQuiz);
-router.use((error, _req, res, _next) => {
+const parseJson = express.json({ limit: '8kb', inflate: false });
+
+function errorHandler(error, _req, res, _next) {
     if (res.headersSent) return res.end();
     const parseError = error.type === 'entity.parse.failed';
     const tooLarge = error.type === 'entity.too.large';
@@ -19,5 +25,23 @@ router.use((error, _req, res, _next) => {
         code: parseError ? 'INVALID_JSON' : tooLarge ? 'REQUEST_LIMIT' : encoding ? 'UNSUPPORTED_ENCODING'
             : error.publicMessage ? error.code : 'SERVICE_UNAVAILABLE',
     });
-});
+}
+
+const router = Router();
+router.use(authMiddleware);
+
+router.get('/', getUserQuizzes);
+router.post('/generations', parseJson, generateQuiz);
+router.get('/generations/:id', getGeneration);
+router.post('/:id/sessions', createSession);
+router.get('/:id', getQuiz);
+router.use(errorHandler);
+
+export const studySessionRouter = Router();
+studySessionRouter.use(authMiddleware);
+studySessionRouter.get('/:id', getSession);
+studySessionRouter.post('/:id/answers', parseJson, postAnswer);
+studySessionRouter.get('/:id/results', getResults);
+studySessionRouter.use(errorHandler);
+
 export default router;

@@ -97,3 +97,78 @@ export async function readQuiz({ userId, id }) {
 export async function recoverPendingGenerations() {
     await model.recoverGenerations(createSupabaseAdminClient());
 }
+
+export async function startSession({ userId, quizId }) {
+    const validQuizId = validateQuizId(quizId);
+    const admin = createSupabaseAdminClient();
+    let res;
+    try {
+        res = await model.startStudySession(admin, userId, validQuizId);
+    } catch (err) {
+        if (err.message === 'QUIZ_NOT_FOUND') throw notFound();
+        throw err;
+    }
+    const session = res.session;
+    const currentQuestion = session.current_question_id
+        ? await model.getSafeQuestion(admin, userId, session.id, session.current_question_id)
+        : null;
+    const answers = await model.getSessionAnswers(admin, userId, session.id);
+    return { isNew: res.is_new, session, currentQuestion, answers };
+}
+
+export async function readSession({ userId, sessionId }) {
+    const validSessionId = validateQuizId(sessionId);
+    const admin = createSupabaseAdminClient();
+    const session = await model.findStudySession(admin, userId, validSessionId);
+    if (!session) throw notFound();
+    const currentQuestion = session.status === 'active' && session.current_question_id
+        ? await model.getSafeQuestion(admin, userId, session.id, session.current_question_id)
+        : null;
+    const answers = await model.getSessionAnswers(admin, userId, session.id);
+    return { session, currentQuestion, answers };
+}
+
+export async function recordAnswer({ userId, sessionId, questionId, optionId }) {
+    const validSessionId = validateQuizId(sessionId);
+    const validQuestionId = validateQuizId(questionId);
+    if (typeof optionId !== 'string' || !['a', 'b', 'c', 'd'].includes(optionId.toLowerCase())) {
+        throw quizError(400, 'INVALID_OPTION', 'Choose a valid option.');
+    }
+    const admin = createSupabaseAdminClient();
+    let res;
+    try {
+        res = await model.submitStudyAnswer(admin, userId, validSessionId, validQuestionId, optionId.toLowerCase());
+    } catch (err) {
+        if (err.message === 'SESSION_NOT_FOUND' || err.message === 'QUESTION_NOT_FOUND') throw notFound();
+        if (err.message === 'ANSWER_CONFLICT') throw quizError(409, 'ANSWER_CONFLICT', 'This question was already answered with a different choice.');
+        if (err.message === 'QUESTION_NOT_CURRENT') throw quizError(409, 'QUESTION_NOT_CURRENT', 'Answer the current question first.');
+        if (err.message === 'SESSION_COMPLETED') throw quizError(409, 'SESSION_COMPLETED', 'This session has already been completed.');
+        throw err;
+    }
+
+    const currentQuestion = res.nextQuestionId
+        ? await model.getSafeQuestion(admin, userId, validSessionId, res.nextQuestionId)
+        : null;
+
+    return {
+        submission: res.submission,
+        session: res.session,
+        currentQuestion,
+    };
+}
+
+export async function readResults({ userId, sessionId }) {
+    const validSessionId = validateQuizId(sessionId);
+    const admin = createSupabaseAdminClient();
+    const results = await model.getCompletedResults(admin, userId, validSessionId);
+    if (!results) throw notFound();
+    if (results.status === 'incomplete') {
+        throw quizError(409, 'SESSION_INCOMPLETE', 'Results are available only after completing the entire quiz.');
+    }
+    return results;
+}
+
+export async function listQuizzes({ userId }) {
+    const admin = createSupabaseAdminClient();
+    return await model.listUserQuizzes(admin, userId);
+}

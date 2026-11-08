@@ -186,7 +186,7 @@ An unanswered question sent to the app has this shape; content here is illustrat
 }
 ```
 
-For coding-syntax questions, `code` is `{ "language": "javascript", "text": "..." }`; render it as inert text, never execute it. Correct option IDs, explanations and supporting excerpts stay private until that question has been answered. Option shuffling changes presentation order only; grade against the saved option ID and preserve option order across resume.
+For coding-syntax questions, `code` is `{ "language": "javascript", "text": "..." }`; render it as inert text, never execute it. Correct option IDs, correctness, explanations and supporting excerpts stay private until the entire quiz is completed. Option shuffling changes presentation order only; grade against the saved option ID and preserve option order across resume.
 
 ### Generation endpoints and lifecycle
 
@@ -216,15 +216,17 @@ Reconcile interrupted processing records under the accepted single-active-API-pr
 |---|---|---|
 | `GET /api/quizzes/:id` | Owned quiz ID | `{ quiz: { id, source, subjectId, topicId, questionType, requestedQuestionCount, questionCount, startingDifficulty } }`; no question bank or keys |
 | `POST /api/quizzes/:id/sessions` | No body | HTTP 201, `{ session, currentQuestion, answers: [] }` for a newly started session; HTTP 200 with current saved state on retry |
-| `GET /api/study-sessions/:id` | Owned session ID | `{ session, currentQuestion, answers }`; current unanswered question uses the public shape above; answers contain feedback for already answered questions only |
-| `POST /api/study-sessions/:id/answers` | `{ questionId, optionId }` | `{ feedback, session, currentQuestion }`, HTTP 200; null current question on completion |
+| `GET /api/study-sessions/:id` | Owned session ID | `{ session, currentQuestion, answers }`; answers contain only `{ questionId, selectedOptionId }` acknowledgements; no correctness or feedback |
+| `POST /api/study-sessions/:id/answers` | `{ questionId, optionId }` | `{ submission: { questionId, selectedOptionId }, session, currentQuestion }`, HTTP 200; null current question on completion; no correctness or feedback |
 | `GET /api/study-sessions/:id/results` | Owned completed session ID | `{ sessionId, correctCount, answeredCount, questionCount, answers }`; HTTP 409 `SESSION_INCOMPLETE` while active |
 
 Public `session` includes `id`, `quizId`, `status`, `questionCount`, `answeredCount`, starting/current difficulty, and start/completion timestamps. Keep unused candidate IDs and adaptive counters server-side. Session states are `active -> completed`; there is no public reopen/reset operation. Save a candidate pool order and each question's option order when the session starts, and persist the current question before exposing it. Repeated start/resume requests return that same session and current question.
 
 Phase 3 initializes the selected starting difficulty and the durable current-difficulty/streak fields. The two-consecutive-answer adaptation algorithm belongs to Phase 4; defining its storage here does not implement it early. The saved candidate order provides deterministic selection and resume without another AI call. Difficulty selection uses an unused question at the current level, then the nearest available level; ties prefer the easier level. Preserve the actual question difficulty on its submitted answer. Phase 4 must reuse these records rather than regenerate a pool after each answer.
 
-Example feedback, returned only after accepting that question's answer:
+Feedback timing was changed by the user on 2026-11-08: show results only after completing the entire quiz. Active-session reads, answer submissions and retries must omit correctness, correct-option IDs, explanations, source excerpts and running correct-count/accuracy. Grade privately on the server. The completed results endpoint is the only public source of feedback and returns HTTP 409 `SESSION_INCOMPLETE` before completion. The final answer response signals completion through session status; the client then requests results.
+
+Example answer review, returned inside the completed results response only:
 
 ```json
 {
@@ -241,7 +243,7 @@ Example feedback, returned only after accepting that question's answer:
 
 Accept a new answer only for the session's current question and an option actually attached to it. One owner-scoped database transaction must lock the session, insert the answer, calculate correctness from the stored key, advance the current question and finalize totals/completion exactly once when the achievable count is reached. Client-supplied correctness, scores, keys and completion timestamps are rejected. No AI call is used for scoring.
 
-An identical retry of an answered `(sessionId, questionId, optionId)` returns stored feedback plus the latest authoritative session/current question, without changing totals, timestamps or difficulty counters. A different option for an answered question returns HTTP 409 `ANSWER_CONFLICT`. An unserved/out-of-order question returns HTTP 409 `QUESTION_NOT_CURRENT`; an invalid option returns HTTP 400. Identical answer retries remain valid after completion. A lost answer response must be resolved by retrying that answer or reading the session before proceeding. Reopening the app resumes the saved session; it never creates a fresh quiz automatically. Answering requires connectivity.
+An identical retry of an answered `(sessionId, questionId, optionId)` returns the stored submission acknowledgement plus the latest authoritative safe session/current question, without changing totals, timestamps or difficulty counters. This response omits grading fields even after completion; use the results endpoint for review. A different option for an answered question returns HTTP 409 `ANSWER_CONFLICT`. An unserved/out-of-order question returns HTTP 409 `QUESTION_NOT_CURRENT`; an invalid option returns HTTP 400. Identical answer retries remain valid after completion. A lost answer response must be resolved by retrying that answer or reading the session before proceeding. Reopening the app resumes the saved session; it never creates a fresh quiz automatically. Answering requires connectivity.
 
 ### Failures, deletion and acceptance checks
 
