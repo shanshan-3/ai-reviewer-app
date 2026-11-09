@@ -17,13 +17,6 @@ import IconFileText from '@tabler/icons-react-native/IconFileText';
 import IconPlus from '@tabler/icons-react-native/IconPlus';
 import { THEME } from '@/lib/theme';
 
-function getGreeting() {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
-}
-
 export default function DashboardPage() {
     const { session } = useSession();
     const showToast = useToast();
@@ -39,9 +32,6 @@ export default function DashboardPage() {
     const requestId = useRef(0);
     const working = useRef(false);
     const failedOffset = useRef(0);
-
-    const displayName = session?.user?.user_metadata?.full_name
-        || (session?.user?.email ? session.user.email.split('@')[0] : 'Student');
 
     usePreventRemove(Boolean(deletingId), () => Alert.alert('Deletion in progress', 'Wait for deletion to finish before leaving this screen.'));
 
@@ -126,8 +116,8 @@ export default function DashboardPage() {
                     <View className="flex-row items-center justify-between">
                         <View className="min-w-0 flex-1 pr-3">
     
-                            <Text accessibilityRole="header" numberOfLines={1} className="font-geist-bold text-3xl tracking-tight text-[#001428]">
-                                {getGreeting()}, {displayName}
+                            <Text accessibilityRole="header" numberOfLines={2} className="font-geist-bold text-2xl tracking-tight text-[#001428]">
+                                Ready to review today?
                             </Text>
                             <Text className="mt-1 font-geist text-xs text-[#526071]">
                                 Track your course modules and generate AI practice quizzes.
