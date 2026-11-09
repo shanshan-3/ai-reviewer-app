@@ -1,8 +1,9 @@
 import { createSupabaseAdminClient } from '../config/supabase.js';
-import { createGroqClient, AI_LIMITS, getCooldownMs } from '../config/ai.js';
+import { createGroqClient, AI_LIMITS, GEMINI_CONFIG, isGeminiConfigured, getCooldownMs } from '../config/ai.js';
 import * as model from '../models/quizModel.js';
 import { validateGenerationRequest, validateQuizId, sameGenerationInput, quizError } from '../validation/quizValidation.js';
 import { selectQuizContext, generateQuestions, generationFailure } from './quizGeneration.js';
+import { generateQuestionsWithGemini } from './geminiGeneration.js';
 
 // shortcut: one active process and one provider attempt per minute; shared admission is required before scaling.
 let working = false;
@@ -29,9 +30,27 @@ async function sourceFor(admin, ownerId, input) {
 
 async function runGeneration(admin, client, row, selected) {
     try {
-        const result = await generateQuestions(client, row, selected);
+        let result;
+        let providerModel = AI_LIMITS.model;
+        try {
+            result = await generateQuestions(client, row, selected);
+        } catch (error) {
+            const isFallbackEligible = isGeminiConfigured() && (
+                error?.status === 429 ||
+                ['APIConnectionTimeoutError', 'AbortError'].includes(error?.name) ||
+                (typeof error?.status === 'number' && error.status >= 500)
+            );
+            if (isFallbackEligible) {
+                console.warn(`[AI Fallback] Groq primary attempt failed (${error?.message || error?.name}). Routing to Gemini backup...`);
+                result = await generateQuestionsWithGemini(row, selected);
+                providerModel = GEMINI_CONFIG.model;
+            } else {
+                throw error;
+            }
+        }
+
         if (!result.questions.length) await model.finishGeneration(admin, row.owner_id, row.id, 'insufficient_source', result.code);
-        else await model.publishQuiz(admin, row.owner_id, row.id, result.questions, AI_LIMITS.model);
+        else await model.publishQuiz(admin, row.owner_id, row.id, result.questions, providerModel);
     } catch (error) {
         // A lost publish acknowledgement must not turn an already committed quiz into a failure.
         try { await model.finishGeneration(admin, row.owner_id, row.id, 'failed', generationFailure(error)); }

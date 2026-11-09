@@ -102,6 +102,7 @@ ai-reviewer-app/
 |   |   |-- services/
 |   |   |   |-- quizService.js              # Generation lifecycle, admission, retries, source ownership, recovery
 |   |   |   |-- quizGeneration.js           # Bounded approved context, Groq calls and failure classification
+|   |   |   |-- geminiGeneration.js         # Google Gemini backup provider adapter and schema translation
 |   |   |   |-- quizPrompts.js              # Strict question JSON schema and grounded IT question prompts
 |   |   |   |-- labelService.js              # Personal label validation and ownership rules
 |   |   |   |-- materialExtraction.js        # Node worker supervision, deadline, Linux RSS monitor

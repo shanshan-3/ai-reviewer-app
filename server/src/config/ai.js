@@ -17,3 +17,13 @@ export function createGroqClient() {
     }
     return new Groq({ apiKey: process.env.GROQ_API_KEY, fetch: globalThis.fetch, maxRetries: 0, timeout: AI_LIMITS.timeoutMs });
 }
+
+export const GEMINI_CONFIG = Object.freeze({
+    model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+    timeoutMs: 45000,
+    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models',
+});
+
+export function isGeminiConfigured() {
+    return Boolean(process.env.GEMINI_API_KEY);
+}

@@ -109,15 +109,15 @@ Defined on 2026-11-07 against [Phase 3 of the roadmap](../planning/ai-powered-re
 
 A module must belong to the caller, be `ready`, and have meaningful sections marked `eligible_for_generation`. Derive its subject/topic from the saved module. Supply only approved sections to Groq. A topic must belong to the caller and resolve to its owned subject; its saved name supplies the topic-only context. Reject unsupported/non-IT or insufficient context. Do not treat the account's topic labels as detected document content.
 
-Module-based coding questions require usable code in the approved source. Missing code produces an insufficient-source outcome without switching question types. Topic-only quizzes are labeled as topic practice and carry no invented module citations. Gemini remains disabled. Current provider configuration and its evaluation boundary are described below.
+Module-based coding questions require usable code in the approved source. Missing code produces an insufficient-source outcome without switching question types. Topic-only quizzes are labeled as topic practice and carry no invented module citations. Google Gemini (`gemini-3.8-flash`) is configured as an automatic fallback when Groq experiences rate limits (`429`) or timeouts. Current provider configuration and its evaluation boundary are described below.
 
 ### Generation backend configuration and rollout
 
-The implementation follows `quizRoutes` -> `quizController` -> `quizService` -> `quizModel`, with context/provider work in `quizGeneration`, structured prompts in `quizPrompts`, request/output checks in `quizValidation`, and the installed Groq SDK in `config/ai.js`. No new application dependency is required.
+The implementation follows `quizRoutes` -> `quizController` -> `quizService` -> `quizModel`, with context/provider work in `quizGeneration` and `geminiGeneration`, structured prompts in `quizPrompts`, request/output checks in `quizValidation`, and the installed Groq SDK / native Gemini fetch in `config/ai.js`. No new application dependency is required.
 
 | Setting | Implemented value |
 |---|---|
-| Provider/model | Groq `openai/gpt-oss-120b`, matching the existing server configuration; other model IDs are rejected until evaluated |
+| Provider/model | Primary: Groq `openai/gpt-oss-120b`; Fallback: Google Gemini `gemini-3.8-flash` (auto-triggered on Groq 429 / timeout if `GEMINI_API_KEY` is present) |
 | Output | Strict JSON Schema requiring code objects in coding mode and null in Multiple Choice/True or False; non-streaming, low reasoning effort |
 | Input bound | 3,072 UTF-8 bytes for serialized messages plus output schema; context is truncated to this bound without splitting Unicode characters |
 | Completion bound | 8,192 tokens, including reasoning; incomplete/truncated output fails validation |
