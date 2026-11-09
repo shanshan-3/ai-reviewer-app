@@ -269,7 +269,7 @@ export default function ResultsPage() {
                                             {item.sources && item.sources.length > 0 && (
                                                 <View className="gap-1.5">
                                                     <Text className="font-geist-semibold text-[11px] uppercase tracking-wider text-[#526071]">
-                                                        Source Excerpt
+                                                        Module Reference
                                                     </Text>
                                                     {item.sources.map((src, sIdx) => (
                                                         <View key={sIdx} className="rounded-xl border border-[#E4E8EE] bg-white p-2.5">
