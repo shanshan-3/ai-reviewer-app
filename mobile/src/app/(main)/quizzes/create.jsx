@@ -125,13 +125,22 @@ export default function CreateQuizPage() {
                     break;
                 }
                 if (currentStatus === 'insufficient_source') {
-                    throw new Error('The selected source does not contain enough usable content for this modality.');
+                    const code = statusRes.generation?.errorCode;
+                    if (code === 'UNSUPPORTED_TOPIC') {
+                        throw new Error('This subject does not support coding syntax questions. Choose Multiple Choice or True/False, or select a programming subject like Web Development.');
+                    }
+                    if (code === 'CODE_SOURCE_REQUIRED') {
+                        throw new Error('This module does not contain programming code. Choose Multiple Choice or True/False, or upload a module with code.');
+                    }
+                    throw new Error('This source has limited content for the requested question count. Try selecting 5 questions, or choose an IT Topic for broader practice.');
                 }
                 if (currentStatus === 'failed') {
-                    const code = statusRes.generation.errorCode;
+                    const code = statusRes.generation?.errorCode;
                     throw new Error(
                         code === 'QUOTA_EXCEEDED'
                             ? 'AI rate limit reached. Please wait a minute and try again.'
+                            : code === 'PROVIDER_TIMEOUT'
+                            ? 'AI generation timed out. Please try again with fewer questions.'
                             : 'Quiz generation failed. Please try again with different choices.'
                     );
                 }
@@ -189,6 +198,7 @@ export default function CreateQuizPage() {
                     onSelectTopic={setTopicId}
                     materials={materials}
                     labels={labels}
+                    onLabelsChange={setLabels}
                     loading={loadingData}
                 />
 
