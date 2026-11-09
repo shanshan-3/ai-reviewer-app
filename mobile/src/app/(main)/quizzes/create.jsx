@@ -30,6 +30,24 @@ export default function CreateQuizPage() {
     const [generating, setGenerating] = useState(false);
     const [genStatusText, setGenStatusText] = useState('');
     const [error, setError] = useState(null);
+    const [cooldownSeconds, setCooldownSeconds] = useState(0);
+
+    useEffect(() => {
+        if (cooldownSeconds <= 0) return;
+        const timer = setInterval(() => {
+            setCooldownSeconds(prev => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    setError(null);
+                    return 0;
+                }
+                const next = prev - 1;
+                setError(`Rate limit cooldown active. Please wait ${next}s before generating.`);
+                return next;
+            });
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [cooldownSeconds]);
 
     useEffect(() => {
         async function init() {
@@ -59,6 +77,7 @@ export default function CreateQuizPage() {
     }, []);
 
     async function handleGenerate() {
+        if (generating || cooldownSeconds > 0) return;
         setError(null);
         if (sourceKind === 'module' && !materialId) {
             setError('Please select an approved module.');
@@ -129,7 +148,13 @@ export default function CreateQuizPage() {
             // Navigate to active quiz
             router.replace(`/(main)/quizzes/${sessionId}`);
         } catch (err) {
-            setError(err.message || 'Generation failed.');
+            const retry = err.retryAfter ? Math.ceil(Number(err.retryAfter)) : 0;
+            if (retry > 0) {
+                setCooldownSeconds(retry);
+                setError(`Rate limit cooldown active. Please wait ${retry}s before generating.`);
+            } else {
+                setError(err.message || 'Generation failed.');
+            }
             setGenerating(false);
         }
     }
@@ -209,7 +234,7 @@ export default function CreateQuizPage() {
                         Question Count
                     </Text>
                     <View className="flex-row gap-3">
-                        {[5, 10].map(cnt => {
+                        {[5, 10, 20].map(cnt => {
                             const selected = questionCount === cnt;
                             return (
                                 <Pressable
@@ -264,8 +289,8 @@ export default function CreateQuizPage() {
 
                 {/* Error Banner */}
                 {error && (
-                    <View className="rounded-2xl border border-[#DC2626] bg-white p-4">
-                        <Text className="font-geist text-sm text-[#DC2626]">{error}</Text>
+                    <View className={`rounded-2xl border ${cooldownSeconds > 0 ? 'border-[#001428] bg-[#F1F4F8]' : 'border-[#DC2626] bg-white'} p-4`}>
+                        <Text className={`font-geist text-sm ${cooldownSeconds > 0 ? 'font-geist-medium text-[#001428]' : 'text-[#DC2626]'}`}>{error}</Text>
                     </View>
                 )}
 
@@ -280,13 +305,16 @@ export default function CreateQuizPage() {
                         </View>
                     ) : (
                         <Pressable
+                            disabled={cooldownSeconds > 0}
                             accessibilityRole="button"
-                            accessibilityLabel="Generate Quiz"
+                            accessibilityLabel={cooldownSeconds > 0 ? `Rate limit cooldown active. Please wait ${cooldownSeconds} seconds` : "Generate Quiz"}
                             onPress={handleGenerate}
-                            className="flex-row items-center justify-center gap-2 rounded-2xl bg-[#001428] py-4 active:opacity-90"
+                            className={`flex-row items-center justify-center gap-2 rounded-2xl py-4 ${cooldownSeconds > 0 ? 'bg-[#8C9BAE]' : 'bg-[#001428] active:opacity-90'}`}
                         >
                             <IconSparkles size={20} color="white" />
-                            <Text className="font-geist-semibold text-base text-white">Generate Quiz</Text>
+                            <Text className="font-geist-semibold text-base text-white">
+                                {cooldownSeconds > 0 ? `Wait ${cooldownSeconds}s` : 'Generate Quiz'}
+                            </Text>
                         </Pressable>
                     )}
                 </View>

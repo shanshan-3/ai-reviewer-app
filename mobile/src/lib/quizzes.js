@@ -38,6 +38,8 @@ async function request(path, options = {}) {
             );
             err.status = response.status;
             err.code = result?.code;
+            const retryHeader = response.headers?.get ? response.headers.get('Retry-After') : null;
+            err.retryAfter = result?.retryAfter ?? (retryHeader ? Number(retryHeader) : undefined);
             throw err;
         }
         if (!result) throw new Error('The server returned an unreadable response.');
