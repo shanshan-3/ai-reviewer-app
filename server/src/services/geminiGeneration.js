@@ -2,10 +2,10 @@ import { GEMINI_CONFIG } from '../config/ai.js';
 import { quizMessages } from './quizPrompts.js';
 import { validateGeneratedQuestions, quizError } from '../validation/quizValidation.js';
 
-function buildGeminiSchema(questionType) {
+function buildGeminiSchema(questionType, difficulty) {
     const questionProperties = {
         prompt: { type: 'STRING' },
-        difficulty: { type: 'STRING', enum: ['easy', 'medium', 'hard'] },
+        difficulty: { type: 'STRING', enum: difficulty ? [difficulty] : ['easy', 'medium', 'hard'] },
         options: {
             type: 'ARRAY',
             items: {
@@ -71,7 +71,7 @@ export async function generateQuestionsWithGemini(settings, selected) {
     const messages = quizMessages(settings, selected.context);
     const systemPrompt = messages[0].content;
     const userPrompt = messages[1].content;
-    const schema = buildGeminiSchema(settings.question_type);
+    const schema = buildGeminiSchema(settings.question_type, settings.starting_difficulty);
 
     const url = `${GEMINI_CONFIG.endpoint}/${GEMINI_CONFIG.model}:generateContent?key=${apiKey}`;
 

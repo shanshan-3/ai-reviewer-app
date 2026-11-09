@@ -6,19 +6,31 @@ import AuthButton from '@/components/AuthButton';
 import AuthMessage from '@/components/AuthMessage';
 import MaterialCard from '@/components/material-card';
 import { deleteMaterial, listMaterials } from '@/lib/materials';
+import { listUserQuizzes } from '@/lib/quizzes';
 import { useSession } from '@/providers/session-provider';
 import { useToast } from '@/providers/toast-provider';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import IconBolt from '@tabler/icons-react-native/IconBolt';
-import IconCards from '@tabler/icons-react-native/IconCards';
 import IconUpload from '@tabler/icons-react-native/IconUpload';
+import IconPlayerPlay from '@tabler/icons-react-native/IconPlayerPlay';
+import IconSparkles from '@tabler/icons-react-native/IconSparkles';
+import IconFileText from '@tabler/icons-react-native/IconFileText';
+import IconPlus from '@tabler/icons-react-native/IconPlus';
 import { THEME } from '@/lib/theme';
+
+function getGreeting() {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+}
 
 export default function DashboardPage() {
     const { session } = useSession();
     const showToast = useToast();
     const userId = session?.user.id;
     const [materials, setMaterials] = useState([]);
+    const [activeQuiz, setActiveQuiz] = useState(null);
+    const [quizCount, setQuizCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
     const [nextOffset, setNextOffset] = useState(null);
@@ -27,6 +39,9 @@ export default function DashboardPage() {
     const requestId = useRef(0);
     const working = useRef(false);
     const failedOffset = useRef(0);
+
+    const displayName = session?.user?.user_metadata?.full_name
+        || (session?.user?.email ? session.user.email.split('@')[0] : 'Student');
 
     usePreventRemove(Boolean(deletingId), () => Alert.alert('Deletion in progress', 'Wait for deletion to finish before leaving this screen.'));
 
@@ -42,6 +57,16 @@ export default function DashboardPage() {
             setMaterials(value => offset === 0 ? result.materials
                 : [...value, ...result.materials.filter(item => !value.some(existing => existing.id === item.id))]);
             setNextOffset(result.nextOffset);
+
+            // Load quizzes for Dashboard metrics and active resume banner
+            listUserQuizzes()
+                .then(res => {
+                    const list = res.quizzes ?? [];
+                    setQuizCount(list.length);
+                    const active = list.find(q => q.session?.status === 'active');
+                    setActiveQuiz(active || null);
+                })
+                .catch(() => {});
         } catch (error) {
             if (id === requestId.current) { failedOffset.current = offset; setMessage(error.message || 'Could not load your modules.'); }
         } finally {
@@ -88,29 +113,110 @@ export default function DashboardPage() {
             } },
         ], { cancelable: false });
     }
+
     return (
         <SafeAreaView className="flex-1 bg-background" edges={['left', 'right']}>
             <FlatList data={materials} keyExtractor={material => material.id}
                 renderItem={({ item }) => <MaterialCard material={item} deleting={deletingId === item.id} disabled={Boolean(deletingId) || loading}
                     onDelete={() => confirmDeletion(item)} onPress={() => router.push({ pathname: '/(main)/materials/[materialId]', params: { materialId: item.id } })} />}
-                contentContainerStyle={{ flexGrow: 1, width: '100%', maxWidth: 720, alignSelf: 'center', padding: 20, paddingTop: 28, paddingBottom: 32, gap: 12 }}
+                contentContainerStyle={{ flexGrow: 1, width: '100%', maxWidth: 720, alignSelf: 'center', padding: 20, paddingTop: 24, paddingBottom: 32, gap: 12 }}
                 refreshing={loading && materials.length > 0} onRefresh={() => load()}
-                ListHeaderComponent={<View className="gap-8 pb-2">
-                <View className="gap-3">
-                    <View className="flex-row flex-wrap items-center gap-4">
-                        <View className="min-w-0 flex-1 basis-40 gap-3">
-                            <Text accessibilityRole="header" className="font-geist-semibold text-3xl leading-10 tracking-tight text-[#001428]">
-                                Your study space
+                ListHeaderComponent={<View className="gap-6 pb-2">
+                    {/* Top Greeting Header */}
+                    <View className="flex-row items-center justify-between">
+                        <View className="min-w-0 flex-1 pr-3">
+    
+                            <Text accessibilityRole="header" numberOfLines={1} className="font-geist-bold text-3xl tracking-tight text-[#001428]">
+                                {getGreeting()}, {displayName}
                             </Text>
-                            <Text className="font-geist text-base leading-7 text-[#526071]">
-                                Keep your modules together, ready for review.
+                            <Text className="mt-1 font-geist text-xs text-[#526071]">
+                                Track your course modules and generate AI practice quizzes.
                             </Text>
                         </View>
-                        <Image source={require('../../../../assets/illustrations/studying-amico-storyset-navy.png')}
-                            style={{ width: 88, height: 88 }} resizeMode="contain" accessible={false} />
+                        <Image
+                            source={require('../../../../assets/illustrations/studying-amico-storyset-navy.png')}
+                            style={{ width: 72, height: 72 }}
+                            resizeMode="contain"
+                            accessible={false}
+                        />
                     </View>
 
-                    <View className="mt-2 gap-3">
+                    {/* Quick KPI Strip */}
+                    <View
+                        className="flex-row items-center divide-x divide-[#E4E8EE] rounded-2xl border border-[#E4E8EE] bg-white py-3 shadow-sm"
+                        style={{ borderCurve: 'continuous' }}
+                    >
+                        <View className="flex-1 items-center px-1">
+                            <Text numberOfLines={1} className="font-geist-bold text-xl text-[#001428]">
+                                {materials.length}
+                            </Text>
+                            <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
+                                Modules
+                            </Text>
+                        </View>
+                        <View className="flex-1 items-center px-1">
+                            <Text numberOfLines={1} className="font-geist-bold text-xl text-[#001428]">
+                                {quizCount}
+                            </Text>
+                            <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
+                                Quizzes
+                            </Text>
+                        </View>
+                        <View className="flex-1 items-center px-1">
+                            <View className="flex-row items-center gap-1.5">
+                                <View className={`h-2 w-2 rounded-full ${activeQuiz ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                <Text numberOfLines={1} className="font-geist-bold text-xl text-[#001428]">
+                                    {activeQuiz ? '1' : '0'}
+                                </Text>
+                            </View>
+                            <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
+                                In Progress
+                            </Text>
+                        </View>
+                    </View>
+
+                    {/* Active In-Progress Quiz Card on Dashboard */}
+                    {activeQuiz && (() => {
+                        const activeProgress = Math.round((activeQuiz.session.answeredCount / activeQuiz.questionCount) * 100);
+                        return (
+                            <View
+                                className="overflow-hidden rounded-3xl border border-[#001428]/15 bg-white p-5 shadow-sm gap-3"
+                                style={{ borderCurve: 'continuous' }}
+                            >
+                                <View className="flex-row items-center justify-between">
+                                    <View className="flex-row items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-1">
+                                        <View className="h-2 w-2 rounded-full bg-emerald-500" />
+                                        <Text className="font-geist-semibold text-xs text-emerald-800">Quiz in Progress</Text>
+                                    </View>
+                                    <Text className="font-geist text-xs text-[#526071]">
+                                        {activeQuiz.session.answeredCount} of {activeQuiz.questionCount} ({activeProgress}%)
+                                    </Text>
+                                </View>
+                                <Text numberOfLines={1} className="font-geist-bold text-base text-[#001428]">
+                                    {activeQuiz.sourceTitle || 'General Practice'}
+                                </Text>
+                                <View className="h-2 w-full overflow-hidden rounded-full bg-[#E2E8F0]">
+                                    <View
+                                        className="h-full rounded-full bg-[#001428]"
+                                        style={{ width: `${activeProgress}%` }}
+                                    />
+                                </View>
+                                <Pressable
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Resume Active Quiz"
+                                    onPress={() => router.push(`/(main)/quizzes/${activeQuiz.session.id}`)}
+                                    className="flex-row items-center justify-center gap-2 rounded-2xl bg-[#001428] py-3.5 shadow-sm active:scale-[0.98] active:opacity-90"
+                                    style={{ borderCurve: 'continuous' }}
+                                >
+                                    <IconPlayerPlay size={18} color="white" />
+                                    <Text className="font-geist-semibold text-sm text-white">Resume Quiz</Text>
+                                </Pressable>
+                            </View>
+                        );
+                    })()}
+
+                    {/* Action Cards Grid */}
+                    <View className="flex-row gap-3">
                         <Pressable
                             accessibilityRole="button"
                             accessibilityLabel="Upload module"
@@ -118,34 +224,77 @@ export default function DashboardPage() {
                             accessibilityState={{ disabled: Boolean(deletingId) }}
                             disabled={Boolean(deletingId)}
                             onPress={() => router.push('/(main)/materials/import')}
-                            className="min-h-14 flex-row items-center justify-center gap-3 rounded-2xl bg-[#001428] px-5 py-4 active:opacity-80 disabled:opacity-40 focus:bg-[#243447]"
+                            className="flex-1 rounded-2xl border border-[#001428] bg-[#001428] p-3.5 shadow-sm active:scale-[0.98] active:opacity-95"
+                            style={{ borderCurve: 'continuous' }}
                         >
-                            <IconUpload size={20} color={THEME.primaryForeground} accessible={false} />
-                            <Text className="shrink text-center font-geist-semibold text-base text-primary-foreground">
-                                Upload module
-                            </Text>
+                            <View className="mb-2 h-8 w-8 items-center justify-center rounded-xl bg-white/10">
+                                <IconUpload size={18} color="white" accessible={false} />
+                            </View>
+                            <Text numberOfLines={1} className="font-geist-semibold text-sm text-white">Upload Module</Text>
+                            <Text numberOfLines={1} className="mt-0.5 font-geist text-[11px] text-white/70">PDF or DOCX notes</Text>
                         </Pressable>
-                        <Text className="text-center font-geist text-xs leading-5 text-[#526071]">
-                            PDF or DOCX · Up to 5 MiB
-                        </Text>
-                    </View>
-                </View>
 
-                <View className="gap-2">
-                    <Text accessibilityRole="header" className="font-geist-semibold text-2xl leading-8 tracking-tight text-[#001428]">
-                        Your modules
-                    </Text>
-                    <Text className="font-geist text-sm leading-6 text-[#526071]">
-                        Open a module to review its content.
-                    </Text>
-                </View>
-                </View>}
-                ListEmptyComponent={!loading && !message ? <View className="items-center gap-5 px-5 py-8">
-                    <View className="max-w-xs gap-2">
-                        <Text className="text-center font-geist-semibold text-xl leading-7 tracking-tight text-[#001428]">No modules yet</Text>
-                        <Text className="text-center font-geist text-sm leading-6 text-[#526071]">Upload your first module to keep your notes here, ready to review.</Text>
+                        <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Generate AI Quiz"
+                            accessibilityHint="Generate a new practice quiz from modules or topics."
+                            onPress={() => router.push('/(main)/quizzes/create')}
+                            className="flex-1 rounded-2xl border border-[#E4E8EE] bg-white p-3.5 shadow-sm active:scale-[0.98] active:bg-[#F8FAFC]"
+                            style={{ borderCurve: 'continuous' }}
+                        >
+                            <View className="mb-2 h-8 w-8 items-center justify-center rounded-xl bg-[#F1F4F8]">
+                                <IconSparkles size={18} color="#001428" accessible={false} />
+                            </View>
+                            <Text numberOfLines={1} className="font-geist-semibold text-sm text-[#001428]">Practice Quiz</Text>
+                            <Text numberOfLines={1} className="mt-0.5 font-geist text-[11px] text-[#526071]">AI practice tests</Text>
+                        </Pressable>
                     </View>
-                </View> : null}
+
+                    {/* Modules Section Header */}
+                    <View className="flex-row items-center justify-between pt-2">
+                        <View>
+                            <Text accessibilityRole="header" className="font-geist-bold text-2xl tracking-tight text-[#001428]">
+                                Your modules
+                            </Text>
+                            <Text className="font-geist text-xs text-[#526071]">
+                                Approved notes ready for interactive review
+                            </Text>
+                        </View>
+                        {materials.length > 0 && (
+                            <View className="rounded-full bg-[#F1F4F8] px-3 py-1">
+                                <Text className="font-geist-medium text-xs text-[#526071]">
+                                    {materials.length} {materials.length === 1 ? 'module' : 'modules'}
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                </View>}
+                ListEmptyComponent={!loading && !message ? (
+                    <View
+                        className="items-center justify-center rounded-3xl border border-[#E4E8EE] bg-white p-8 text-center shadow-sm"
+                        style={{ borderCurve: 'continuous' }}
+                    >
+                        <View className="mb-4 h-16 w-16 items-center justify-center rounded-2xl bg-[#F1F4F8]">
+                            <IconFileText size={32} color="#001428" />
+                        </View>
+                        <Text className="font-geist-bold text-xl text-[#001428]">
+                            No modules yet
+                        </Text>
+                        <Text className="mt-2 max-w-xs text-center font-geist text-xs leading-5 text-[#526071]">
+                            Upload your course modules or lecture notes in PDF or DOCX format to start generating AI quizzes.
+                        </Text>
+                        <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Upload your first module"
+                            onPress={() => router.push('/(main)/materials/import')}
+                            className="mt-5 flex-row items-center gap-2 rounded-2xl bg-[#001428] px-5 py-3 shadow-sm active:scale-95 active:opacity-90"
+                            style={{ borderCurve: 'continuous' }}
+                        >
+                            <IconPlus size={18} color="white" />
+                            <Text className="font-geist-semibold text-xs text-white">Upload First Module</Text>
+                        </Pressable>
+                    </View>
+                ) : null}
                 ListFooterComponent={<View className="gap-2">
                     {loading && <View className="items-center gap-2 py-5" accessibilityLiveRegion="polite">
                         <ActivityIndicator color={THEME.primary} accessibilityLabel="Loading your modules" />
@@ -154,19 +303,6 @@ export default function DashboardPage() {
                     <AuthMessage message={message} isError />
                     {!loading && Boolean(message) && <AuthButton submitLabel="Retry" disabled={Boolean(deletingId)} onSubmit={() => load(failedOffset.current)} />}
                     {!loading && !message && nextOffset !== null && <AuthButton submitLabel="Load more modules" disabled={Boolean(deletingId)} onSubmit={() => load(nextOffset)} />}
-                    <View className="mt-6 gap-4 rounded-2xl bg-[#EDF0F5] p-5" style={{ borderCurve: 'continuous' }}>
-                        <Text className="font-geist-medium text-xs leading-5 text-[#526071]">Coming soon</Text>
-                        <View className="flex-row flex-wrap gap-x-6 gap-y-4">
-                            <View className="max-w-full flex-row items-center gap-2">
-                                <IconBolt size={18} color={THEME.mutedForeground} accessible={false} />
-                                <Text className="shrink font-geist text-sm leading-6 text-[#526071]">Practice quizzes</Text>
-                            </View>
-                            <View className="max-w-full flex-row items-center gap-2">
-                                <IconCards size={18} color={THEME.mutedForeground} accessible={false} />
-                                <Text className="shrink font-geist text-sm leading-6 text-[#526071]">Flashcards</Text>
-                            </View>
-                        </View>
-                    </View>
                 </View>}
             />
         </SafeAreaView>

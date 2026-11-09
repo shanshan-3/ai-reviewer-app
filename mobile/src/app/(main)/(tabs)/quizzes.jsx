@@ -3,10 +3,10 @@ import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import IconPlus from '@tabler/icons-react-native/IconPlus';
-import IconHelp from '@tabler/icons-react-native/IconHelp';
 import IconChevronRight from '@tabler/icons-react-native/IconChevronRight';
 import IconPlayerPlay from '@tabler/icons-react-native/IconPlayerPlay';
 import IconTrash from '@tabler/icons-react-native/IconTrash';
+import IconSparkles from '@tabler/icons-react-native/IconSparkles';
 import { deleteQuiz, listUserQuizzes } from '@/lib/quizzes';
 import { useToast } from '@/providers/toast-provider';
 import { THEME } from '@/lib/theme';
@@ -72,6 +72,13 @@ export default function QuizzesPage() {
     const activeItem = quizzes.find(q => q.session?.status === 'active');
     const completedItems = quizzes.filter(q => q.session?.status === 'completed');
 
+    const avgScore = completedItems.length > 0
+        ? Math.round(
+            completedItems.reduce((acc, item) => acc + (item.session.correctCount / item.questionCount) * 100, 0) /
+            completedItems.length
+        )
+        : null;
+
     function formatModality(type) {
         if (type === 'true_false') return 'True or False';
         if (type === 'coding_syntax') return 'Coding Syntax';
@@ -87,19 +94,63 @@ export default function QuizzesPage() {
                 {/* Header CTA */}
                 <View className="flex-row items-center justify-between">
                     <View>
-                        <Text className="font-geist-bold text-2xl text-[#001428]">Quizzes</Text>
-                        <Text className="font-geist text-xs text-[#526071]">Practice and test your knowledge</Text>
+                        <Text className="font-geist-bold text-3xl tracking-tight text-[#001428]">Quizzes</Text>
+                        <Text className="mt-0.5 font-geist text-xs text-[#526071]">Practice and test your knowledge</Text>
                     </View>
                     <Pressable
                         accessibilityRole="button"
                         accessibilityLabel="Create New Quiz"
                         onPress={() => router.push('/(main)/quizzes/create')}
-                        className="flex-row items-center gap-1.5 rounded-full bg-[#001428] px-4 py-2.5 active:opacity-90"
+                        className="flex-row items-center gap-1.5 rounded-full bg-[#001428] px-4 py-2.5 shadow-sm active:scale-95 active:opacity-90"
+                        style={{ borderCurve: 'continuous' }}
                     >
                         <IconPlus size={18} color="white" />
                         <Text className="font-geist-semibold text-sm text-white">New Quiz</Text>
                     </Pressable>
                 </View>
+
+                {/* KPI Summary Strip */}
+                {(completedItems.length > 0 || activeItem) && (
+                    <View
+                        className="flex-row items-center divide-x divide-[#E4E8EE] rounded-2xl border border-[#E4E8EE] bg-white py-3 shadow-sm"
+                        style={{ borderCurve: 'continuous' }}
+                    >
+                        <View className="flex-1 items-center px-1">
+                            <Text numberOfLines={1} className="font-geist-bold text-xl text-[#001428]">
+                                {quizzes.length}
+                            </Text>
+                            <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
+                                Total
+                            </Text>
+                        </View>
+                        <View className="flex-1 items-center px-1">
+                            <Text
+                                numberOfLines={1}
+                                className={`font-geist-bold text-xl ${
+                                    avgScore !== null && avgScore >= 75 ? 'text-emerald-700' : 'text-[#001428]'
+                                }`}
+                            >
+                                {avgScore !== null ? `${avgScore}%` : '--'}
+                            </Text>
+                            <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
+                                Avg Score
+                            </Text>
+                        </View>
+                        <View className="flex-1 items-center px-1">
+                            <View className="flex-row items-center gap-1">
+                                <Text numberOfLines={1} className="font-geist-bold text-xl text-[#001428]">
+                                    {completedItems.length}
+                                </Text>
+                                {activeItem && (
+                                    <View className="h-2 w-2 rounded-full bg-emerald-500" />
+                                )}
+                            </View>
+                            <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
+                                Completed
+                            </Text>
+                        </View>
+                    </View>
+                )}
 
                 {/* Error Banner */}
                 {error && (
@@ -116,87 +167,125 @@ export default function QuizzesPage() {
                 ) : (
                     <View key="content-state" className="gap-5">
                         {/* Active / In-Progress Quiz Card */}
-                        {activeItem && (
-                            <View
-                                className={`overflow-hidden rounded-3xl border border-[#001428] bg-[#F1F4F8] p-5 ${
-                                    deletingId === activeItem.id ? 'opacity-50' : ''
-                                }`}
-                                style={{ borderCurve: 'continuous' }}
-                            >
-                                <View className="mb-2 flex-row items-center justify-between">
-                                    <View className="flex-row items-center gap-2">
-                                        <View className="h-2.5 w-2.5 rounded-full bg-[#001428]" />
-                                        <Text className="font-geist-medium text-xs uppercase tracking-wider text-[#001428]">
-                                            In Progress
-                                        </Text>
-                                    </View>
-                                    <View className="flex-row items-center gap-2">
-                                        <Text className="font-geist text-xs text-[#526071]">
-                                            {activeItem.session.answeredCount} of {activeItem.questionCount} answered
-                                        </Text>
-                                        <Pressable
-                                            accessibilityRole="button"
-                                            accessibilityLabel="Discard active quiz"
-                                            accessibilityHint="Permanently discards this quiz in progress."
-                                            accessibilityState={{ busy: deletingId === activeItem.id }}
-                                            disabled={Boolean(deletingId)}
-                                            hitSlop={8}
-                                            onPress={() => confirmDelete(activeItem)}
-                                            className="h-7 w-7 items-center justify-center rounded-lg active:bg-[#E2E8F0]"
-                                            style={{ borderCurve: 'continuous' }}
-                                        >
-                                            {deletingId === activeItem.id ? (
-                                                <ActivityIndicator size="small" color="#DC2626" />
-                                            ) : (
-                                                <IconTrash size={15} color="#526071" />
-                                            )}
-                                        </Pressable>
-                                    </View>
-                                </View>
-
-                                <Text numberOfLines={1} className="mb-1 font-geist-semibold text-lg text-[#001428]">
-                                    {activeItem.sourceTitle || 'Quiz in progress'}
-                                </Text>
-                                <Text className="mb-4 font-geist text-xs text-[#526071]">
-                                    {formatModality(activeItem.questionType)} • {activeItem.startingDifficulty}
-                                </Text>
-
-                                <Pressable
-                                    accessibilityRole="button"
-                                    accessibilityLabel="Resume Active Quiz"
-                                    disabled={Boolean(deletingId)}
-                                    onPress={() => router.push(`/(main)/quizzes/${activeItem.session.id}`)}
-                                    className="flex-row items-center justify-center gap-2 rounded-2xl bg-[#001428] py-3 active:opacity-90"
+                        {activeItem && (() => {
+                            const activeProgress = Math.round((activeItem.session.answeredCount / activeItem.questionCount) * 100);
+                            return (
+                                <View
+                                    className={`overflow-hidden rounded-3xl border border-[#001428]/15 bg-white p-5 shadow-sm ${
+                                        deletingId === activeItem.id ? 'opacity-50' : ''
+                                    }`}
                                     style={{ borderCurve: 'continuous' }}
                                 >
-                                    <IconPlayerPlay size={18} color="white" />
-                                    <Text className="font-geist-semibold text-sm text-white">Resume Quiz</Text>
-                                </Pressable>
-                            </View>
-                        )}
+                                    <View className="mb-2 flex-row items-center justify-between">
+                                        <View className="flex-row items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-1">
+                                            <View className="h-2 w-2 rounded-full bg-emerald-500" />
+                                            <Text className="font-geist-semibold text-xs text-emerald-800">
+                                                In Progress
+                                            </Text>
+                                        </View>
+                                        <View className="flex-row items-center gap-2">
+                                            <Text className="font-geist text-xs text-[#526071]">
+                                                {activeItem.session.answeredCount} of {activeItem.questionCount} answered
+                                            </Text>
+                                            <Pressable
+                                                accessibilityRole="button"
+                                                accessibilityLabel="Discard active quiz"
+                                                accessibilityHint="Permanently discards this quiz in progress."
+                                                accessibilityState={{ busy: deletingId === activeItem.id }}
+                                                disabled={Boolean(deletingId)}
+                                                hitSlop={10}
+                                                onPress={() => confirmDelete(activeItem)}
+                                                className="h-8 w-8 items-center justify-center rounded-xl active:bg-[#FEF2F2]"
+                                                style={{ borderCurve: 'continuous' }}
+                                            >
+                                                {deletingId === activeItem.id ? (
+                                                    <ActivityIndicator size="small" color="#DC2626" />
+                                                ) : (
+                                                    <IconTrash size={16} color="#94A3B8" />
+                                                )}
+                                            </Pressable>
+                                        </View>
+                                    </View>
+
+                                    <Text numberOfLines={1} className="mt-2 font-geist-bold text-lg text-[#001428]">
+                                        {activeItem.sourceTitle || 'Quiz in progress'}
+                                    </Text>
+
+                                    {/* Chips */}
+                                    <View className="mt-2 flex-row flex-wrap items-center gap-1.5">
+                                        <View className="rounded-full bg-[#F1F4F8] px-2.5 py-0.5">
+                                            <Text className="font-geist-medium text-xs text-[#001428]">
+                                                {formatModality(activeItem.questionType)}
+                                            </Text>
+                                        </View>
+                                        <View className="rounded-full bg-[#F1F4F8] px-2.5 py-0.5">
+                                            <Text className="font-geist-medium text-xs capitalize text-[#526071]">
+                                                {activeItem.startingDifficulty}
+                                            </Text>
+                                        </View>
+                                    </View>
+
+                                    {/* Progress Bar */}
+                                    <View className="mt-4 mb-4 gap-1.5">
+                                        <View className="h-2 w-full overflow-hidden rounded-full bg-[#E2E8F0]">
+                                            <View
+                                                className="h-full rounded-full bg-[#001428]"
+                                                style={{ width: `${activeProgress}%` }}
+                                            />
+                                        </View>
+                                    </View>
+
+                                    <Pressable
+                                        accessibilityRole="button"
+                                        accessibilityLabel="Resume Active Quiz"
+                                        disabled={Boolean(deletingId)}
+                                        onPress={() => router.push(`/(main)/quizzes/${activeItem.session.id}`)}
+                                        className="flex-row items-center justify-center gap-2 rounded-2xl bg-[#001428] py-3.5 shadow-sm active:scale-[0.98] active:opacity-90"
+                                        style={{ borderCurve: 'continuous' }}
+                                    >
+                                        <IconPlayerPlay size={18} color="white" />
+                                        <Text className="font-geist-semibold text-sm text-white">Resume Quiz</Text>
+                                    </Pressable>
+                                </View>
+                            );
+                        })()}
 
                         {/* Recent Completed Quizzes */}
                         <View className="gap-3">
-                            <Text className="font-geist-medium text-xs uppercase tracking-wider text-[#526071]">
-                                Recent Practice
-                            </Text>
+                            <View className="flex-row items-center justify-between">
+                                <Text className="font-geist-semibold text-xs uppercase tracking-wider text-[#526071]">
+                                    Recent Practice
+                                </Text>
+                                {completedItems.length > 0 && (
+                                    <Text className="font-geist text-xs text-[#526071]">
+                                        {completedItems.length} {completedItems.length === 1 ? 'quiz' : 'quizzes'}
+                                    </Text>
+                                )}
+                            </View>
 
                             {completedItems.length === 0 && !activeItem ? (
-                                <View className="items-center justify-center rounded-3xl border border-dashed border-[#E4E8EE] bg-white py-12 px-6">
-                                    <IconHelp size={40} color="#526071" />
-                                    <Text className="mt-3 font-geist-semibold text-base text-[#001428]">
+                                <View
+                                    className="items-center justify-center rounded-3xl border border-[#E4E8EE] bg-white p-8 text-center shadow-sm"
+                                    style={{ borderCurve: 'continuous' }}
+                                >
+                                    <View className="mb-4 h-16 w-16 items-center justify-center rounded-2xl bg-[#F1F4F8]">
+                                        <IconSparkles size={32} color="#001428" />
+                                    </View>
+                                    <Text className="font-geist-bold text-xl text-[#001428]">
                                         No quizzes yet
                                     </Text>
-                                    <Text className="mt-1 text-center font-geist text-xs leading-5 text-[#526071]">
-                                        Generate your first quiz from a school module or IT topic to start testing your knowledge.
+                                    <Text className="mt-2 max-w-xs text-center font-geist text-xs leading-5 text-[#526071]">
+                                        Test your knowledge with AI-generated quizzes tailored to your BSIT modules or curriculum topics.
                                     </Text>
                                     <Pressable
                                         accessibilityRole="button"
-                                        accessibilityLabel="Create Quiz"
+                                        accessibilityLabel="Create First Quiz"
                                         onPress={() => router.push('/(main)/quizzes/create')}
-                                        className="mt-4 rounded-xl bg-[#F1F4F8] px-4 py-2 active:opacity-80"
+                                        className="mt-5 flex-row items-center gap-2 rounded-2xl bg-[#001428] px-5 py-3 shadow-sm active:scale-95 active:opacity-90"
+                                        style={{ borderCurve: 'continuous' }}
                                     >
-                                        <Text className="font-geist-medium text-xs text-[#001428]">Get Started</Text>
+                                        <IconPlus size={18} color="white" />
+                                        <Text className="font-geist-semibold text-xs text-white">Create First Quiz</Text>
                                     </Pressable>
                                 </View>
                             ) : completedItems.length === 0 ? (
@@ -205,10 +294,16 @@ export default function QuizzesPage() {
                                 completedItems.map(item => {
                                     const percent = Math.round((item.session.correctCount / item.questionCount) * 100);
                                     const isDeleting = deletingId === item.id;
+                                    const isHigh = percent >= 80;
+                                    const isMid = percent >= 50;
+                                    const badgeBg = isHigh ? 'bg-emerald-50 border-emerald-200/80 text-emerald-800'
+                                        : isMid ? 'bg-amber-50 border-amber-200/80 text-amber-800'
+                                        : 'bg-slate-100 border-slate-200 text-slate-700';
+
                                     return (
                                         <View
                                             key={item.id}
-                                            className={`flex-row items-center justify-between rounded-2xl border border-[#E4E8EE] bg-white p-4 ${
+                                            className={`flex-row items-center justify-between rounded-2xl border border-[#E4E8EE] bg-white p-4 shadow-sm ${
                                                 isDeleting ? 'opacity-50' : ''
                                             }`}
                                             style={{ borderCurve: 'continuous' }}
@@ -221,15 +316,22 @@ export default function QuizzesPage() {
                                                 onPress={() => router.push(`/(main)/quizzes/${item.session.id}/results`)}
                                                 className="min-w-0 flex-1 pr-3 active:opacity-70"
                                             >
-                                                <Text numberOfLines={1} className="font-geist-medium text-sm text-[#001428]">
+                                                <Text numberOfLines={1} className="font-geist-semibold text-base text-[#001428]">
                                                     {item.sourceTitle || 'General Practice'}
                                                 </Text>
-                                                <Text className="font-geist text-xs text-[#526071]">
-                                                    {formatModality(item.questionType)} • {item.questionCount} Questions
-                                                </Text>
+                                                <View className="mt-1 flex-row flex-wrap items-center gap-2">
+                                                    <Text className="font-geist text-xs text-[#526071]">
+                                                        {formatModality(item.questionType)} • {item.questionCount} Questions
+                                                    </Text>
+                                                    <View className="rounded-full bg-[#F1F4F8] px-2 py-0.5">
+                                                        <Text className="font-geist-medium text-[10px] capitalize text-[#526071]">
+                                                            {item.startingDifficulty}
+                                                        </Text>
+                                                    </View>
+                                                </View>
                                             </Pressable>
 
-                                            <View className="flex-row items-center gap-3">
+                                            <View className="flex-row items-center gap-2.5">
                                                 <Pressable
                                                     accessibilityRole="button"
                                                     accessibilityLabel={`View score: ${item.session.correctCount} of ${item.questionCount}`}
@@ -237,15 +339,15 @@ export default function QuizzesPage() {
                                                     onPress={() => router.push(`/(main)/quizzes/${item.session.id}/results`)}
                                                     className="flex-row items-center gap-2 active:opacity-70"
                                                 >
-                                                    <View className="items-end">
-                                                        <Text className="font-geist-bold text-sm text-[#001428]">
+                                                    <View className={`items-end rounded-xl border px-2.5 py-1 ${badgeBg}`}>
+                                                        <Text className="font-geist-bold text-xs">
                                                             {item.session.correctCount}/{item.questionCount}
                                                         </Text>
-                                                        <Text className="font-geist text-[11px] text-[#526071]">
+                                                        <Text className="font-geist text-[10px]">
                                                             {percent}%
                                                         </Text>
                                                     </View>
-                                                    <IconChevronRight size={18} color="#526071" />
+                                                    <IconChevronRight size={18} color="#94A3B8" />
                                                 </Pressable>
 
                                                 <Pressable
@@ -254,7 +356,7 @@ export default function QuizzesPage() {
                                                     accessibilityHint="Opens confirmation dialog to delete this quiz record."
                                                     accessibilityState={{ busy: isDeleting }}
                                                     disabled={Boolean(deletingId)}
-                                                    hitSlop={8}
+                                                    hitSlop={10}
                                                     onPress={() => confirmDelete(item)}
                                                     className="h-9 w-9 items-center justify-center rounded-xl active:bg-[#FEF2F2]"
                                                     style={{ borderCurve: 'continuous' }}
@@ -262,7 +364,7 @@ export default function QuizzesPage() {
                                                     {isDeleting ? (
                                                         <ActivityIndicator size="small" color="#DC2626" />
                                                     ) : (
-                                                        <IconTrash size={18} color="#94A3B8" />
+                                                        <IconTrash size={16} color="#94A3B8" />
                                                     )}
                                                 </Pressable>
                                             </View>

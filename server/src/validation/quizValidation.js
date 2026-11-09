@@ -92,7 +92,7 @@ export function validateGeneratedQuestions(output, settings, sections) {
             option_a: options.get('a'), option_b: options.get('b'), option_c: options.get('c') ?? null, option_d: options.get('d') ?? null,
             correct_option_id: question.correctOptionId, explanation: question.explanation.trim(), sources };
     });
-    if (questions.length === settings.requested_question_count
-        && new Set(questions.map(question => question.difficulty)).size !== 3) invalid();
+    const targetDifficulty = settings.starting_difficulty || 'medium';
+    if (questions.some(question => question.difficulty !== targetDifficulty)) invalid();
     return { questions, code: null };
 }

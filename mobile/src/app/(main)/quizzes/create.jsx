@@ -268,10 +268,10 @@ export default function CreateQuizPage() {
                     </View>
                 </View>
 
-                {/* Starting Difficulty */}
+                {/* Difficulty Level */}
                 <View className="gap-2.5">
                     <Text className="font-geist-medium text-xs uppercase tracking-wider text-[#526071]">
-                        Starting Difficulty
+                        Difficulty Level
                     </Text>
                     <View className="flex-row gap-2">
                         {['easy', 'medium', 'hard'].map(diff => {

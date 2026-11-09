@@ -4,7 +4,7 @@ import { validateGeneratedQuestions, quizError } from '../validation/quizValidat
 
 export function selectQuizContext(settings, source) {
     const sections = [];
-    const schema = quizSchema(settings.question_type);
+    const schema = quizSchema(settings.question_type, settings.starting_difficulty);
     const context = settings.source_kind === 'topic' ? { subject: source.subjects?.name, topic: source.name } : { sections };
     const bytes = () => Buffer.byteLength(JSON.stringify(quizMessages(settings, context)))
         + Buffer.byteLength(JSON.stringify(schema));
@@ -33,7 +33,7 @@ export async function generateQuestions(client, settings, selected) {
     }
     const response = await client.chat.completions.create({
         model: AI_LIMITS.model, messages: quizMessages(settings, selected.context),
-        response_format: { type: 'json_schema', json_schema: { name: 'it_quiz', strict: true, schema: quizSchema(settings.question_type) } },
+        response_format: { type: 'json_schema', json_schema: { name: 'it_quiz', strict: true, schema: quizSchema(settings.question_type, settings.starting_difficulty) } },
         max_completion_tokens: AI_LIMITS.completionTokens, reasoning_effort: 'low', stream: false,
     });
     const choice = response.choices?.[0];
