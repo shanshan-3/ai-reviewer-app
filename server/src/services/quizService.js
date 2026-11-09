@@ -1,5 +1,5 @@
 import { createSupabaseAdminClient } from '../config/supabase.js';
-import { createGroqClient, AI_LIMITS } from '../config/ai.js';
+import { createGroqClient, AI_LIMITS, getCooldownMs } from '../config/ai.js';
 import * as model from '../models/quizModel.js';
 import { validateGenerationRequest, validateQuizId, sameGenerationInput, quizError } from '../validation/quizValidation.js';
 import { selectQuizContext, generateQuestions, generationFailure } from './quizGeneration.js';
@@ -44,9 +44,14 @@ export async function startGeneration({ userId, body }) {
     const admin = createSupabaseAdminClient();
     const previous = await model.findGeneration(admin, userId, 'request_id', input.request_id);
     if (previous) return existingRequest(previous, input);
-    if (working || Date.now() < nextProviderAt) {
-        throw Object.assign(quizError(429, 'GENERATION_BUSY', 'Quiz generation is busy. Try again shortly.'),
-            { retryAfter: Math.max(5, Math.ceil((nextProviderAt - Date.now()) / 1000)) });
+    if (working) {
+        throw Object.assign(quizError(429, 'GENERATION_BUSY', 'A quiz is currently being generated. Please wait a moment.'),
+            { retryAfter: 5 });
+    }
+    if (Date.now() < nextProviderAt) {
+        const secondsRemaining = Math.max(1, Math.ceil((nextProviderAt - Date.now()) / 1000));
+        throw Object.assign(quizError(429, 'GENERATION_BUSY', `Rate limit cooldown active. Please wait ${secondsRemaining}s before generating.`),
+            { retryAfter: secondsRemaining });
     }
     working = true;
     let scheduled = false;
@@ -66,7 +71,7 @@ export async function startGeneration({ userId, body }) {
             if (error.message === 'MODULE_NOT_READY') throw quizError(409, 'MODULE_NOT_READY', 'This module is no longer ready. Reload your modules.');
             throw error;
         }
-        if (row.source_kind === 'topic' || selected.sections.length) nextProviderAt = Date.now() + AI_LIMITS.cooldownMs;
+        if (row.source_kind === 'topic' || selected.sections.length) nextProviderAt = Date.now() + getCooldownMs(row.requested_question_count);
         scheduled = true;
         void runGeneration(admin, client, row, selected);
         return row;

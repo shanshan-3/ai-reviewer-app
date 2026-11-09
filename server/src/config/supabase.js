@@ -10,6 +10,20 @@ export function createSupabaseAdminClient() {
     });
 }
 
+export function createSupabaseAnonClient() {
+    const url = process.env.SUPABASE_URL;
+    const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+
+    if (!url || !publishableKey) {
+        throw new Error("SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY are required.");
+    }
+
+    return createClient(url, publishableKey, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+        global: { fetch: (url, options) => fetch(url, { ...options, signal: AbortSignal.timeout(20000) }) },
+    });
+}
+
 export function createSupabaseClient(accessToken) {
     const url = process.env.SUPABASE_URL;
     const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;

@@ -24,6 +24,7 @@ function errorHandler(error, _req, res, _next) {
             : encoding ? 'Compressed request bodies are not supported.' : error.publicMessage ?? 'The quiz service is unavailable. Try again later.',
         code: parseError ? 'INVALID_JSON' : tooLarge ? 'REQUEST_LIMIT' : encoding ? 'UNSUPPORTED_ENCODING'
             : error.publicMessage ? error.code : 'SERVICE_UNAVAILABLE',
+        ...(error.retryAfter ? { retryAfter: error.retryAfter } : {}),
     });
 }
 

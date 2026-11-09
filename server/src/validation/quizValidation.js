@@ -23,9 +23,9 @@ export function validateGenerationRequest(body) {
     const type = body.questionType === undefined ? 'conceptual' : body.questionType;
     const count = body.questionCount === undefined ? 10 : body.questionCount;
     const difficulty = body.startingDifficulty === undefined ? 'medium' : body.startingDifficulty;
-    if (!['conceptual', 'true_false', 'coding_syntax'].includes(type) || ![5, 10].includes(count)
+    if (!['conceptual', 'true_false', 'coding_syntax'].includes(type) || ![5, 10, 20].includes(count)
         || !['easy', 'medium', 'hard'].includes(difficulty)) {
-        throw quizError(400, 'INVALID_QUIZ_REQUEST', 'Choose 5 or 10 questions, a supported type and difficulty.');
+        throw quizError(400, 'INVALID_QUIZ_REQUEST', 'Choose 5, 10, or 20 questions, a supported type and difficulty.');
     }
     return { request_id: validateQuizId(body.requestId), source_kind: kind, material_id: kind === 'module' ? sourceId : null,
         topic_id: kind === 'topic' ? sourceId : null, question_type: type, requested_question_count: count, starting_difficulty: difficulty };
@@ -39,7 +39,10 @@ export function sameGenerationInput(row, request) {
 export function validateGeneratedQuestions(output, settings, sections) {
     const invalid = () => { throw quizError(422, 'INVALID_GENERATION', 'The generated quiz did not pass validation. Try again.'); };
     if (!keys(output, ['outcome', 'questions']) || !['ready', 'insufficient_source', 'unsupported_topic'].includes(output.outcome)
-        || !Array.isArray(output.questions) || output.questions.length > settings.requested_question_count) invalid();
+        || !Array.isArray(output.questions)) invalid();
+    if (output.questions.length > settings.requested_question_count) {
+        output.questions = output.questions.slice(0, settings.requested_question_count);
+    }
     if (output.outcome !== 'ready') {
         if (output.questions.length) invalid();
         return { questions: [], code: output.outcome === 'unsupported_topic' ? 'UNSUPPORTED_TOPIC'
