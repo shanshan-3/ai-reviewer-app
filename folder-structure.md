@@ -131,7 +131,9 @@ ai-reviewer-app/
 |       |-- 0009_material_deletion.sql        # Deleting status and service-role deletion marker
 |       |-- 0010_material_import_recovery.sql # Durable unfinished-import markers
 |       |-- 0011_material_review.sql          # Atomic module approval; service-role-only function
-|       `-- 0012_question_modalities.sql      # Three modalities, two/four options and answer membership; unapplied
+|       |-- 0012_question_modalities.sql      # Three modalities, two/four options and answer membership; applied
+|       |-- 0013_atomic_study_operations.sql  # Atomic session start and answer submission RPCs; applied
+|       `-- 0014_extend_question_count.sql    # Extend question count check constraints to support 5, 10, and 20 questions
 |-- docs/
 |   |-- api.md                               # Authenticated material import and preview contract
 |   |-- adr/

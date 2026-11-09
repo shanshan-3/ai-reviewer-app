@@ -103,7 +103,7 @@ Defined on 2026-11-07 against [Phase 3 of the roadmap](../planning/ai-powered-re
 |---|---|
 | `source` | Exactly `{ "kind": "module", "materialId": "uuid" }` or `{ "kind": "topic", "topicId": "uuid" }` |
 | `questionType` | `conceptual` (Multiple Choice, default), `true_false`, or `coding_syntax` (code with four choices); one type per quiz |
-| `questionCount` | `5` or `10` (default `10`); requested session length, not the pool size |
+| `questionCount` | `5`, `10`, or `20` (default `10`); requested session length, not the pool size |
 | `startingDifficulty` | `easy`, `medium` (default), or `hard` |
 | `requestId` | Client-generated UUID, retained across retries of the same generation request |
 
@@ -120,10 +120,10 @@ The implementation follows `quizRoutes` -> `quizController` -> `quizService` -> 
 | Provider/model | Groq `openai/gpt-oss-120b`, matching the existing server configuration; other model IDs are rejected until evaluated |
 | Output | Strict JSON Schema requiring code objects in coding mode and null in Multiple Choice/True or False; non-streaming, low reasoning effort |
 | Input bound | 3,072 UTF-8 bytes for serialized messages plus output schema; context is truncated to this bound without splitting Unicode characters |
-| Completion bound | 4,096 tokens, including reasoning; incomplete/truncated output fails validation |
-| Provider timeout/retries | 45 seconds; SDK retries disabled |
-| Pool | At most the requested 5 or 10 distinct questions; full pools must cover easy/medium/hard; fewer are accepted with explicit actual count |
-| Admission | One active generation per API process and at most one provider attempt per 60 seconds; duplicates of an existing request bypass admission and return saved status |
+| Completion bound | 8,192 tokens, including reasoning; incomplete/truncated output fails validation |
+| Provider timeout/retries | 60 seconds; SDK retries disabled |
+| Pool | At most the requested 5, 10, or 20 distinct questions; full pools must cover easy/medium/hard; fewer are accepted with explicit actual count |
+| Admission | One active generation per API process; dynamic cooldown (10s for 5, 15s for 10, 30s for 20 questions) to protect Groq TPM limits; duplicates of an existing request bypass admission and return saved status |
 | Source selection | First 200 approved sections in source order, filled into the bounded context; coding mode considers sections containing common code markers |
 
 These are conservative development bounds, not measured campus capacity or a guarantee that any account's remaining quota is sufficient. Groq organization quotas may be shared with other applications. Published model/structured-output/rate-limit references: [models](https://console.groq.com/docs/models), [strict outputs](https://console.groq.com/docs/structured-outputs), [rate limits](https://console.groq.com/docs/rate-limits). The lexical coding filter is not a parser for every programming language. A code sample beyond the first 200 sections, or insufficient supported text within the byte budget, can yield insufficient source; retrieval ranking remains future evaluation work. Source checks verify exact excerpts/owned references, not semantic truth of every AI-authored explanation. Instructor/content-quality and broader module evaluation remain required.

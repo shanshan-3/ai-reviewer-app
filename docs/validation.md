@@ -1,5 +1,31 @@
 # Phase 1: PDF/DOCX extraction validation
 
+## 20-Question quiz generation, rate limit safeguards, and study lifecycle - 2026-11-09
+
+After applying `0014_extend_question_count.sql` on Supabase, the 20-question quiz option and dynamic rate-limiting architecture passed all live end-to-end integration checks against hosted Supabase and Groq `openai/gpt-oss-120b`:
+
+- **Negative Validation Gate**: Requests with unsupported counts (`15`, `25`) were rejected immediately with HTTP 400 `INVALID_QUIZ_REQUEST`.
+- **20-Question Request Admission**: `requested_question_count = 20` passed validation and committed to `public.quiz_generations` under migration 0014 constraints.
+- **Provider Speed & Token Footprint**: Full 20-question generation completed in **13 seconds** (629 prompt tokens, 4,235 completion tokens, 64 reasoning tokens). Concise system prompting kept token consumption at ~4,200 tokens (down ~50% from raw outputs), safeguarding Groq's rolling Tokens Per Minute (TPM) quota.
+- **Question Quality & Distribution**: 20 distinct questions were published with exact target distribution: **6 easy, 8 medium, and 6 hard**. All four options were distinct and justifications verified.
+- **Dynamic Count-Aware Cooldown**: Immediate subsequent generation request was throttled with HTTP 429 `GENERATION_BUSY` (`retryAfter: 18s` remaining of the 30s dynamic cooldown window).
+- **Study Session Lifecycle**: Starting a session on the 20-question quiz created 20 `session_questions` rows with `question_count = 20`. First question answer submission incremented `answered_count: 1/20` and advanced to question 2.
+- **Teardown**: The disposable test user, auth record, profile, subject, topic, quiz generation, quiz, questions, session, and answers were permanently deleted; 0 residual test data was left in the database.
+
+## Live study sessions and answer scoring - 2026-11-09
+
+After applying the updated `0013_atomic_study_operations.sql` in Supabase, the study session lifecycle, answer scoring, and results endpoints passed **36 live integration checks** over loopback HTTP and hosted Supabase PostgreSQL:
+
+- **Session startup (`POST /api/quizzes/:id/sessions`)**: Returned HTTP 201/200 with an active session and current question. Answer keys, correct option IDs, explanations, and supporting source citations were strictly excluded from the active question payload.
+- **Interrupted session resumption**: `GET /api/study-sessions/:id` and repeating session creation returned the same active session, preserved current question ID, and retained answer sequence without resetting progress or altering question order.
+- **Premature results gate**: Requesting `GET /api/study-sessions/:id/results` while the session is active returned HTTP 409 `SESSION_INCOMPLETE`.
+- **Answering error handling**: Submitting an answer for an unserved/non-current question returned HTTP 409 `QUESTION_NOT_CURRENT`; submitting an invalid option returned HTTP 400.
+- **Hidden-answer submission (`POST /api/study-sessions/:id/answers`)**: Returned HTTP 200 with submission acknowledgement (`questionId`, `selectedOptionId`) and advanced to the next question. Correctness, correct option ID, and explanations were omitted from the response.
+- **Idempotent retries and conflict handling**: Resubmitting the exact same `(sessionId, questionId, optionId)` returned HTTP 200 with matching submission acknowledgement without double-counting `answered_count` or mutating totals. Submitting a different choice for an already-answered question returned HTTP 409 `ANSWER_CONFLICT`.
+- **Cross-account isolation**: A second authenticated user (User B) received HTTP 404 when attempting to read or submit answers to User A's session.
+- **Quiz finalization & complete results reveal**: Submitting the final answer transitioned session status to `completed` and cleared `current_question_id`. `GET /api/study-sessions/:id/results` then returned HTTP 200 with authoritative totals (`questionCount`, `answeredCount`, `correctCount`) and per-question breakdowns revealing correctness, correct option IDs, AI-authored explanations, and source excerpts with page references.
+- **Full cleanup**: Both disposable test accounts and all cascading subject, topic, material, section, generation, quiz, question, session, and answer rows were permanently deleted; absence was verified. No temporary test files were retained in the repository.
+
 ## Hosted quiz generation - 2026-11-08
 
 After the maintainer reported deploying `b0e148f` and applying 0008/0012, live checks reached `https://rebyuit-api.onrender.com`. An initial attempt returned safe HTTP 503 `AI_NOT_CONFIGURED`; all fixtures were removed. The maintainer corrected Render's Groq environment settings before the runs below. No backend source changes were made during these checks.
