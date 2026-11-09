@@ -47,7 +47,7 @@ export async function generateQuestions(client, settings, selected) {
 
 export function generationFailure(error) {
     if (error?.status === 429) return 'QUOTA_EXCEEDED';
-    if (['APIConnectionTimeoutError', 'AbortError'].includes(error?.name)) return 'PROVIDER_TIMEOUT';
+    if (['APIConnectionTimeoutError', 'AbortError', 'TimeoutError'].includes(error?.name)) return 'PROVIDER_TIMEOUT';
     if (['PROVIDER_REFUSED', 'INVALID_GENERATION'].includes(error?.code)) return error.code;
     return 'GENERATION_FAILED';
 }

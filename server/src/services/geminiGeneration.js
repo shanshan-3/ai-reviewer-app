@@ -66,7 +66,7 @@ export async function generateQuestionsWithGemini(settings, selected) {
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw quizError(503, 'AI_NOT_CONFIGURED', 'Gemini backup is not configured on this server.');
+    if (!apiKey) throw quizError(503, 'AI_NOT_CONFIGURED', 'Gemini is not configured on this server.');
 
     const messages = quizMessages(settings, selected.context);
     const systemPrompt = messages[0].content;

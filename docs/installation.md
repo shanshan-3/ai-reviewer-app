@@ -58,11 +58,11 @@ Ask the maintainer privately for the authorized development values, then edit th
 | File | Values |
 |---|---|
 | `mobile/.env` | `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `EXPO_PUBLIC_API_URL`. |
-| `server/.env` | `PORT`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `GROQ_API_KEY`, and `GROQ_MODEL`. |
+| `server/.env` | `PORT`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `AI_PRIMARY_PROVIDER` (`gemini` or `groq`), `GEMINI_API_KEY`, `GEMINI_MODEL`, `GROQ_API_KEY`, and `GROQ_MODEL`. |
 
-Set `PORT=3000` for the default local API. The starter currently reads only `PORT`; the service variables are for the integrations still to be implemented. Request privileged service keys only when your assigned work needs them.
+Set `PORT=3000` for the default local API. The server supports Google Gemini as the primary AI provider with optional Groq fallback or standalone execution. Request privileged service keys only when your assigned work needs them.
 
-Keep placeholders in `.env.example`. Real values belong in ignored `.env` files. Groq keys and privileged Supabase keys must stay on the server and must never use an `EXPO_PUBLIC_` prefix.
+Keep placeholders in `.env.example`. Real values belong in ignored `.env` files. Gemini, Groq, and privileged Supabase keys must stay on the server and must never use an `EXPO_PUBLIC_` prefix.
 
 For an Android phone, set `EXPO_PUBLIC_API_URL` to your own PC LAN IPv4 address and API port, such as `http://192.168.1.20:3000`. Replace that example address with yours. You can find the active network adapter IPv4 address with:
 

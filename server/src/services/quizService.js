@@ -1,5 +1,14 @@
 import { createSupabaseAdminClient } from '../config/supabase.js';
-import { createGroqClient, AI_LIMITS, GEMINI_CONFIG, isGeminiConfigured, getCooldownMs } from '../config/ai.js';
+import {
+    createGroqClient,
+    AI_LIMITS,
+    GEMINI_CONFIG,
+    isGroqConfigured,
+    isGeminiConfigured,
+    getPrimaryProvider,
+    isPrimaryAiConfigured,
+    getCooldownMs,
+} from '../config/ai.js';
 import * as model from '../models/quizModel.js';
 import { validateGenerationRequest, validateQuizId, sameGenerationInput, quizError } from '../validation/quizValidation.js';
 import { selectQuizContext, generateQuestions, generationFailure } from './quizGeneration.js';
@@ -8,6 +17,14 @@ import { generateQuestionsWithGemini } from './geminiGeneration.js';
 // shortcut: one active process and one provider attempt per minute; shared admission is required before scaling.
 let working = false;
 let nextProviderAt = 0;
+
+function isFallbackEligible(error) {
+    return (
+        error?.status === 429 ||
+        ['APIConnectionTimeoutError', 'AbortError', 'TimeoutError'].includes(error?.name) ||
+        (typeof error?.status === 'number' && error.status >= 500)
+    );
+}
 
 function existingRequest(row, input) {
     if (!sameGenerationInput(row, input)) throw quizError(409, 'REQUEST_CONFLICT', 'This request ID already belongs to different quiz choices.');
@@ -28,24 +45,39 @@ async function sourceFor(admin, ownerId, input) {
     return { settings: { ...input, subject_id: material.subject_id, topic_id: material.topic_id }, source: sections };
 }
 
-async function runGeneration(admin, client, row, selected) {
+async function runGeneration(admin, row, selected) {
     try {
         let result;
-        let providerModel = AI_LIMITS.model;
-        try {
-            result = await generateQuestions(client, row, selected);
-        } catch (error) {
-            const isFallbackEligible = isGeminiConfigured() && (
-                error?.status === 429 ||
-                ['APIConnectionTimeoutError', 'AbortError'].includes(error?.name) ||
-                (typeof error?.status === 'number' && error.status >= 500)
-            );
-            if (isFallbackEligible) {
-                console.warn(`[AI Fallback] Groq primary attempt failed (${error?.message || error?.name}). Routing to Gemini backup...`);
+        let providerModel;
+        const primary = getPrimaryProvider();
+
+        if (primary === 'gemini') {
+            try {
                 result = await generateQuestionsWithGemini(row, selected);
                 providerModel = GEMINI_CONFIG.model;
-            } else {
-                throw error;
+            } catch (error) {
+                if (isGroqConfigured() && isFallbackEligible(error)) {
+                    console.warn(`[AI Fallback] Gemini primary attempt failed (${error?.message || error?.name}). Routing to Groq backup...`);
+                    const groqClient = createGroqClient();
+                    result = await generateQuestions(groqClient, row, selected);
+                    providerModel = AI_LIMITS.model;
+                } else {
+                    throw error;
+                }
+            }
+        } else {
+            try {
+                const groqClient = createGroqClient();
+                result = await generateQuestions(groqClient, row, selected);
+                providerModel = AI_LIMITS.model;
+            } catch (error) {
+                if (isGeminiConfigured() && isFallbackEligible(error)) {
+                    console.warn(`[AI Fallback] Groq primary attempt failed (${error?.message || error?.name}). Routing to Gemini backup...`);
+                    result = await generateQuestionsWithGemini(row, selected);
+                    providerModel = GEMINI_CONFIG.model;
+                } else {
+                    throw error;
+                }
             }
         }
 
@@ -75,9 +107,9 @@ export async function startGeneration({ userId, body }) {
     working = true;
     let scheduled = false;
     try {
-        let client;
-        try { client = createGroqClient(); }
-        catch { throw quizError(503, 'AI_NOT_CONFIGURED', 'Quiz generation is not configured on this server.'); }
+        if (!isPrimaryAiConfigured()) {
+            throw quizError(503, 'AI_NOT_CONFIGURED', 'Quiz generation is not configured on this server.');
+        }
         const { settings, source } = await sourceFor(admin, userId, input);
         const selected = selectQuizContext(settings, source);
         let row;
@@ -92,7 +124,7 @@ export async function startGeneration({ userId, body }) {
         }
         if (row.source_kind === 'topic' || selected.sections.length) nextProviderAt = Date.now() + getCooldownMs(row.requested_question_count);
         scheduled = true;
-        void runGeneration(admin, client, row, selected);
+        void runGeneration(admin, row, selected);
         return row;
     } finally { if (!scheduled) working = false; }
 }

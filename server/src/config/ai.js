@@ -11,6 +11,10 @@ export function getCooldownMs(questionCount) {
     return 30000;
 }
 
+export function isGroqConfigured() {
+    return Boolean(process.env.GROQ_API_KEY);
+}
+
 export function createGroqClient() {
     if (!process.env.GROQ_API_KEY || (process.env.GROQ_MODEL && process.env.GROQ_MODEL !== AI_LIMITS.model)) {
         throw new Error('QUIZ_AI_NOT_CONFIGURED');
@@ -26,4 +30,17 @@ export const GEMINI_CONFIG = Object.freeze({
 
 export function isGeminiConfigured() {
     return Boolean(process.env.GEMINI_API_KEY);
+}
+
+export function getPrimaryProvider() {
+    const configured = (process.env.AI_PRIMARY_PROVIDER || '').toLowerCase().trim();
+    if (configured === 'gemini') return 'gemini';
+    if (configured === 'groq') return 'groq';
+    if (isGroqConfigured() && !isGeminiConfigured()) return 'groq';
+    return 'gemini';
+}
+
+export function isPrimaryAiConfigured() {
+    const primary = getPrimaryProvider();
+    return primary === 'gemini' ? isGeminiConfigured() : isGroqConfigured();
 }
