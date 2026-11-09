@@ -1,6 +1,6 @@
 begin;
 
-create function public.start_study_session(p_owner_id uuid, p_quiz_id uuid)
+create or replace function public.start_study_session(p_owner_id uuid, p_quiz_id uuid)
 returns jsonb
 language plpgsql
 set search_path = ''
@@ -15,11 +15,11 @@ declare
   options text[];
   new_session_id uuid;
 begin
-  select q.id, q.owner_id, q.question_count, g.starting_difficulty, g.question_type
+  select qz.id, qz.owner_id, qz.question_count, g.starting_difficulty, g.question_type
     into quiz
-    from public.quizzes q
-    join public.quiz_generations g on g.id = q.generation_id and g.owner_id = q.owner_id
-    where q.id = p_quiz_id and q.owner_id = p_owner_id;
+    from public.quizzes qz
+    join public.quiz_generations g on g.id = qz.generation_id and g.owner_id = qz.owner_id
+    where qz.id = p_quiz_id and qz.owner_id = p_owner_id;
   if not found then raise exception 'QUIZ_NOT_FOUND'; end if;
 
   select s.id, s.quiz_id, s.question_count, s.status, s.starting_difficulty,
@@ -38,6 +38,28 @@ begin
 
   new_session_id := gen_random_uuid();
 
+  select qq.id into first_question_id
+    from public.quiz_questions qq
+    where qq.quiz_id = p_quiz_id and qq.owner_id = p_owner_id and qq.difficulty = quiz.starting_difficulty
+    order by qq.pool_position
+    limit 1;
+
+  if first_question_id is null then
+    select qq.id into first_question_id
+      from public.quiz_questions qq
+      where qq.quiz_id = p_quiz_id and qq.owner_id = p_owner_id
+      order by qq.pool_position
+      limit 1;
+  end if;
+
+  insert into public.study_sessions (
+    id, owner_id, quiz_id, question_count, status, starting_difficulty,
+    current_difficulty, current_question_id, answered_count, correct_count
+  ) values (
+    new_session_id, p_owner_id, p_quiz_id, quiz.question_count, 'active',
+    quiz.starting_difficulty, quiz.starting_difficulty, first_question_id, 0, 0
+  ) returning * into session;
+
   for q in (
     select qq.id, qq.difficulty, qq.pool_position, qq.option_c
       from public.quiz_questions qq
@@ -51,30 +73,12 @@ begin
       options := array['a', 'b', 'c', 'd'];
     end if;
 
-    if first_question_id is null and q.difficulty = quiz.starting_difficulty then
-      first_question_id := q.id;
-    end if;
-
     insert into public.session_questions (
       session_id, quiz_id, owner_id, question_id, candidate_position, option_order
     ) values (
       new_session_id, p_quiz_id, p_owner_id, q.id, pos, options
     );
   end loop;
-
-  if first_question_id is null then
-    select question_id into first_question_id
-      from public.session_questions
-      where session_id = new_session_id and candidate_position = 1;
-  end if;
-
-  insert into public.study_sessions (
-    id, owner_id, quiz_id, question_count, status, starting_difficulty,
-    current_difficulty, current_question_id, answered_count, correct_count
-  ) values (
-    new_session_id, p_owner_id, p_quiz_id, quiz.question_count, 'active',
-    quiz.starting_difficulty, quiz.starting_difficulty, first_question_id, 0, 0
-  ) returning * into session;
 
   return jsonb_build_object(
     'session', row_to_json(session),
@@ -83,7 +87,7 @@ begin
 end;
 $$;
 
-create function public.submit_study_answer(
+create or replace function public.submit_study_answer(
   p_owner_id uuid, p_session_id uuid, p_question_id uuid, p_option_id text
 )
 returns jsonb
