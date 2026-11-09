@@ -91,6 +91,12 @@ export async function listUserQuizzes() {
     return request('/api/quizzes');
 }
 
+export async function deleteQuiz(quizId) {
+    return request(`/api/quizzes/${quizId}`, {
+        method: 'DELETE',
+    });
+}
+
 export async function startQuizSession(quizId) {
     return request(`/api/quizzes/${quizId}/sessions`, {
         method: 'POST',

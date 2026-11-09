@@ -9,6 +9,7 @@ import {
     postAnswer,
     getResults,
     getUserQuizzes,
+    deleteQuiz,
 } from '../controllers/quizController.js';
 
 const parseJson = express.json({ limit: '8kb', inflate: false });
@@ -36,6 +37,7 @@ router.post('/generations', parseJson, generateQuiz);
 router.get('/generations/:id', getGeneration);
 router.post('/:id/sessions', createSession);
 router.get('/:id', getQuiz);
+router.delete('/:id', deleteQuiz);
 router.use(errorHandler);
 
 export const studySessionRouter = Router();

@@ -7,6 +7,7 @@ import {
     recordAnswer,
     readResults,
     listQuizzes,
+    removeQuiz,
 } from '../services/quizService.js';
 
 export async function generateQuiz(req, res) {
@@ -56,4 +57,9 @@ export async function getResults(req, res) {
 export async function getUserQuizzes(req, res) {
     const quizzes = await listQuizzes({ userId: req.user.id });
     res.json({ quizzes });
+}
+
+export async function deleteQuiz(req, res) {
+    await removeQuiz({ userId: req.user.id, quizId: req.params.id });
+    res.json({ success: true });
 }

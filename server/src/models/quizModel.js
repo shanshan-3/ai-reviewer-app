@@ -153,6 +153,17 @@ export async function getCompletedResults(admin, ownerId, sessionId) {
     };
 }
 
+export async function deleteQuiz(admin, ownerId, quizId) {
+    const quiz = data(await admin.from('quizzes').select('id, generation_id').eq('owner_id', ownerId).eq('id', quizId).maybeSingle());
+    if (!quiz) return false;
+    if (quiz.generation_id) {
+        data(await admin.from('quiz_generations').delete().eq('owner_id', ownerId).eq('id', quiz.generation_id));
+    } else {
+        data(await admin.from('quizzes').delete().eq('owner_id', ownerId).eq('id', quizId));
+    }
+    return true;
+}
+
 export async function listUserQuizzes(admin, ownerId) {
     const list = data(await admin.from('quizzes')
         .select('id, question_count, created_at, generation_id, quiz_generations!inner(source_kind, material_id, subject_id, topic_id, question_type, starting_difficulty, status, materials(title), topics(name)), study_sessions(id, status, answered_count, correct_count, completed_at)')

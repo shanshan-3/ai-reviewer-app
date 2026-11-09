@@ -196,3 +196,11 @@ export async function listQuizzes({ userId }) {
     const admin = createSupabaseAdminClient();
     return await model.listUserQuizzes(admin, userId);
 }
+
+export async function removeQuiz({ userId, quizId }) {
+    const validQuizId = validateQuizId(quizId);
+    const admin = createSupabaseAdminClient();
+    const deleted = await model.deleteQuiz(admin, userId, validQuizId);
+    if (!deleted) throw notFound();
+    return { success: true };
+}
