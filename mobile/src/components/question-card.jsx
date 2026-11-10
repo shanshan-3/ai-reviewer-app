@@ -111,13 +111,8 @@ export default function QuestionCard({
                             accessibilityState={{ selected: isSelected, disabled }}
                             accessibilityLabel={`Option ${opt.id.toUpperCase()}: ${opt.text}`}
                             onPress={() => onSelectOption(opt.id)}
-                            style={({ pressed }) => [
-                                {
-                                    borderCurve: 'continuous',
-                                    transform: [{ scale: pressed && !disabled ? 0.985 : 1 }],
-                                },
-                            ]}
-                            className={`min-h-[56px] flex-row items-center rounded-2xl border p-4 ${
+                            style={{ borderCurve: 'continuous' }}
+                            className={`min-h-[56px] flex-row items-center rounded-2xl border p-4 active:scale-[0.98] ${
                                 isSelected
                                     ? 'border-[#001428] bg-[#F1F4F8] shadow-sm'
                                     : 'border-[#E4E8EE] bg-white active:bg-[#F8FAFC]'

@@ -99,8 +99,7 @@ export default function AnsweringPage() {
                         accessibilityRole="button"
                         accessibilityLabel="Leave quiz"
                         onPress={() => setLeaveModalOpen(true)}
-                        style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.92 : 1 }] }]}
-                        className="h-10 w-10 items-center justify-center rounded-full active:bg-[#F1F4F8]"
+                        className="h-10 w-10 items-center justify-center rounded-full active:scale-95 active:bg-[#F1F4F8]"
                     >
                         <IconArrowLeft size={22} color="#001428" />
                     </Pressable>
@@ -150,14 +149,9 @@ export default function AnsweringPage() {
                     accessibilityRole="button"
                     accessibilityLabel={isLastQuestion ? 'Finish Quiz' : 'Next Question'}
                     onPress={handleSubmit}
-                    style={({ pressed }) => [
-                        {
-                            borderCurve: 'continuous',
-                            transform: [{ scale: pressed && selectedOptionId && !submitting ? 0.985 : 1 }],
-                        },
-                    ]}
+                    style={{ borderCurve: 'continuous' }}
                     className={`flex-row items-center justify-center gap-2 rounded-2xl py-4 shadow-sm ${
-                        !selectedOptionId || submitting ? 'bg-[#F1F4F8]' : 'bg-[#001428]'
+                        !selectedOptionId || submitting ? 'bg-[#F1F4F8]' : 'bg-[#001428] active:scale-[0.98] active:opacity-90'
                     }`}
                 >
                     {submitting ? (
@@ -190,8 +184,8 @@ export default function AnsweringPage() {
                         <View className="mt-6 flex-row gap-3">
                             <Pressable
                                 onPress={() => setLeaveModalOpen(false)}
-                                style={({ pressed }) => [{ borderCurve: 'continuous', transform: [{ scale: pressed ? 0.97 : 1 }] }]}
-                                className="flex-1 items-center justify-center rounded-2xl bg-[#F1F4F8] py-3.5"
+                                style={{ borderCurve: 'continuous' }}
+                                className="flex-1 items-center justify-center rounded-2xl bg-[#F1F4F8] py-3.5 active:scale-95"
                             >
                                 <Text className="font-geist-medium text-sm text-[#001428]">Continue</Text>
                             </Pressable>
@@ -200,8 +194,8 @@ export default function AnsweringPage() {
                                     setLeaveModalOpen(false);
                                     router.replace('/(main)/(tabs)/quizzes');
                                 }}
-                                style={({ pressed }) => [{ borderCurve: 'continuous', transform: [{ scale: pressed ? 0.97 : 1 }] }]}
-                                className="flex-1 items-center justify-center rounded-2xl bg-[#DC2626] py-3.5"
+                                style={{ borderCurve: 'continuous' }}
+                                className="flex-1 items-center justify-center rounded-2xl bg-[#DC2626] py-3.5 active:scale-95"
                             >
                                 <Text className="font-geist-medium text-sm text-white">Exit</Text>
                             </Pressable>
