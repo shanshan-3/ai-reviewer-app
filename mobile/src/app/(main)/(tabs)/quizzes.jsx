@@ -7,7 +7,6 @@ import IconChevronRight from '@tabler/icons-react-native/IconChevronRight';
 import IconArrowRight from '@tabler/icons-react-native/IconArrowRight';
 import IconTrash from '@tabler/icons-react-native/IconTrash';
 import IconSparkles from '@tabler/icons-react-native/IconSparkles';
-import IconTarget from '@tabler/icons-react-native/IconTarget';
 import { deleteQuiz, listUserQuizzes } from '@/lib/quizzes';
 import { getTopicRecommendations } from '@/lib/progress';
 import { useToast } from '@/providers/toast-provider';
@@ -274,22 +273,24 @@ export default function QuizzesPage() {
                             );
                         })()}
 
-                        {/* Weak-Topic Recommendation Card (Phase 4 Inter-Quiz Adaptation) */}
+                        {/* Weak-Topic Recommendation Card (Restored Layout with Refined Color Palette) */}
                         {recommendations.length > 0 && (() => {
                             const topRec = recommendations[0];
                             return (
                                 <View
-                                    className="overflow-hidden rounded-3xl border border-amber-200/80 bg-amber-50/40 p-5 shadow-sm gap-3"
+                                    className="overflow-hidden rounded-3xl border border-[#001428]/15 bg-white p-5 shadow-sm gap-3"
                                     style={{ borderCurve: 'continuous' }}
                                 >
                                     <View className="flex-row items-center justify-between">
-                                        <View className="flex-row items-center gap-1.5 rounded-full border border-amber-300 bg-amber-100/80 px-2.5 py-1">
-                                            <IconTarget size={13} color="#92400E" />
-                                            <Text className="font-geist-semibold text-xs text-amber-900">Recommended Topic</Text>
-                                        </View>
-                                        <Text className="font-geist text-xs text-[#526071]">
-                                            {topRec.accuracy}% accuracy ({topRec.sampleCount} questions)
+                                        <Text className="font-geist-bold text-sm text-[#001428]">
+                                            {topRec.accuracy}% Accuracy <Text className="font-geist text-xs text-[#526071] font-normal">• {topRec.sampleCount} questions</Text>
                                         </Text>
+                                        <View className="flex-row items-center gap-1.5">
+                                            <View className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                                            <Text className="font-geist-semibold text-xs text-[#526071]">
+                                                Needs Practice
+                                            </Text>
+                                        </View>
                                     </View>
 
                                     <View>

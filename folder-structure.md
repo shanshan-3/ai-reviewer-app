@@ -150,6 +150,7 @@ ai-reviewer-app/
 |   |-- commands.md                          # Comprehensive developer and command handbook
 |   |-- development.md                       # Contributor workflow and guide index
 |   |-- installation.md                      # Prerequisites, installation, and environment setup
+|   |-- system-process.md                    # End-to-end system architecture, technical workflows, and code lifecycle
 |   `-- validation.md                        # Extraction benchmark results and test evidence
 |-- planning/
 |   `-- ai-powered-reviewer-roadmap.md
@@ -496,4 +497,5 @@ The local extraction harness already uses a child process and bounded file, time
 | [Development page](docs/development.md) | Links developers to installation, folder, and roadmap documentation. |
 | [Glossary](GLOSSARY.md) | Defines the terms used throughout the project. |
 | [Private preparation decision](docs/adr/0001-private-independent-preparation.md) | Records privacy boundaries and module-deletion behavior. |
+| [System process](docs/system-process.md) | End-to-end system architecture, technical workflows, and code lifecycle. |
 | `folder-structure.md` | Explains where existing and planned files belong. |
