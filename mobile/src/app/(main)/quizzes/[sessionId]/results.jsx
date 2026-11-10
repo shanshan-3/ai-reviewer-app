@@ -71,10 +71,10 @@ export default function ResultsPage() {
                 <Text className="text-center font-geist-semibold text-lg text-foreground">Could not load results</Text>
                 <Text className="mt-2 text-center font-geist text-sm text-muted-foreground">{error}</Text>
                 <Pressable
-                    onPress={() => router.replace('/(main)/(tabs)/quizzes')}
+                    onPress={() => router.replace('/(main)/(tabs)/dashboard')}
                     className="mt-6 rounded-2xl bg-secondary px-5 py-3"
                 >
-                    <Text className="font-geist-medium text-sm text-foreground">Return to Quizzes</Text>
+                    <Text className="font-geist-medium text-sm text-foreground">Back to Dashboard</Text>
                 </Pressable>
             </SafeAreaView>
         );
@@ -98,8 +98,8 @@ export default function ResultsPage() {
             <View className="flex-row items-center border-b border-[#E4E8EE] bg-white px-4 py-3">
                 <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Return to Quizzes"
-                    onPress={() => router.replace('/(main)/(tabs)/quizzes')}
+                    accessibilityLabel="Return to Dashboard"
+                    onPress={() => router.replace('/(main)/(tabs)/dashboard')}
                     className="mr-3 h-10 w-10 items-center justify-center rounded-full active:bg-[#F1F4F8]"
                 >
                     <IconArrowLeft size={22} color="#001428" />
@@ -312,11 +312,11 @@ export default function ResultsPage() {
                 <View className="gap-3 pt-4">
                     <Pressable
                         accessibilityRole="button"
-                        accessibilityLabel="Return to Quizzes"
-                        onPress={() => router.replace('/(main)/(tabs)/quizzes')}
+                        accessibilityLabel="Back to Dashboard"
+                        onPress={() => router.replace('/(main)/(tabs)/dashboard')}
                         className="items-center justify-center rounded-2xl bg-[#001428] py-4 active:opacity-90"
                     >
-                        <Text className="font-geist-semibold text-base text-white">Back to Quizzes</Text>
+                        <Text className="font-geist-semibold text-base text-white">Back to Dashboard</Text>
                     </Pressable>
 
                     <Pressable

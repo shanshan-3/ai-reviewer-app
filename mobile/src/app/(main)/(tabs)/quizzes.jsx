@@ -7,7 +7,9 @@ import IconChevronRight from '@tabler/icons-react-native/IconChevronRight';
 import IconArrowRight from '@tabler/icons-react-native/IconArrowRight';
 import IconTrash from '@tabler/icons-react-native/IconTrash';
 import IconSparkles from '@tabler/icons-react-native/IconSparkles';
+import IconTarget from '@tabler/icons-react-native/IconTarget';
 import { deleteQuiz, listUserQuizzes } from '@/lib/quizzes';
+import { getTopicRecommendations } from '@/lib/progress';
 import { useToast } from '@/providers/toast-provider';
 import { THEME } from '@/lib/theme';
 
@@ -15,6 +17,7 @@ export default function QuizzesPage() {
     const router = useRouter();
     const showToast = useToast();
     const [quizzes, setQuizzes] = useState([]);
+    const [recommendations, setRecommendations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
@@ -29,6 +32,13 @@ export default function QuizzesPage() {
             setQuizzes(data.quizzes ?? []);
         } catch (err) {
             setError(err.message || 'Could not load quizzes.');
+        }
+
+        try {
+            const recData = await getTopicRecommendations();
+            setRecommendations(recData.recommendations ?? []);
+        } catch {
+            // Non-blocking recommendations fetch
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -260,6 +270,50 @@ export default function QuizzesPage() {
                                             />
                                         </View>
                                     </View>
+                                </View>
+                            );
+                        })()}
+
+                        {/* Weak-Topic Recommendation Card (Phase 4 Inter-Quiz Adaptation) */}
+                        {recommendations.length > 0 && (() => {
+                            const topRec = recommendations[0];
+                            return (
+                                <View
+                                    className="overflow-hidden rounded-3xl border border-amber-200/80 bg-amber-50/40 p-5 shadow-sm gap-3"
+                                    style={{ borderCurve: 'continuous' }}
+                                >
+                                    <View className="flex-row items-center justify-between">
+                                        <View className="flex-row items-center gap-1.5 rounded-full border border-amber-300 bg-amber-100/80 px-2.5 py-1">
+                                            <IconTarget size={13} color="#92400E" />
+                                            <Text className="font-geist-semibold text-xs text-amber-900">Recommended Topic</Text>
+                                        </View>
+                                        <Text className="font-geist text-xs text-[#526071]">
+                                            {topRec.accuracy}% accuracy ({topRec.sampleCount} questions)
+                                        </Text>
+                                    </View>
+
+                                    <View>
+                                        <Text numberOfLines={1} className="font-geist-bold text-base text-[#001428]">
+                                            {topRec.topicName}
+                                        </Text>
+                                        <Text numberOfLines={2} className="mt-1 font-geist text-xs leading-5 text-[#526071]">
+                                            {topRec.reason}
+                                        </Text>
+                                    </View>
+
+                                    <Pressable
+                                        accessibilityRole="button"
+                                        accessibilityLabel={`Practice recommended topic ${topRec.topicName}`}
+                                        onPress={() => router.push({
+                                            pathname: '/(main)/quizzes/create',
+                                            params: { sourceKind: 'topic', topicId: topRec.topicId },
+                                        })}
+                                        className="flex-row items-center justify-center gap-2 rounded-2xl bg-[#001428] py-3.5 shadow-sm active:scale-[0.98] active:opacity-90"
+                                        style={{ borderCurve: 'continuous' }}
+                                    >
+                                        <Text className="font-geist-semibold text-xs text-white">Practice This Topic</Text>
+                                        <IconArrowRight size={16} color="white" />
+                                    </Pressable>
                                 </View>
                             );
                         })()}

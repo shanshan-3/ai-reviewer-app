@@ -22,7 +22,7 @@ export async function getRecentSubmittedAnswers(admin, ownerId, limit = 500) {
     const quizzes = data(
         await admin
             .from('quizzes')
-            .select('id, generation:quiz_generations!inner(subject_id, topic_id, subjects!inner(id, name), topics!inner(id, name))')
+            .select('id, generation:quiz_generations!inner(source_kind, subject_id, topic_id, materials(id, title, subjects(id, name)), topics(id, name, subjects(id, name)))')
             .eq('owner_id', ownerId)
             .in('id', quizIds)
     );
@@ -32,14 +32,24 @@ export async function getRecentSubmittedAnswers(admin, ownerId, limit = 500) {
     return answers
         .map(a => {
             const gen = quizMap.get(a.quiz_id);
+            const topic = gen?.topics;
+            const material = gen?.materials;
+            const topicId = gen?.topic_id || topic?.id;
+            const subjectId = gen?.subject_id || topic?.subjects?.id || material?.subjects?.id;
+            const subjectName = topic?.subjects?.name || material?.subjects?.name || 'General Subject';
+            const rawTopicName = topic?.name;
+            const topicName = rawTopicName && rawTopicName !== 'General'
+                ? rawTopicName
+                : subjectName;
+
             return {
                 questionId: a.question_id,
                 isCorrect: a.is_correct,
                 answeredAt: a.answered_at,
-                subjectId: gen?.subject_id,
-                subjectName: gen?.subjects?.name,
-                topicId: gen?.topic_id,
-                topicName: gen?.topics?.name,
+                subjectId,
+                subjectName,
+                topicId,
+                topicName,
             };
         })
         .filter(a => a.topicId);
