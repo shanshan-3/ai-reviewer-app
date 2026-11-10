@@ -128,6 +128,7 @@ export async function getCompletedResults(admin, ownerId, sessionId) {
         ];
         return {
             questionId: a.question_id,
+            difficulty: a.difficulty ?? q?.difficulty ?? 'medium',
             prompt: q?.prompt ?? '',
             code: q?.code ? { language: q?.code_language, text: q?.code } : null,
             options,
@@ -147,6 +148,7 @@ export async function getCompletedResults(admin, ownerId, sessionId) {
         answeredCount: session.answered_count,
         questionCount: session.question_count,
         startingDifficulty: session.starting_difficulty,
+        finalDifficulty: session.current_difficulty,
         startedAt: session.started_at,
         completedAt: session.completed_at,
         answers: detailedAnswers,

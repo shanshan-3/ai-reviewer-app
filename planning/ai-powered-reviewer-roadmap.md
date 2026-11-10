@@ -331,9 +331,9 @@ Outcome: Practice difficulty responds to performance, and flashcards support tec
 
 Prerequisites: Stable question/answer interfaces and saved study sessions.
 
-- [ ] Implement selected starting difficulty, two-answer consecutive transitions, counter resets, easy/medium/hard bounds, and nearest-available selection from the limited pool, without a provider request for each answer.
+- [x] Configure strict starting difficulty per user selection (enforced in commit d07bb1a). In-quiz dynamic level shifting superseded by inter-quiz weak-topic recommendations and dashboard mastery estimates to maintain hidden-feedback and single-difficulty integrity.
 - [ ] Generate and save personal technical-term flashcards from the approved sources, with output validation. Track each card-back view so only a full-set review within the same day qualifies as completed.
-- [ ] Use saved answers to suggest weak topics with sufficient history. Explain the recommendations while leaving topic/material selection and next-quiz generation to the user.
+- [x] Use saved answers to suggest weak topics with sufficient history. Implemented rolling 20-answer window and 5-answer threshold in `progressEstimates.js` and `topicRecommendations.js`, with actionable suggestion card on Dashboard leaving topic/quiz choice to user.
 - [ ] Test difficulty limits, mixed correct/incorrect sequences, exhausted question pools, restart/resume consistency, empty flashcard sets, and repeated review-completion requests.
 
 Acceptance checks: Controlled consecutive and alternating answer sequences verify transitions, counter resets, level bounds, and nearest-available fallback; resumed study sessions preserve that state. Flashcards reveal the correct back text; a full set reviewed that day qualifies once, while partial or empty reviews do not. Reproduce recommendations from saved answers and verify that they neither change the selected topic/material nor generate the next quiz automatically.

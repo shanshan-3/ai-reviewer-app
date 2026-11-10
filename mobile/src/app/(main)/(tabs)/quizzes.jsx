@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import IconPlus from '@tabler/icons-react-native/IconPlus';
 import IconChevronRight from '@tabler/icons-react-native/IconChevronRight';
-import IconPlayerPlay from '@tabler/icons-react-native/IconPlayerPlay';
+import IconArrowRight from '@tabler/icons-react-native/IconArrowRight';
 import IconTrash from '@tabler/icons-react-native/IconTrash';
 import IconSparkles from '@tabler/icons-react-native/IconSparkles';
 import { deleteQuiz, listUserQuizzes } from '@/lib/quizzes';
@@ -93,13 +93,18 @@ export default function QuizzesPage() {
             >
                 {/* Header CTA */}
                 <View className="flex-row items-center justify-between">
-                    <View>
-                        <Text className="font-geist-bold text-3xl tracking-tight text-[#001428]">Quizzes</Text>
-                        <Text className="mt-0.5 font-geist text-xs text-[#526071]">Practice and test your knowledge</Text>
+                    <View className="min-w-0 flex-1 pr-3">
+                        <Text accessibilityRole="header" numberOfLines={1} className="font-geist-bold text-2xl tracking-tight text-[#001428]">
+                            Test Your Mastery
+                        </Text>
+                        <Text className="mt-0.5 font-geist text-xs text-[#526071]">
+                            Generate targeted AI quizzes from your modules and topics
+                        </Text>
                     </View>
                     <Pressable
                         accessibilityRole="button"
                         accessibilityLabel="Create New Quiz"
+                        accessibilityHint="Opens quiz creator to generate a new practice test"
                         onPress={() => router.push('/(main)/quizzes/create')}
                         className="flex-row items-center gap-1.5 rounded-full bg-[#001428] px-4 py-2.5 shadow-sm active:scale-95 active:opacity-90"
                         style={{ borderCurve: 'continuous' }}
@@ -166,86 +171,95 @@ export default function QuizzesPage() {
                     </View>
                 ) : (
                     <View key="content-state" className="gap-5">
-                        {/* Active / In-Progress Quiz Card */}
+                        {/* Active / In-Progress Quiz Card (Compact Apple-style Capsule) */}
                         {activeItem && (() => {
                             const activeProgress = Math.round((activeItem.session.answeredCount / activeItem.questionCount) * 100);
+                            const isDeleting = deletingId === activeItem.id;
                             return (
-                                <View
-                                    className={`overflow-hidden rounded-3xl border border-[#001428]/15 bg-white p-5 shadow-sm ${
-                                        deletingId === activeItem.id ? 'opacity-50' : ''
-                                    }`}
-                                    style={{ borderCurve: 'continuous' }}
-                                >
-                                    <View className="mb-2 flex-row items-center justify-between">
-                                        <View className="flex-row items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-1">
-                                            <View className="h-2 w-2 rounded-full bg-emerald-500" />
-                                            <Text className="font-geist-semibold text-xs text-emerald-800">
-                                                In Progress
-                                            </Text>
-                                        </View>
-                                        <View className="flex-row items-center gap-2">
-                                            <Text className="font-geist text-xs text-[#526071]">
-                                                {activeItem.session.answeredCount} of {activeItem.questionCount} answered
-                                            </Text>
+                                <View className="gap-2">
+                                    <View className="flex-row items-center justify-between">
+                                        <Text className="font-geist-semibold text-xs uppercase tracking-wider text-[#526071]">
+                                            Continue Practice
+                                        </Text>
+                                    </View>
+                                    <View
+                                        className={`overflow-hidden rounded-2xl border border-[#001428]/15 bg-white shadow-xs ${
+                                            isDeleting ? 'opacity-50' : ''
+                                        }`}
+                                        style={{ borderCurve: 'continuous' }}
+                                    >
+                                        <View className="flex-row items-center justify-between p-3.5">
                                             <Pressable
                                                 accessibilityRole="button"
-                                                accessibilityLabel="Discard active quiz"
-                                                accessibilityHint="Permanently discards this quiz in progress."
-                                                accessibilityState={{ busy: deletingId === activeItem.id }}
+                                                accessibilityLabel={`Resume active quiz for ${activeItem.sourceTitle || 'Quiz in progress'}, ${activeProgress}% complete`}
+                                                accessibilityHint="Navigates to the active quiz session"
                                                 disabled={Boolean(deletingId)}
-                                                hitSlop={10}
-                                                onPress={() => confirmDelete(activeItem)}
-                                                className="h-8 w-8 items-center justify-center rounded-xl active:bg-[#FEF2F2]"
-                                                style={{ borderCurve: 'continuous' }}
+                                                onPress={() => router.push(`/(main)/quizzes/${activeItem.session.id}`)}
+                                                className="min-w-0 flex-1 pr-3 active:opacity-70"
                                             >
-                                                {deletingId === activeItem.id ? (
-                                                    <ActivityIndicator size="small" color="#DC2626" />
-                                                ) : (
-                                                    <IconTrash size={16} color="#94A3B8" />
-                                                )}
+                                                <View className="flex-row items-center gap-1.5">
+                                                    <View className="h-2 w-2 rounded-full bg-emerald-500" />
+                                                    <Text className="font-geist-semibold text-[11px] uppercase tracking-wider text-emerald-700">
+                                                        In Progress • {activeProgress}%
+                                                    </Text>
+                                                </View>
+                                                <Text numberOfLines={1} className="mt-1 font-geist-bold text-sm text-[#001428]">
+                                                    {activeItem.sourceTitle || 'Quiz in progress'}
+                                                </Text>
+                                                <View className="mt-1 flex-row flex-wrap items-center gap-1.5">
+                                                    <Text numberOfLines={1} className="font-geist text-[11px] text-[#526071]">
+                                                        {formatModality(activeItem.questionType)} • {activeItem.session.answeredCount} of {activeItem.questionCount}
+                                                    </Text>
+                                                    <View className="rounded-full bg-[#F1F4F8] px-2 py-0.5">
+                                                        <Text className="font-geist-medium text-[10px] capitalize text-[#526071]">
+                                                            {activeItem.startingDifficulty}
+                                                        </Text>
+                                                    </View>
+                                                </View>
                                             </Pressable>
-                                        </View>
-                                    </View>
 
-                                    <Text numberOfLines={1} className="mt-2 font-geist-bold text-lg text-[#001428]">
-                                        {activeItem.sourceTitle || 'Quiz in progress'}
-                                    </Text>
+                                            <View className="flex-row items-center gap-2">
+                                                <Pressable
+                                                    accessibilityRole="button"
+                                                    accessibilityLabel="Discard active quiz"
+                                                    accessibilityHint="Permanently discards this quiz in progress."
+                                                    accessibilityState={{ busy: isDeleting }}
+                                                    disabled={Boolean(deletingId)}
+                                                    hitSlop={10}
+                                                    onPress={() => confirmDelete(activeItem)}
+                                                    className="h-8 w-8 items-center justify-center rounded-xl active:bg-[#FEF2F2]"
+                                                    style={{ borderCurve: 'continuous' }}
+                                                >
+                                                    {isDeleting ? (
+                                                        <ActivityIndicator size="small" color="#DC2626" />
+                                                    ) : (
+                                                        <IconTrash size={16} color="#94A3B8" />
+                                                    )}
+                                                </Pressable>
 
-                                    {/* Chips */}
-                                    <View className="mt-2 flex-row flex-wrap items-center gap-1.5">
-                                        <View className="rounded-full bg-[#F1F4F8] px-2.5 py-0.5">
-                                            <Text className="font-geist-medium text-xs text-[#001428]">
-                                                {formatModality(activeItem.questionType)}
-                                            </Text>
+                                                <Pressable
+                                                    accessibilityRole="button"
+                                                    accessibilityLabel="Resume quiz"
+                                                    accessibilityHint="Navigates to the active quiz session"
+                                                    disabled={Boolean(deletingId)}
+                                                    onPress={() => router.push(`/(main)/quizzes/${activeItem.session.id}`)}
+                                                    className="flex-row items-center gap-1.5 rounded-full bg-[#001428] px-3 py-2 shadow-xs active:scale-95 active:opacity-90"
+                                                    style={{ borderCurve: 'continuous' }}
+                                                >
+                                                    <Text className="font-geist-semibold text-xs text-white">Resume</Text>
+                                                    <IconArrowRight size={13} color="white" />
+                                                </Pressable>
+                                            </View>
                                         </View>
-                                        <View className="rounded-full bg-[#F1F4F8] px-2.5 py-0.5">
-                                            <Text className="font-geist-medium text-xs capitalize text-[#526071]">
-                                                {activeItem.startingDifficulty}
-                                            </Text>
-                                        </View>
-                                    </View>
 
-                                    {/* Progress Bar */}
-                                    <View className="mt-4 mb-4 gap-1.5">
-                                        <View className="h-2 w-full overflow-hidden rounded-full bg-[#E2E8F0]">
+                                        {/* Hairline Progress Bar */}
+                                        <View className="h-1 w-full bg-[#E2E8F0]">
                                             <View
-                                                className="h-full rounded-full bg-[#001428]"
+                                                className="h-full bg-[#001428]"
                                                 style={{ width: `${activeProgress}%` }}
                                             />
                                         </View>
                                     </View>
-
-                                    <Pressable
-                                        accessibilityRole="button"
-                                        accessibilityLabel="Resume Active Quiz"
-                                        disabled={Boolean(deletingId)}
-                                        onPress={() => router.push(`/(main)/quizzes/${activeItem.session.id}`)}
-                                        className="flex-row items-center justify-center gap-2 rounded-2xl bg-[#001428] py-3.5 shadow-sm active:scale-[0.98] active:opacity-90"
-                                        style={{ borderCurve: 'continuous' }}
-                                    >
-                                        <IconPlayerPlay size={18} color="white" />
-                                        <Text className="font-geist-semibold text-sm text-white">Resume Quiz</Text>
-                                    </Pressable>
                                 </View>
                             );
                         })()}

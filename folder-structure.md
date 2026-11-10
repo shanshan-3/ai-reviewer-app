@@ -52,11 +52,13 @@ ai-reviewer-app/
 |   |   |   |-- material-card.jsx            # Saved module title, filename, status, and preview action
 |   |   |   |-- FormField.jsx                # Labeled input with icons, error border, password toggle
 |   |   |   |-- PasswordStrength.jsx         # Visual 4-bar password complexity indicator
+|   |   |   |-- topic-estimate.jsx           # Practice estimate and sample count
 |   |   |   `-- StartupSplash.jsx            # Animated splash coordinator and motion detection
 |   |   `-- lib/
 |   |       |-- auth.js                      # Login, registration, and recovery validation rules
 |   |       |-- materials.js                 # Authenticated module list, upload, preview, labels, and approval
 |   |       |-- curriculum.js                # Supplied BSIT subjects grouped by year, with search
+|   |       |-- progress.js                  # Dashboard/report data requests
 |   |       |-- recovery-session.js          # In-memory verified recovery user ID
 |   |       |-- session-storage.js           # Remember me; memory or persistent session storage
 |   |       |-- supabase.js                  # Public Supabase client and shared auth storage
@@ -86,24 +88,30 @@ ai-reviewer-app/
 |   |   |   |-- quizController.js           # Generate quiz, poll generation status, read safe quiz metadata
 |   |   |   |-- labelController.js           # Personal label list/create responses
 |   |   |   |-- materialController.js        # Upload and owner-only preview responses
-|   |   |   `-- profileController.js         # Own-profile response and safe errors
+|   |   |   |-- profileController.js         # Own-profile response and safe errors
+|   |   |   `-- progressController.js        # Progress and recommendation responses
 |   |   |-- middleware/
 |   |   |   `-- authMiddleware.js            # Verify Bearer token and attach identity
 |   |   |-- models/
 |   |   |   |-- quizModel.js                # Owner-scoped generation/source reads and atomic quiz publication
 |   |   |   |-- labelModel.js                # Owner-scoped subject/topic persistence
 |   |   |   |-- materialModel.js             # Material/section persistence and private files
-|   |   |   `-- profileModel.js              # Read profile by authenticated user ID
+|   |   |   |-- profileModel.js              # Read profile by authenticated user ID
+|   |   |   `-- progressModel.js             # Owner-scoped submitted answers and topic queries
 |   |   |-- routes/
 |   |   |   |-- quizRoutes.js               # Authenticated /api/quizzes generation/status/metadata routes
 |   |   |   |-- labelRoutes.js               # Label endpoints mounted at /api/materials/labels
 |   |   |   |-- materialRoutes.js            # Authenticated raw upload and preview endpoints
-|   |   |   `-- profileRoutes.js             # Protected GET /api/profile
+|   |   |   |-- profileRoutes.js             # Protected GET /api/profile
+|   |   |   `-- progressRoutes.js            # Authenticated /api/progress routes
 |   |   |-- services/
 |   |   |   |-- quizService.js              # Generation lifecycle, admission, retries, source ownership, recovery
 |   |   |   |-- quizGeneration.js           # Bounded approved context, Groq calls and failure classification
 |   |   |   |-- geminiGeneration.js         # Google Gemini backup provider adapter and schema translation
 |   |   |   |-- quizPrompts.js              # Strict question JSON schema and grounded IT question prompts
+|   |   |   |-- progressService.js           # Shared progress and recommendation service
+|   |   |   |-- progressEstimates.js         # Rolling 20 first-submission answers, minimum five
+|   |   |   |-- topicRecommendations.js      # Weak-topic suggestions based on accuracy
 |   |   |   |-- labelService.js              # Personal label validation and ownership rules
 |   |   |   |-- materialExtraction.js        # Node worker supervision, deadline, Linux RSS monitor
 |   |   |   |-- materialExtractionLimits.js  # Shared extraction ceilings and safe messages

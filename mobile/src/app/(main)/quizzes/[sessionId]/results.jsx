@@ -11,6 +11,12 @@ import IconSparkles from '@tabler/icons-react-native/IconSparkles';
 import { getStudySessionResults } from '@/lib/quizzes';
 import { THEME } from '@/lib/theme';
 
+const DIFFICULTY_CONFIG = {
+    easy: { label: 'Easy', bg: 'bg-[#ECFDF5]', text: 'text-[#065F46]', border: 'border-[#A7F3D0]' },
+    medium: { label: 'Medium', bg: 'bg-[#EFF6FF]', text: 'text-[#1E40AF]', border: 'border-[#BFDBFE]' },
+    hard: { label: 'Hard', bg: 'bg-[#FAF5FF]', text: 'text-[#6B21A8]', border: 'border-[#E9D5FF]' },
+};
+
 export default function ResultsPage() {
     const { sessionId } = useLocalSearchParams();
     const router = useRouter();
@@ -119,7 +125,7 @@ export default function ResultsPage() {
                                 <Text className="font-geist-bold text-xl text-[#001428]">{accuracyPercent}%</Text>
                             </View>
                             <Text className="mt-1 font-geist text-xs capitalize text-[#526071]">
-                                {results.startingDifficulty} difficulty
+                                {results.startingDifficulty || 'medium'} difficulty
                             </Text>
                         </View>
                     </View>
@@ -203,10 +209,19 @@ export default function ResultsPage() {
                                             </View>
 
                                             <View className="flex-1">
-                                                <Text className="font-geist text-xs text-[#526071]">
-                                                    Question {idx + 1}
-                                                </Text>
-                                                <Text numberOfLines={isExpanded ? undefined : 2} className="font-geist-medium text-sm text-[#001428]">
+                                                <View className="flex-row items-center gap-2">
+                                                    <Text className="font-geist text-xs text-[#526071]">
+                                                        Question {idx + 1}
+                                                    </Text>
+                                                    {item.difficulty && (
+                                                        <View className={`rounded-full border px-2 py-0.5 ${DIFFICULTY_CONFIG[item.difficulty]?.bg || 'bg-[#F1F4F8]'} ${DIFFICULTY_CONFIG[item.difficulty]?.border || 'border-[#E4E8EE]'}`}>
+                                                            <Text className={`font-geist-semibold text-[10px] capitalize ${DIFFICULTY_CONFIG[item.difficulty]?.text || 'text-[#526071]'}`}>
+                                                                {item.difficulty}
+                                                            </Text>
+                                                        </View>
+                                                    )}
+                                                </View>
+                                                <Text numberOfLines={isExpanded ? undefined : 2} className="mt-0.5 font-geist-medium text-sm text-[#001428]">
                                                     {item.prompt}
                                                 </Text>
                                             </View>

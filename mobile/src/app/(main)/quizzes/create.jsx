@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import IconArrowLeft from '@tabler/icons-react-native/IconArrowLeft';
 import IconSparkles from '@tabler/icons-react-native/IconSparkles';
 import SourcePicker from '@/components/source-picker';
@@ -10,11 +10,12 @@ import { createQuizGeneration, getQuizGeneration, startQuizSession } from '@/lib
 
 export default function CreateQuizPage() {
     const router = useRouter();
+    const params = useLocalSearchParams();
 
     // Source state
-    const [sourceKind, setSourceKind] = useState('module');
-    const [materialId, setMaterialId] = useState(null);
-    const [topicId, setTopicId] = useState(null);
+    const [sourceKind, setSourceKind] = useState(params.sourceKind === 'topic' ? 'topic' : 'module');
+    const [materialId, setMaterialId] = useState(params.materialId || null);
+    const [topicId, setTopicId] = useState(params.topicId || null);
 
     // Options state
     const [questionType, setQuestionType] = useState('conceptual');
@@ -60,12 +61,20 @@ export default function CreateQuizPage() {
                 setMaterials(matRes.materials ?? []);
                 setLabels(labelRes ?? { subjects: [], topics: [] });
 
-                const ready = (matRes.materials ?? []).filter(m => m.status === 'ready');
-                if (ready.length > 0) {
-                    setMaterialId(ready[0].id);
-                } else if ((labelRes.topics ?? []).length > 0) {
+                if (params.topicId) {
                     setSourceKind('topic');
-                    setTopicId(labelRes.topics[0].id);
+                    setTopicId(params.topicId);
+                } else if (params.materialId) {
+                    setSourceKind('module');
+                    setMaterialId(params.materialId);
+                } else {
+                    const ready = (matRes.materials ?? []).filter(m => m.status === 'ready');
+                    if (ready.length > 0) {
+                        setMaterialId(ready[0].id);
+                    } else if ((labelRes.topics ?? []).length > 0) {
+                        setSourceKind('topic');
+                        setTopicId(labelRes.topics[0].id);
+                    }
                 }
             } catch {
                 // non-fatal
@@ -74,7 +83,7 @@ export default function CreateQuizPage() {
             }
         }
         init();
-    }, []);
+    }, [params.materialId, params.topicId]);
 
     async function handleGenerate() {
         if (generating || cooldownSeconds > 0) return;

@@ -7,14 +7,16 @@ import AuthMessage from '@/components/AuthMessage';
 import MaterialCard from '@/components/material-card';
 import { deleteMaterial, listMaterials } from '@/lib/materials';
 import { listUserQuizzes } from '@/lib/quizzes';
+import { getTopicRecommendations } from '@/lib/progress';
 import { useSession } from '@/providers/session-provider';
 import { useToast } from '@/providers/toast-provider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import IconUpload from '@tabler/icons-react-native/IconUpload';
-import IconPlayerPlay from '@tabler/icons-react-native/IconPlayerPlay';
 import IconSparkles from '@tabler/icons-react-native/IconSparkles';
 import IconFileText from '@tabler/icons-react-native/IconFileText';
 import IconPlus from '@tabler/icons-react-native/IconPlus';
+import IconTarget from '@tabler/icons-react-native/IconTarget';
+import IconArrowRight from '@tabler/icons-react-native/IconArrowRight';
 import { THEME } from '@/lib/theme';
 
 export default function DashboardPage() {
@@ -24,6 +26,7 @@ export default function DashboardPage() {
     const [materials, setMaterials] = useState([]);
     const [activeQuiz, setActiveQuiz] = useState(null);
     const [quizCount, setQuizCount] = useState(0);
+    const [recommendations, setRecommendations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
     const [nextOffset, setNextOffset] = useState(null);
@@ -55,6 +58,13 @@ export default function DashboardPage() {
                     setQuizCount(list.length);
                     const active = list.find(q => q.session?.status === 'active');
                     setActiveQuiz(active || null);
+                })
+                .catch(() => {});
+
+            // Load weak-topic recommendations
+            getTopicRecommendations()
+                .then(res => {
+                    setRecommendations(res.recommendations ?? []);
                 })
                 .catch(() => {});
         } catch (error) {
@@ -165,43 +175,48 @@ export default function DashboardPage() {
                         </View>
                     </View>
 
-                    {/* Active In-Progress Quiz Card on Dashboard */}
+                    {/* Active In-Progress Quiz Card on Dashboard (Compact Apple-style Capsule) */}
                     {activeQuiz && (() => {
                         const activeProgress = Math.round((activeQuiz.session.answeredCount / activeQuiz.questionCount) * 100);
                         return (
-                            <View
-                                className="overflow-hidden rounded-3xl border border-[#001428]/15 bg-white p-5 shadow-sm gap-3"
-                                style={{ borderCurve: 'continuous' }}
+                            <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel={`Resume active quiz for ${activeQuiz.sourceTitle || 'General Practice'}, ${activeProgress}% complete`}
+                                accessibilityHint="Navigates to the active quiz session"
+                                onPress={() => router.push(`/(main)/quizzes/${activeQuiz.session.id}`)}
+                                className="overflow-hidden rounded-2xl border border-[#001428]/15 bg-white shadow-xs active:opacity-95"
+                                style={({ pressed }) => [{
+                                    borderCurve: 'continuous',
+                                    transform: [{ scale: pressed ? 0.985 : 1 }],
+                                }]}
                             >
-                                <View className="flex-row items-center justify-between">
-                                    <View className="flex-row items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-1">
-                                        <View className="h-2 w-2 rounded-full bg-emerald-500" />
-                                        <Text className="font-geist-semibold text-xs text-emerald-800">Quiz in Progress</Text>
+                                <View className="flex-row items-center justify-between p-3.5">
+                                    <View className="flex-1 pr-3">
+                                        <View className="flex-row items-center gap-1.5">
+                                            <View className="h-2 w-2 rounded-full bg-emerald-500" />
+                                            <Text className="font-geist-semibold text-[11px] uppercase tracking-wider text-emerald-700">
+                                                In Progress • {activeProgress}%
+                                            </Text>
+                                        </View>
+                                        <Text numberOfLines={1} className="mt-1 font-geist-bold text-sm text-[#001428]">
+                                            {activeQuiz.sourceTitle || 'General Practice'}
+                                        </Text>
+                                        <Text numberOfLines={1} className="mt-0.5 font-geist text-[11px] text-[#526071]">
+                                            Question {activeQuiz.session.answeredCount} of {activeQuiz.questionCount} answered
+                                        </Text>
                                     </View>
-                                    <Text className="font-geist text-xs text-[#526071]">
-                                        {activeQuiz.session.answeredCount} of {activeQuiz.questionCount} ({activeProgress}%)
-                                    </Text>
+                                    <View className="flex-row items-center gap-1.5 rounded-full bg-[#001428] px-3 py-2 shadow-xs">
+                                        <Text className="font-geist-semibold text-xs text-white">Resume</Text>
+                                        <IconArrowRight size={13} color="white" />
+                                    </View>
                                 </View>
-                                <Text numberOfLines={1} className="font-geist-bold text-base text-[#001428]">
-                                    {activeQuiz.sourceTitle || 'General Practice'}
-                                </Text>
-                                <View className="h-2 w-full overflow-hidden rounded-full bg-[#E2E8F0]">
+                                <View className="h-1 w-full bg-[#E2E8F0]">
                                     <View
-                                        className="h-full rounded-full bg-[#001428]"
+                                        className="h-full bg-[#001428]"
                                         style={{ width: `${activeProgress}%` }}
                                     />
                                 </View>
-                                <Pressable
-                                    accessibilityRole="button"
-                                    accessibilityLabel="Resume Active Quiz"
-                                    onPress={() => router.push(`/(main)/quizzes/${activeQuiz.session.id}`)}
-                                    className="flex-row items-center justify-center gap-2 rounded-2xl bg-[#001428] py-3.5 shadow-sm active:scale-[0.98] active:opacity-90"
-                                    style={{ borderCurve: 'continuous' }}
-                                >
-                                    <IconPlayerPlay size={18} color="white" />
-                                    <Text className="font-geist-semibold text-sm text-white">Resume Quiz</Text>
-                                </Pressable>
-                            </View>
+                            </Pressable>
                         );
                     })()}
 
@@ -239,6 +254,50 @@ export default function DashboardPage() {
                             <Text numberOfLines={1} className="mt-0.5 font-geist text-[11px] text-[#526071]">AI practice tests</Text>
                         </Pressable>
                     </View>
+
+                    {/* Weak-Topic Recommendation Card (Phase 4 Inter-Quiz Adaptation) */}
+                    {recommendations.length > 0 && (() => {
+                        const topRec = recommendations[0];
+                        return (
+                            <View
+                                className="overflow-hidden rounded-3xl border border-amber-200/80 bg-amber-50/40 p-5 shadow-sm gap-3"
+                                style={{ borderCurve: 'continuous' }}
+                            >
+                                <View className="flex-row items-center justify-between">
+                                    <View className="flex-row items-center gap-1.5 rounded-full border border-amber-300 bg-amber-100/80 px-2.5 py-1">
+                                        <IconTarget size={13} color="#92400E" />
+                                        <Text className="font-geist-semibold text-xs text-amber-900">Recommended Topic</Text>
+                                    </View>
+                                    <Text className="font-geist text-xs text-[#526071]">
+                                        {topRec.accuracy}% accuracy ({topRec.sampleCount} questions)
+                                    </Text>
+                                </View>
+
+                                <View>
+                                    <Text numberOfLines={1} className="font-geist-bold text-base text-[#001428]">
+                                        {topRec.topicName}
+                                    </Text>
+                                    <Text numberOfLines={2} className="mt-1 font-geist text-xs leading-5 text-[#526071]">
+                                        {topRec.reason}
+                                    </Text>
+                                </View>
+
+                                <Pressable
+                                    accessibilityRole="button"
+                                    accessibilityLabel={`Practice recommended topic ${topRec.topicName}`}
+                                    onPress={() => router.push({
+                                        pathname: '/(main)/quizzes/create',
+                                        params: { sourceKind: 'topic', topicId: topRec.topicId },
+                                    })}
+                                    className="flex-row items-center justify-center gap-2 rounded-2xl bg-[#001428] py-3.5 shadow-sm active:scale-[0.98] active:opacity-90"
+                                    style={{ borderCurve: 'continuous' }}
+                                >
+                                    <Text className="font-geist-semibold text-xs text-white">Practice This Topic</Text>
+                                    <IconArrowRight size={16} color="white" />
+                                </Pressable>
+                            </View>
+                        );
+                    })()}
 
                     {/* Modules Section Header */}
                     <View className="flex-row items-center justify-between pt-2">

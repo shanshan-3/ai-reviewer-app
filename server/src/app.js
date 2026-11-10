@@ -2,6 +2,7 @@ import express from 'express';
 import profileRoutes from './routes/profileRoutes.js';
 import materialRoutes from './routes/materialRoutes.js';
 import quizRoutes, { studySessionRouter } from './routes/quizRoutes.js';
+import progressRoutes from './routes/progressRoutes.js';
 
 const app = express();
 
@@ -13,5 +14,6 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/materials', materialRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api/study-sessions', studySessionRouter);
+app.use('/api/progress', progressRoutes);
 
 export default app;

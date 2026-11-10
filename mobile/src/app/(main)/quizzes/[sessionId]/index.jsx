@@ -85,10 +85,10 @@ export default function AnsweringPage() {
         );
     }
 
-    const currentNumber = (session?.answeredCount ?? 0) + 1;
-    const totalCount = session?.questionCount ?? 1;
+    const currentNumber = (session?.answeredCount ?? session?.answered_count ?? 0) + 1;
+    const totalCount = session?.questionCount ?? session?.question_count ?? 1;
     const isLastQuestion = currentNumber >= totalCount;
-    const progressPercent = Math.min(100, Math.round(((session?.answeredCount ?? 0) / totalCount) * 100));
+    const progressPercent = Math.min(100, Math.round((((session?.answeredCount ?? session?.answered_count ?? 0)) / totalCount) * 100));
 
     return (
         <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right', 'bottom']}>
@@ -99,6 +99,7 @@ export default function AnsweringPage() {
                         accessibilityRole="button"
                         accessibilityLabel="Leave quiz"
                         onPress={() => setLeaveModalOpen(true)}
+                        style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.92 : 1 }] }]}
                         className="h-10 w-10 items-center justify-center rounded-full active:bg-[#F1F4F8]"
                     >
                         <IconArrowLeft size={22} color="#001428" />
@@ -111,7 +112,7 @@ export default function AnsweringPage() {
                     <View className="w-10" />
                 </View>
 
-                {/* Progress bar */}
+                {/* Progress bar with Apple continuous curvature */}
                 <View className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#F1F4F8]">
                     <View
                         className="h-full rounded-full bg-[#001428]"
@@ -121,9 +122,12 @@ export default function AnsweringPage() {
             </View>
 
             {/* Question Body */}
-            <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
+            <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 110 }}>
                 {error && (
-                    <View className="mb-4 rounded-2xl border border-[#DC2626] bg-white p-4">
+                    <View
+                        className="mb-4 rounded-2xl border border-[#DC2626] bg-white p-4 shadow-sm"
+                        style={{ borderCurve: 'continuous' }}
+                    >
                         <Text className="font-geist text-sm text-[#DC2626]">{error}</Text>
                     </View>
                 )}
@@ -146,8 +150,14 @@ export default function AnsweringPage() {
                     accessibilityRole="button"
                     accessibilityLabel={isLastQuestion ? 'Finish Quiz' : 'Next Question'}
                     onPress={handleSubmit}
-                    className={`flex-row items-center justify-center gap-2 rounded-2xl py-4 ${
-                        !selectedOptionId || submitting ? 'bg-[#F1F4F8]' : 'bg-[#001428] active:opacity-90'
+                    style={({ pressed }) => [
+                        {
+                            borderCurve: 'continuous',
+                            transform: [{ scale: pressed && selectedOptionId && !submitting ? 0.985 : 1 }],
+                        },
+                    ]}
+                    className={`flex-row items-center justify-center gap-2 rounded-2xl py-4 shadow-sm ${
+                        !selectedOptionId || submitting ? 'bg-[#F1F4F8]' : 'bg-[#001428]'
                     }`}
                 >
                     {submitting ? (
@@ -168,8 +178,11 @@ export default function AnsweringPage() {
 
             {/* Leave Confirmation Modal */}
             <Modal visible={leaveModalOpen} transparent animationType="fade" onRequestClose={() => setLeaveModalOpen(false)}>
-                <View className="flex-1 items-center justify-center p-6" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-                    <View className="w-full max-w-sm rounded-3xl bg-white p-6 border border-[#E4E8EE]">
+                <View className="flex-1 items-center justify-center p-6" style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}>
+                    <View
+                        className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl border border-[#E4E8EE]"
+                        style={{ borderCurve: 'continuous' }}
+                    >
                         <Text className="font-geist-bold text-lg text-[#001428]">Leave Quiz?</Text>
                         <Text className="mt-2 font-geist text-sm leading-5 text-[#526071]">
                             Your answered questions are safely stored. You can resume this session anytime from the Quizzes tab.
@@ -177,15 +190,17 @@ export default function AnsweringPage() {
                         <View className="mt-6 flex-row gap-3">
                             <Pressable
                                 onPress={() => setLeaveModalOpen(false)}
+                                style={({ pressed }) => [{ borderCurve: 'continuous', transform: [{ scale: pressed ? 0.97 : 1 }] }]}
                                 className="flex-1 items-center justify-center rounded-2xl bg-[#F1F4F8] py-3.5"
                             >
-                                <Text className="font-geist-medium text-sm text-[#001428]">Continue Practice</Text>
+                                <Text className="font-geist-medium text-sm text-[#001428]">Continue</Text>
                             </Pressable>
                             <Pressable
                                 onPress={() => {
                                     setLeaveModalOpen(false);
                                     router.replace('/(main)/(tabs)/quizzes');
                                 }}
+                                style={({ pressed }) => [{ borderCurve: 'continuous', transform: [{ scale: pressed ? 0.97 : 1 }] }]}
                                 className="flex-1 items-center justify-center rounded-2xl bg-[#DC2626] py-3.5"
                             >
                                 <Text className="font-geist-medium text-sm text-white">Exit</Text>
