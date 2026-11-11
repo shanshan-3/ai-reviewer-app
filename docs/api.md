@@ -253,6 +253,18 @@ An identical retry of an answered `(sessionId, questionId, optionId)` returns th
 - Test both source kinds, all three modalities, the 5/10 choices and defaults; valid and invalid PDF/DOCX citations; missing code, fewer-question and empty-source outcomes; option shuffling; malformed/duplicate provider output; untrusted source instructions; and provider quota/refusal/timeout behavior.
 - Test two-account isolation through API and direct database access, key omission before answering, concurrent duplicate generation/answers, conflicting retries, final-answer idempotency, interrupted generation recovery, session resume with stable option order, and module deletion during generation. These are required future checks, not results claimed by this document.
 
+## Flashcard API
+
+Defined for Phase 4 technical-term flashcard review. Mounted under `/api/flashcards`. Every endpoint requires a Bearer token.
+
+| Endpoint | Method | Request | Response | Notes |
+|---|---|---|---|---|
+| `/api/flashcards` | GET | None | `{ "sets": [...] }` | Lists caller's flashcard sets with review count and last reviewed timestamp |
+| `/api/flashcards` | POST | `{ "source": { ... }, "cardCount": 10, "title": "optional" }` | HTTP 201, `{ "setId", "title", "cardCount", "cards": [...] }` | Generates technical terms using Groq/Gemini and saves atomically via RPC |
+| `/api/flashcards/:id` | GET | Owned set UUID | `{ "set": { ..., "cards": [...] } }` | Retrieves deck metadata and ordered cards for study |
+| `/api/flashcards/:id/reviews` | POST | `{ "viewedCardCount": 10 }` | `{ "reviewId", "setId", "completed": true }` | Records full review session; only full-deck reviews qualify for study streak |
+| `/api/flashcards/:id` | DELETE | Owned set UUID | `{ "deleted": true }` | Removes deck, cards, and review records |
+
 ## Verification
 
 Previous verification appears in [validation.md](validation.md). The test harness and commands have been removed. Manual API checks require the migrations listed above and two disposable accounts. Never put privileged keys in the mobile app.

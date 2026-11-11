@@ -42,7 +42,26 @@ ai-reviewer-app/
 |   |   |   |   |-- set-password.jsx         # Verified recovery session, password update, local sign-out
 |   |   |   |   `-- verify-email.jsx         # Supabase recovery-email request and error handling
 |   |   |   |-- _layout.jsx                  # Theme, fonts, splash, foreground token refresh
-|   |   |   `-- index.jsx                    # Starter redirect to login
+|   |   |   |-- index.jsx                    # Starter redirect to login
+|   |   |   `-- (main)/
+|   |   |       |-- _layout.jsx              # Protected app stack layout
+|   |   |       |-- (tabs)/
+|   |   |       |   |-- _layout.jsx          # Bottom tabs configuration and shared logo header
+|   |   |       |   |-- dashboard.jsx        # Learning dashboard, recent modules, recommendations
+|   |   |       |   |-- quizzes.jsx          # Quiz history and session resumption
+|   |   |       |   |-- flashcards.jsx       # Saved technical-term flashcard decks
+|   |   |       |   `-- profile.jsx          # Profile details and sign-out
+|   |   |       |-- materials/
+|   |   |       |   |-- import.jsx           # Module upload flow
+|   |   |       |   `-- [materialId].jsx     # Module preview, approval, and deletion
+|   |   |       |-- quizzes/
+|   |   |       |   |-- create.jsx           # Quiz setup and generation
+|   |   |       |   `-- [sessionId]/
+|   |   |       |       |-- index.jsx        # Answering interface without correctness feedback
+|   |   |       |       `-- results.jsx      # Authoritative results reveal and explanations
+|   |   |       `-- flashcards/
+|   |   |           |-- create.jsx           # Source selection and term extraction
+|   |   |           `-- [setId].jsx          # Front/back study screen and review logging
 |   |   |-- components/
 |   |   |   |-- AuthButton.jsx               # Submit button, disabled/busy state, footer
 |   |   |   |-- AuthMessage.jsx              # Feedback directly above authentication submit buttons
@@ -57,6 +76,7 @@ ai-reviewer-app/
 |   |   `-- lib/
 |   |       |-- auth.js                      # Login, registration, and recovery validation rules
 |   |       |-- materials.js                 # Authenticated module list, upload, preview, labels, and approval
+|   |       |-- flashcards.js                # Authenticated flashcard deck list, create, study, review
 |   |       |-- curriculum.js                # Supplied BSIT subjects grouped by year, with search
 |   |       |-- progress.js                  # Dashboard/report data requests
 |   |       |-- recovery-session.js          # In-memory verified recovery user ID
@@ -86,6 +106,7 @@ ai-reviewer-app/
 |   |   |   `-- supabase.js                  # Per-request client with caller token
 |   |   |-- controllers/
 |   |   |   |-- quizController.js           # Generate quiz, poll generation status, read safe quiz metadata
+|   |   |   |-- flashcardController.js      # Flashcard generation, list, study, and review responses
 |   |   |   |-- labelController.js           # Personal label list/create responses
 |   |   |   |-- materialController.js        # Upload and owner-only preview responses
 |   |   |   |-- profileController.js         # Own-profile response and safe errors
@@ -94,12 +115,14 @@ ai-reviewer-app/
 |   |   |   `-- authMiddleware.js            # Verify Bearer token and attach identity
 |   |   |-- models/
 |   |   |   |-- quizModel.js                # Owner-scoped generation/source reads and atomic quiz publication
+|   |   |   |-- flashcardModel.js           # Owner-scoped flashcard sets, cards, and review records
 |   |   |   |-- labelModel.js                # Owner-scoped subject/topic persistence
 |   |   |   |-- materialModel.js             # Material/section persistence and private files
 |   |   |   |-- profileModel.js              # Read profile by authenticated user ID
 |   |   |   `-- progressModel.js             # Owner-scoped submitted answers and topic queries
 |   |   |-- routes/
 |   |   |   |-- quizRoutes.js               # Authenticated /api/quizzes generation/status/metadata routes
+|   |   |   |-- flashcardRoutes.js          # Authenticated /api/flashcards generation, retrieval, reviews
 |   |   |   |-- labelRoutes.js               # Label endpoints mounted at /api/materials/labels
 |   |   |   |-- materialRoutes.js            # Authenticated raw upload and preview endpoints
 |   |   |   |-- profileRoutes.js             # Protected GET /api/profile
@@ -109,6 +132,9 @@ ai-reviewer-app/
 |   |   |   |-- quizGeneration.js           # Bounded approved context, Groq calls and failure classification
 |   |   |   |-- geminiGeneration.js         # Google Gemini backup provider adapter and schema translation
 |   |   |   |-- quizPrompts.js              # Strict question JSON schema and grounded IT question prompts
+|   |   |   |-- flashcardService.js         # Flashcard generation, deck management, and review completion
+|   |   |   |-- flashcardGeneration.js      # Bounded context selection, Groq generation and Gemini fallback
+|   |   |   |-- flashcardPrompts.js         # Strict flashcard JSON schema and technical-term prompts
 |   |   |   |-- progressService.js           # Shared progress and recommendation service
 |   |   |   |-- progressEstimates.js         # Rolling 20 first-submission answers, minimum five
 |   |   |   |-- topicRecommendations.js      # Weak-topic suggestions based on accuracy
@@ -121,6 +147,7 @@ ai-reviewer-app/
 |   |   |   `-- profileService.js            # Lookup and missing-profile handling
 |   |   |-- validation/
 |   |   |   |-- quizValidation.js           # Quiz choices, provider output, options and citations
+|   |   |   |-- flashcardValidation.js      # Source, count tiers, and card uniqueness checks
 |   |   |   `-- materialValidation.js        # Filename, MIME, size, signature, and ID checks
 |   |   |-- app.js                           # Express, health, profile, material and quiz route mounts
 |   |   `-- server.js                        # Recover pending imports and quiz generations before listening
@@ -142,7 +169,8 @@ ai-reviewer-app/
 |       |-- 0011_material_review.sql          # Atomic module approval; service-role-only function
 |       |-- 0012_question_modalities.sql      # Three modalities, two/four options and answer membership; applied
 |       |-- 0013_atomic_study_operations.sql  # Atomic session start and answer submission RPCs; applied
-|       `-- 0014_extend_question_count.sql    # Extend question count check constraints to support 5, 10, and 20 questions
+|       |-- 0014_extend_question_count.sql    # Extend question count check constraints to support 5, 10, and 20 questions
+|       `-- 0015_flashcard_sets_and_reviews.sql # Sets, cards, and review tracking with full-deck completion check
 |-- docs/
 |   |-- api.md                               # Authenticated material import and preview contract
 |   |-- adr/

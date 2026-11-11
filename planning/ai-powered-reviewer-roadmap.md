@@ -332,7 +332,7 @@ Outcome: Practice difficulty responds to performance, and flashcards support tec
 Prerequisites: Stable question/answer interfaces and saved study sessions.
 
 - [x] Configure strict starting difficulty per user selection (enforced in commit d07bb1a). In-quiz dynamic level shifting superseded by inter-quiz weak-topic recommendations and dashboard mastery estimates to maintain hidden-feedback and single-difficulty integrity.
-- [ ] Generate and save personal technical-term flashcards from the approved sources, with output validation. Track each card-back view so only a full-set review within the same day qualifies as completed.
+- [x] Generate and save personal technical-term flashcards from the approved sources, with output validation. Track each card-back view so only a full-set review within the same day qualifies as completed. Implemented migration 0015, MVC routes under `/api/flashcards`, and full mobile deck generation and flip-study screens.
 - [x] Use saved answers to suggest weak topics with sufficient history. Implemented rolling 20-answer window and 5-answer threshold in `progressEstimates.js` and `topicRecommendations.js`, with actionable suggestion card on Dashboard leaving topic/quiz choice to user.
 - [ ] Test difficulty limits, mixed correct/incorrect sequences, exhausted question pools, restart/resume consistency, empty flashcard sets, and repeated review-completion requests.
 
