@@ -71,6 +71,7 @@ ai-reviewer-app/
 |   |   |   |-- material-card.jsx            # Saved module title, filename, status, and preview action
 |   |   |   |-- FormField.jsx                # Labeled input with icons, error border, password toggle
 |   |   |   |-- PasswordStrength.jsx         # Visual 4-bar password complexity indicator
+|   |   |   |-- progress-summary.jsx         # Streak badge and study progress summary card
 |   |   |   |-- topic-estimate.jsx           # Practice estimate and sample count
 |   |   |   `-- StartupSplash.jsx            # Animated splash coordinator and motion detection
 |   |   `-- lib/
@@ -78,8 +79,10 @@ ai-reviewer-app/
 |   |       |-- materials.js                 # Authenticated module list, upload, preview, labels, and approval
 |   |       |-- flashcards.js                # Authenticated flashcard deck list, create, study, review
 |   |       |-- curriculum.js                # Supplied BSIT subjects grouped by year, with search
-|   |       |-- progress.js                  # Dashboard/report data requests
+|   |       |-- progress.js                  # Dashboard/report data requests and streak endpoint
+|   |       |-- study-date.js                # Device timezone and local study date
 |   |       |-- recovery-session.js          # In-memory verified recovery user ID
+
 |   |       |-- session-storage.js           # Remember me; memory or persistent session storage
 |   |       |-- supabase.js                  # Public Supabase client and shared auth storage
 |   |       |-- theme.js                     # Theme tokens, palette, and navigation theme
@@ -137,7 +140,9 @@ ai-reviewer-app/
 |   |   |   |-- flashcardPrompts.js         # Strict flashcard JSON schema and technical-term prompts
 |   |   |   |-- progressService.js           # Shared progress and recommendation service
 |   |   |   |-- progressEstimates.js         # Rolling 20 first-submission answers, minimum five
+|   |   |   |-- studyStreaks.js              # Qualifying recorded study dates and streak calculation
 |   |   |   |-- topicRecommendations.js      # Weak-topic suggestions based on accuracy
+
 |   |   |   |-- labelService.js              # Personal label validation and ownership rules
 |   |   |   |-- materialExtraction.js        # Node worker supervision, deadline, Linux RSS monitor
 |   |   |   |-- materialExtractionLimits.js  # Shared extraction ceilings and safe messages

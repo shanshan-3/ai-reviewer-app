@@ -7,8 +7,11 @@ import AuthMessage from '@/components/AuthMessage';
 import MaterialCard from '@/components/material-card';
 import { deleteMaterial, listMaterials } from '@/lib/materials';
 import { listUserQuizzes } from '@/lib/quizzes';
-import { getTopicRecommendations } from '@/lib/progress';
+import { getTopicRecommendations, getUserStreak } from '@/lib/progress';
+import { WeeklyDateStrip } from '@/components/progress-summary';
 import { useSession } from '@/providers/session-provider';
+
+
 import { useToast } from '@/providers/toast-provider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import IconUpload from '@tabler/icons-react-native/IconUpload';
@@ -16,7 +19,10 @@ import IconSparkles from '@tabler/icons-react-native/IconSparkles';
 import IconFileText from '@tabler/icons-react-native/IconFileText';
 import IconPlus from '@tabler/icons-react-native/IconPlus';
 import IconArrowRight from '@tabler/icons-react-native/IconArrowRight';
+import IconFlame from '@tabler/icons-react-native/IconFlame';
 import { THEME } from '@/lib/theme';
+
+
 
 export default function DashboardPage() {
     const { session } = useSession();
@@ -26,7 +32,9 @@ export default function DashboardPage() {
     const [activeQuiz, setActiveQuiz] = useState(null);
     const [quizCount, setQuizCount] = useState(0);
     const [recommendations, setRecommendations] = useState([]);
+    const [streak, setStreak] = useState(null);
     const [loading, setLoading] = useState(true);
+
     const [message, setMessage] = useState('');
     const [nextOffset, setNextOffset] = useState(null);
     const [deletingId, setDeletingId] = useState(null);
@@ -66,6 +74,14 @@ export default function DashboardPage() {
                     setRecommendations(res.recommendations ?? []);
                 })
                 .catch(() => {});
+
+            // Load study streak
+            getUserStreak()
+                .then(res => {
+                    setStreak(res.streak ?? null);
+                })
+                .catch(() => {});
+
         } catch (error) {
             if (id === requestId.current) { failedOffset.current = offset; setMessage(error.message || 'Could not load your modules.'); }
         } finally {
@@ -124,7 +140,6 @@ export default function DashboardPage() {
                     {/* Top Greeting Header */}
                     <View className="flex-row items-center justify-between">
                         <View className="min-w-0 flex-1 pr-3">
-    
                             <Text accessibilityRole="header" numberOfLines={2} className="font-geist-bold text-2xl tracking-tight text-[#001428]">
                                 Ready to review today?
                             </Text>
@@ -134,7 +149,7 @@ export default function DashboardPage() {
                         </View>
                         <Image
                             source={require('../../../../assets/illustrations/studying-amico-storyset-navy.png')}
-                            style={{ width: 72, height: 72 }}
+                            style={{ width: 92, height: 92 }}
                             resizeMode="contain"
                             accessible={false}
                         />
@@ -142,11 +157,11 @@ export default function DashboardPage() {
 
                     {/* Quick KPI Strip */}
                     <View
-                        className="flex-row items-center divide-x divide-[#E4E8EE] rounded-2xl border border-[#E4E8EE] bg-white py-3 shadow-sm"
+                        className="flex-row items-center divide-x divide-[#E4E8EE] rounded-2xl border border-[#E4E8EE] bg-white py-3 shadow-xs"
                         style={{ borderCurve: 'continuous' }}
                     >
                         <View className="flex-1 items-center px-1">
-                            <Text numberOfLines={1} className="font-geist-bold text-xl text-[#001428]">
+                            <Text numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }} className="font-geist-bold text-xl text-[#001428]">
                                 {materials.length}
                             </Text>
                             <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
@@ -154,25 +169,74 @@ export default function DashboardPage() {
                             </Text>
                         </View>
                         <View className="flex-1 items-center px-1">
-                            <Text numberOfLines={1} className="font-geist-bold text-xl text-[#001428]">
+                            <Text numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }} className="font-geist-bold text-xl text-[#001428]">
                                 {quizCount}
                             </Text>
                             <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
                                 Quizzes
                             </Text>
                         </View>
-                        <View className="flex-1 items-center px-1">
-                            <View className="flex-row items-center gap-1.5">
-                                <View className={`h-2 w-2 rounded-full ${activeQuiz ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                                <Text numberOfLines={1} className="font-geist-bold text-xl text-[#001428]">
-                                    {activeQuiz ? '1' : '0'}
+                        <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={`Study streak: ${streak?.currentStreak ?? 0} days`}
+                            onPress={() => router.push('/(main)/(tabs)/profile')}
+                            className="flex-1 items-center px-1 active:opacity-75"
+                        >
+                            <View className="flex-row items-center gap-1">
+                                <IconFlame
+                                    size={15}
+                                    color={streak?.hasStudiedToday && (streak?.currentStreak ?? 0) > 0 ? '#D97706' : '#94A3B8'}
+                                    fill={streak?.hasStudiedToday && (streak?.currentStreak ?? 0) > 0 ? '#FDE68A' : 'none'}
+                                    strokeWidth={2}
+                                />
+                                <Text numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }} className="font-geist-bold text-xl text-[#001428]">
+                                    {streak?.currentStreak ?? 0}
                                 </Text>
                             </View>
+                            <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
+                                Day Streak
+                            </Text>
+                        </Pressable>
+                        <View className="flex-1 items-center px-1">
+                            <Text numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }} className="font-geist-bold text-xl text-[#001428]">
+                                {activeQuiz ? '1' : '0'}
+                            </Text>
                             <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
                                 In Progress
                             </Text>
                         </View>
                     </View>
+
+                    {/* Weekly Study Streak Calendar Strip */}
+                    <View
+                        className="overflow-hidden rounded-2xl border border-[#E4E8EE] bg-white p-3.5 shadow-xs"
+                        style={{ borderCurve: 'continuous' }}
+                    >
+                        <View className="mb-2.5 flex-row items-center justify-between">
+                            <View className="flex-row items-center gap-1.5">
+                                <IconFlame
+                                    size={15}
+                                    color={streak?.hasStudiedToday && (streak?.currentStreak ?? 0) > 0 ? '#D97706' : '#94A3B8'}
+                                    fill={streak?.hasStudiedToday && (streak?.currentStreak ?? 0) > 0 ? '#FDE68A' : 'none'}
+                                    strokeWidth={2}
+                                />
+                                <Text className="font-geist-semibold text-xs text-[#001428]">
+                                    {streak?.currentStreak ?? 0} {streak?.currentStreak === 1 ? 'Day Streak' : 'Days Streak'}
+                                </Text>
+                            </View>
+                            <Text className="font-geist text-[11px] text-[#526071]">
+                                {streak?.hasStudiedToday ? 'Goal reached today' : 'Study today to keep streak'}
+                            </Text>
+                        </View>
+                        <WeeklyDateStrip
+                            recentDays={streak?.recentDays ?? []}
+                            onDayPress={() => router.push('/(main)/(tabs)/profile')}
+                        />
+                    </View>
+
+
+
+
 
                     {/* Active In-Progress Quiz Card on Dashboard (Compact Apple-style Capsule) */}
                     {activeQuiz && (() => {
@@ -191,13 +255,11 @@ export default function DashboardPage() {
                             >
                                 <View className="flex-row items-center justify-between p-3.5">
                                     <View className="flex-1 pr-3">
-                                        <View className="flex-row items-center gap-1.5">
-                                            <View className="h-2 w-2 rounded-full bg-emerald-500" />
-                                            <Text className="font-geist-semibold text-[11px] uppercase tracking-wider text-emerald-700">
-                                                In Progress • {activeProgress}%
-                                            </Text>
-                                        </View>
+                                        <Text className="font-geist-semibold text-[11px] uppercase tracking-wider text-emerald-700">
+                                            In Progress ({activeProgress}%)
+                                        </Text>
                                         <Text numberOfLines={1} className="mt-1 font-geist-bold text-sm text-[#001428]">
+
                                             {activeQuiz.sourceTitle || 'General Practice'}
                                         </Text>
                                         <Text numberOfLines={1} className="mt-0.5 font-geist text-[11px] text-[#526071]">
@@ -266,13 +328,8 @@ export default function DashboardPage() {
                                     <Text className="font-geist-bold text-sm text-[#001428]">
                                         {topRec.accuracy}% Accuracy <Text className="font-geist text-xs text-[#526071] font-normal">• {topRec.sampleCount} questions</Text>
                                     </Text>
-                                    <View className="flex-row items-center gap-1.5">
-                                        <View className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                                        <Text className="font-geist-semibold text-xs text-[#526071]">
-                                            Needs Practice
-                                        </Text>
-                                    </View>
                                 </View>
+
 
                                 <View>
                                     <Text numberOfLines={1} className="font-geist-bold text-base text-[#001428]">
@@ -301,23 +358,15 @@ export default function DashboardPage() {
                     })()}
 
                     {/* Modules Section Header */}
-                    <View className="flex-row items-center justify-between pt-2">
-                        <View>
-                            <Text accessibilityRole="header" className="font-geist-bold text-2xl tracking-tight text-[#001428]">
-                                Your modules
-                            </Text>
-                            <Text className="font-geist text-xs text-[#526071]">
-                                Approved notes ready for interactive review
-                            </Text>
-                        </View>
-                        {materials.length > 0 && (
-                            <View className="rounded-full bg-[#F1F4F8] px-3 py-1">
-                                <Text className="font-geist-medium text-xs text-[#526071]">
-                                    {materials.length} {materials.length === 1 ? 'module' : 'modules'}
-                                </Text>
-                            </View>
-                        )}
+                    <View className="pt-2">
+                        <Text accessibilityRole="header" className="font-geist-bold text-2xl tracking-tight text-[#001428]">
+                            Your modules
+                        </Text>
+                        <Text className="mt-0.5 font-geist text-xs text-[#526071]">
+                            Approved notes ready for interactive review
+                        </Text>
                     </View>
+
                 </View>}
                 ListEmptyComponent={!loading && !message ? (
                     <View

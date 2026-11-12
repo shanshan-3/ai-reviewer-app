@@ -151,18 +151,14 @@ export default function QuizzesPage() {
                             </Text>
                         </View>
                         <View className="flex-1 items-center px-1">
-                            <View className="flex-row items-center gap-1">
-                                <Text numberOfLines={1} className="font-geist-bold text-xl text-[#001428]">
-                                    {completedItems.length}
-                                </Text>
-                                {activeItem && (
-                                    <View className="h-2 w-2 rounded-full bg-emerald-500" />
-                                )}
-                            </View>
+                            <Text numberOfLines={1} className="font-geist-bold text-xl text-[#001428]">
+                                {completedItems.length}
+                            </Text>
                             <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
                                 Completed
                             </Text>
                         </View>
+
                     </View>
                 )}
 
@@ -206,13 +202,11 @@ export default function QuizzesPage() {
                                                 onPress={() => router.push(`/(main)/quizzes/${activeItem.session.id}`)}
                                                 className="min-w-0 flex-1 pr-3 active:opacity-70"
                                             >
-                                                <View className="flex-row items-center gap-1.5">
-                                                    <View className="h-2 w-2 rounded-full bg-emerald-500" />
-                                                    <Text className="font-geist-semibold text-[11px] uppercase tracking-wider text-emerald-700">
-                                                        In Progress • {activeProgress}%
-                                                    </Text>
-                                                </View>
+                                                <Text className="font-geist-semibold text-[11px] uppercase tracking-wider text-emerald-700">
+                                                    In Progress ({activeProgress}%)
+                                                </Text>
                                                 <Text numberOfLines={1} className="mt-1 font-geist-bold text-sm text-[#001428]">
+
                                                     {activeItem.sourceTitle || 'Quiz in progress'}
                                                 </Text>
                                                 <View className="mt-1 flex-row flex-wrap items-center gap-1.5">
@@ -285,13 +279,8 @@ export default function QuizzesPage() {
                                         <Text className="font-geist-bold text-sm text-[#001428]">
                                             {topRec.accuracy}% Accuracy <Text className="font-geist text-xs text-[#526071] font-normal">• {topRec.sampleCount} questions</Text>
                                         </Text>
-                                        <View className="flex-row items-center gap-1.5">
-                                            <View className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                                            <Text className="font-geist-semibold text-xs text-[#526071]">
-                                                Needs Practice
-                                            </Text>
-                                        </View>
                                     </View>
+
 
                                     <View>
                                         <Text numberOfLines={1} className="font-geist-bold text-base text-[#001428]">
