@@ -1,7 +1,9 @@
 import { fetch } from 'expo/fetch';
 import { supabase } from '@/lib/supabase';
+import { getDeviceTimeZone } from '@/lib/study-date';
 
 async function request(path, options = {}) {
+
     const baseUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/+$/, '');
     if (!baseUrl) throw new Error('The server address is not configured.');
     const { data, error } = await supabase.auth.getSession();
@@ -46,3 +48,9 @@ export async function getTopicRecommendations() {
 export async function getTopicEstimates() {
     return request('/api/progress/estimates');
 }
+
+export async function getUserStreak() {
+    const tz = getDeviceTimeZone();
+    return request(`/api/progress/streak?tz=${encodeURIComponent(tz)}`);
+}
+

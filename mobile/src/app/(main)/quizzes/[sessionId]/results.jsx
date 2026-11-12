@@ -8,7 +8,9 @@ import IconX from '@tabler/icons-react-native/IconX';
 import IconChevronDown from '@tabler/icons-react-native/IconChevronDown';
 import IconChevronUp from '@tabler/icons-react-native/IconChevronUp';
 import IconSparkles from '@tabler/icons-react-native/IconSparkles';
+import IconFlame from '@tabler/icons-react-native/IconFlame';
 import { getStudySessionResults } from '@/lib/quizzes';
+
 import { THEME } from '@/lib/theme';
 
 const DIFFICULTY_CONFIG = {
@@ -137,7 +139,26 @@ export default function ResultsPage() {
                             ? 'Good effort. Review explanations below to strengthen your understanding.'
                             : 'Review the detailed explanations and module excerpts below to improve your score.'}
                     </Text>
+
+                    {/* Streak Milestone Pill */}
+                    <View
+                        className="mt-4 flex-row items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50/70 p-3"
+                        style={{ borderCurve: 'continuous' }}
+                    >
+                        <View className="h-7 w-7 items-center justify-center rounded-lg bg-amber-100/90">
+                            <IconFlame size={16} color="#D97706" fill="#FDE68A" strokeWidth={2} />
+                        </View>
+                        <View className="flex-1">
+                            <Text className="font-geist-semibold text-xs text-amber-900">
+                                Daily Study Goal Completed
+                            </Text>
+                            <Text className="font-geist text-[11px] text-amber-800/85">
+                                This quiz session qualifies toward your daily study streak.
+                            </Text>
+                        </View>
+                    </View>
                 </View>
+
 
                 {/* Filter Tabs */}
                 <View className="flex-row rounded-xl bg-[#F1F4F8] p-1">
