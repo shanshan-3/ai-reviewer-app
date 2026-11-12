@@ -54,3 +54,32 @@ export async function getRecentSubmittedAnswers(admin, ownerId, limit = 500) {
         })
         .filter(a => a.topicId);
 }
+
+/**
+ * Fetches timestamps of all qualifying completed study events:
+ * 1. Completed quiz study sessions
+ * 2. Completed flashcard deck reviews
+ */
+export async function getCompletedStudyActivities(admin, ownerId) {
+    const [sessionsResult, flashcardsResult] = await Promise.all([
+        admin
+            .from('study_sessions')
+            .select('completed_at')
+            .eq('owner_id', ownerId)
+            .eq('status', 'completed')
+            .not('completed_at', 'is', null)
+            .order('completed_at', { ascending: false }),
+        admin
+            .from('flashcard_reviews')
+            .select('completed_at')
+            .eq('owner_id', ownerId)
+            .not('completed_at', 'is', null)
+            .order('completed_at', { ascending: false }),
+    ]);
+
+    const sessionDates = data(sessionsResult).map(s => s.completed_at);
+    const flashcardDates = data(flashcardsResult).map(f => f.completed_at);
+
+    return [...sessionDates, ...flashcardDates];
+}
+
