@@ -1,5 +1,35 @@
 # Phase 1: PDF/DOCX extraction validation
 
+## Phase 4: Study session lifecycle, difficulty limits, pool exhaustion, and flashcard review validation - 2026-11-13
+
+All Phase 4 study session dynamics, difficulty bounds, mixed sequence answering, pool exhaustion, session resumption, empty flashcard set guards, and repeated review-completion streak invariants passed **14 automated integration checks** in `server/test/phase4_study_lifecycle.test.js` against hosted Supabase:
+
+- **Difficulty limits & bounds**:
+  - `validateGenerationRequest` strictly enforces starting difficulty choices (`easy`, `medium`, `hard`), defaulting to `medium`, and rejects out-of-range strings (`expert`, `beginner`, empty, numbers) with HTTP 400 `INVALID_QUIZ_REQUEST`.
+  - `validateGeneratedQuestions` enforces that 100% of generated questions strictly match the target difficulty, rejecting mixed or out-of-bound difficulty outputs with HTTP 422 `INVALID_GENERATION`.
+- **Mixed correct/incorrect sequences & private answer accumulation**:
+  - Submitting an answer (`submit_study_answer`) correctly updates `answered_count` and privately tracks `correct_count` without leaking correctness, correct option IDs, or explanations into the active question response.
+  - Idempotent retries (resubmitting identical `(questionId, optionId)`) succeed with `is_retry: true` and do not increment counters or mutate totals.
+  - Conflicting resubmissions for already-answered questions reject with `ANSWER_CONFLICT`.
+  - Answering future/non-current questions rejects with `QUESTION_NOT_CURRENT`.
+- **Restart & resume consistency**:
+  - Resuming an active quiz session via `start_study_session` returns `is_new: false` with the exact active session state, current question ID, answered count, and correct count intact.
+  - `readSession` and `getSessionAnswers` accurately preserve submitted answer sequence and ordering without loss or mutation.
+- **Premature results gate & question pool exhaustion**:
+  - Querying `getCompletedResults` on an active session returns `status: 'incomplete'`.
+  - Answering the final question (`answered_count >= question_count`) atomically transitions status to `completed`, records `completed_at`, and clears `current_question_id` (pool exhausted).
+  - Subsequent answer submissions are blocked with `SESSION_COMPLETED`.
+  - Results reveal unlocks full question breakdowns: `questionCount`, `answeredCount`, `correctCount`, option lists, correct option IDs, AI explanations, and source excerpts.
+- **Empty flashcard sets & review constraints**:
+  - `validateFlashcardGenerationRequest` rejects invalid card counts (e.g. 0) and invalid source configurations with HTTP 400.
+  - `validateGeneratedFlashcards` maps 0 generated cards to `insufficient_source` for modules.
+  - Database RPC `publish_flashcard_set` rejects empty cards arrays (`total_cards < 1`) with exception `INVALID_CARD_COUNT`.
+  - Database RPC `record_flashcard_review` rejects partial reviews (`viewed_card_count < card_count`) and empty sets with exception `INCOMPLETE_REVIEW`.
+- **Repeated review-completion requests & streak invariance**:
+  - Multiple flashcard review completions on the same calendar day record individual audit rows in `flashcard_reviews`.
+  - `calculateStreak` deduplicates multiple completion events within the same local calendar date into exactly 1 qualifying study day, preventing artificial streak inflation.
+- **Teardown**: The disposable test user, auth record, profile, subject, topic, quiz generation, quiz, questions, session, answers, flashcard set, and reviews were permanently deleted; verified 0 residual rows remained in the database.
+
 ## 20-Question quiz generation, rate limit safeguards, and study lifecycle - 2026-11-09
 
 After applying `0014_extend_question_count.sql` on Supabase, the 20-question quiz option and dynamic rate-limiting architecture passed all live end-to-end integration checks against hosted Supabase and Groq `openai/gpt-oss-120b`:
