@@ -54,3 +54,8 @@ export async function getUserStreak() {
     return request(`/api/progress/streak?tz=${encodeURIComponent(tz)}`);
 }
 
+export async function getUserReport() {
+    const tz = getDeviceTimeZone();
+    return request(`/api/progress/report?tz=${encodeURIComponent(tz)}`);
+}
+
