@@ -23,3 +23,42 @@ export async function getUserStreak({ userId, timeZone }) {
     return calculateStreak(timestamps, timeZone);
 }
 
+export async function getUserReport({ userId, timeZone }) {
+    const admin = createSupabaseAdminClient();
+    const [answers, timestamps, quizCountResult, flashcardCountResult] = await Promise.all([
+        model.getRecentSubmittedAnswers(admin, userId),
+        model.getCompletedStudyActivities(admin, userId),
+        admin.from('study_sessions').select('id', { count: 'exact', head: true }).eq('owner_id', userId).eq('status', 'completed'),
+        admin.from('flashcard_reviews').select('id', { count: 'exact', head: true }).eq('owner_id', userId),
+    ]);
+
+    const estimates = calculateTopicEstimates(answers);
+    const streak = calculateStreak(timestamps, timeZone);
+    const totalAnswers = answers.length;
+    const correctAnswers = answers.filter(a => a.isCorrect).length;
+    const overallAccuracy = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
+
+    const eligible = estimates.filter(e => e.eligible);
+    const strengths = eligible.filter(e => e.accuracy >= 80).sort((a, b) => b.accuracy - a.accuracy);
+    const weaknesses = eligible.filter(e => e.accuracy < 70).sort((a, b) => a.accuracy - b.accuracy);
+
+    return {
+        summary: {
+            totalQuizzesCompleted: quizCountResult.count || 0,
+            totalFlashcardReviews: flashcardCountResult.count || 0,
+            totalQuestionsAnswered: totalAnswers,
+            overallAccuracy,
+            currentStreak: streak.currentStreak,
+            longestStreak: streak.longestStreak,
+            totalStudyDays: streak.totalStudyDays,
+            lastStudiedDate: streak.lastStudiedDate,
+        },
+        strengths,
+        weaknesses,
+        estimates,
+        isEmpty: totalAnswers === 0 && (streak.totalStudyDays || 0) === 0,
+        hasSparseData: estimates.length > 0 && eligible.length === 0,
+        disclaimer: 'Subject mastery estimates are calculated from your latest practice sessions and do not certify formal examination readiness.',
+    };
+}
+
