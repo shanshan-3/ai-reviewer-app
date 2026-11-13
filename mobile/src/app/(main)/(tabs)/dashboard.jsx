@@ -178,8 +178,8 @@ export default function DashboardPage() {
                         </View>
                         <Pressable
                             accessibilityRole="button"
-                            accessibilityLabel={`Study streak: ${streak?.currentStreak ?? 0} days`}
-                            onPress={() => router.push('/(main)/(tabs)/profile')}
+                            accessibilityLabel={`Study streak: ${streak?.currentStreak ?? 0} days. Tap to view performance report.`}
+                            onPress={() => router.push('/(main)/report')}
                             className="flex-1 items-center px-1 active:opacity-75"
                         >
                             <View className="flex-row items-center gap-1">
@@ -213,7 +213,12 @@ export default function DashboardPage() {
                         style={{ borderCurve: 'continuous' }}
                     >
                         <View className="mb-2.5 flex-row items-center justify-between">
-                            <View className="flex-row items-center gap-1.5">
+                            <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel="View full performance report"
+                                onPress={() => router.push('/(main)/report')}
+                                className="flex-row items-center gap-1.5 active:opacity-75"
+                            >
                                 <IconFlame
                                     size={15}
                                     color={streak?.hasStudiedToday && (streak?.currentStreak ?? 0) > 0 ? '#D97706' : '#94A3B8'}
@@ -223,14 +228,21 @@ export default function DashboardPage() {
                                 <Text className="font-geist-semibold text-xs text-[#001428]">
                                     {streak?.currentStreak ?? 0} {streak?.currentStreak === 1 ? 'Day Streak' : 'Days Streak'}
                                 </Text>
-                            </View>
-                            <Text className="font-geist text-[11px] text-[#526071]">
-                                {streak?.hasStudiedToday ? 'Goal reached today' : 'Study today to keep streak'}
-                            </Text>
+                            </Pressable>
+                            <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel="View performance report"
+                                onPress={() => router.push('/(main)/report')}
+                                className="flex-row items-center gap-1 active:opacity-75"
+                            >
+                                <Text className="font-geist-medium text-[11px] text-[#2563EB]">
+                                    Report →
+                                </Text>
+                            </Pressable>
                         </View>
                         <WeeklyDateStrip
                             recentDays={streak?.recentDays ?? []}
-                            onDayPress={() => router.push('/(main)/(tabs)/profile')}
+                            onDayPress={() => router.push('/(main)/report')}
                         />
                     </View>
 
