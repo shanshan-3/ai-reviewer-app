@@ -1,15 +1,18 @@
 import { useCallback, useRef, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import AuthButton from '@/components/AuthButton';
 import AuthMessage from '@/components/AuthMessage';
 import ProgressSummary from '@/components/progress-summary';
-import { getUserStreak } from '@/lib/progress';
+import TopicEstimatesCard from '@/components/topic-estimates-card';
+import { getUserStreak, getTopicEstimates } from '@/lib/progress';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
 import IconUser from '@tabler/icons-react-native/IconUser';
 import IconShieldCheck from '@tabler/icons-react-native/IconShieldCheck';
+import IconChartBar from '@tabler/icons-react-native/IconChartBar';
+import IconChevronRight from '@tabler/icons-react-native/IconChevronRight';
 
 export default function ProfilePage() {
     const { session } = useSession();
@@ -17,12 +20,20 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [streak, setStreak] = useState(null);
+    const [estimates, setEstimates] = useState([]);
+    const [estimatesLoading, setEstimatesLoading] = useState(true);
 
     useFocusEffect(
         useCallback(() => {
             getUserStreak()
                 .then(res => setStreak(res.streak ?? null))
                 .catch(() => {});
+
+            setEstimatesLoading(true);
+            getTopicEstimates()
+                .then(res => setEstimates(res.estimates ?? []))
+                .catch(() => {})
+                .finally(() => setEstimatesLoading(false));
         }, [])
     );
 
@@ -78,7 +89,52 @@ export default function ProfilePage() {
                     <Text className="font-geist-semibold text-xs uppercase tracking-wider text-[#526071]">
                         Study Streak & Activity
                     </Text>
-                    <ProgressSummary streak={streak || {}} />
+                    <ProgressSummary
+                        streak={streak || {}}
+                        onPress={() => router.push('/(main)/report')}
+                    />
+                </View>
+
+                {/* Topic Practice Estimates Section */}
+                <View className="gap-2">
+                    <TopicEstimatesCard
+                        estimates={estimates}
+                        loading={estimatesLoading}
+                        limit={4}
+                        onViewAllPress={() => router.push('/(main)/report')}
+                    />
+                </View>
+
+                {/* Personal Performance Report Link */}
+                <View className="gap-2">
+                    <Text className="font-geist-semibold text-xs uppercase tracking-wider text-[#526071]">
+                        Personal Diagnostics
+                    </Text>
+                    <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="View personal performance report"
+                        onPress={() => router.push('/(main)/report')}
+                        className="flex-row items-center justify-between rounded-2xl border border-[#E4E8EE] bg-white p-4 shadow-2xs active:opacity-85"
+                        style={{ borderCurve: 'continuous' }}
+                    >
+                        <View className="flex-row items-center gap-3">
+                            <View
+                                className="h-10 w-10 items-center justify-center rounded-xl border border-blue-200 bg-blue-50"
+                                style={{ borderCurve: 'continuous' }}
+                            >
+                                <IconChartBar size={20} color="#2563EB" />
+                            </View>
+                            <View>
+                                <Text className="font-geist-bold text-sm text-[#001428]">
+                                    Personal Performance Report
+                                </Text>
+                                <Text className="font-geist text-xs text-[#526071]">
+                                    Topic mastery, strengths, and accuracy estimates
+                                </Text>
+                            </View>
+                        </View>
+                        <IconChevronRight size={18} color="#94A3B8" />
+                    </Pressable>
                 </View>
 
                 {/* Account Management & Sign Out */}
