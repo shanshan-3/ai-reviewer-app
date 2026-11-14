@@ -4,27 +4,27 @@ import { calculateTopicEstimates } from './progressEstimates.js';
 import { generateTopicRecommendations } from './topicRecommendations.js';
 import { calculateStreak } from './studyStreaks.js';
 
-export async function getUserRecommendations({ userId }) {
-    const admin = createSupabaseAdminClient();
+export async function getUserRecommendations({ userId, client }) {
+    const admin = client || createSupabaseAdminClient();
     const answers = await model.getRecentSubmittedAnswers(admin, userId);
     return generateTopicRecommendations(answers);
 }
 
-export async function getUserEstimates({ userId }) {
-    const admin = createSupabaseAdminClient();
+export async function getUserEstimates({ userId, client }) {
+    const admin = client || createSupabaseAdminClient();
     const answers = await model.getRecentSubmittedAnswers(admin, userId);
     const estimates = calculateTopicEstimates(answers);
     return { estimates };
 }
 
-export async function getUserStreak({ userId, timeZone }) {
-    const admin = createSupabaseAdminClient();
+export async function getUserStreak({ userId, timeZone, client }) {
+    const admin = client || createSupabaseAdminClient();
     const timestamps = await model.getCompletedStudyActivities(admin, userId);
     return calculateStreak(timestamps, timeZone);
 }
 
-export async function getUserReport({ userId, timeZone }) {
-    const admin = createSupabaseAdminClient();
+export async function getUserReport({ userId, timeZone, client }) {
+    const admin = client || createSupabaseAdminClient();
     const [answers, timestamps, quizCountResult, flashcardCountResult] = await Promise.all([
         model.getRecentSubmittedAnswers(admin, userId),
         model.getCompletedStudyActivities(admin, userId),
