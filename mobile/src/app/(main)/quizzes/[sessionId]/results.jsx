@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, BackHandler, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import IconArrowLeft from '@tabler/icons-react-native/IconArrowLeft';
@@ -48,6 +48,16 @@ export default function ResultsPage() {
         }
         if (sessionId) fetchResults();
     }, [sessionId]);
+
+    // Handle Android system back press to return to dashboard cleanly
+    useEffect(() => {
+        const onBackPress = () => {
+            router.replace('/(main)/(tabs)/dashboard');
+            return true;
+        };
+        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+        return () => subscription.remove();
+    }, [router]);
 
     function toggleExpand(id) {
         setExpandedIds(prev => {
@@ -99,6 +109,7 @@ export default function ResultsPage() {
             {/* Header */}
             <View className="flex-row items-center border-b border-[#E4E8EE] bg-white px-4 py-3">
                 <Pressable
+                    hitSlop={8}
                     accessibilityRole="button"
                     accessibilityLabel="Return to Dashboard"
                     onPress={() => router.replace('/(main)/(tabs)/dashboard')}

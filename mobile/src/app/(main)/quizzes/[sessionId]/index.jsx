@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, BackHandler, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import IconArrowLeft from '@tabler/icons-react-native/IconArrowLeft';
@@ -19,6 +19,16 @@ export default function AnsweringPage() {
     const [selectedOptionId, setSelectedOptionId] = useState(null);
     const [error, setError] = useState(null);
     const [leaveModalOpen, setLeaveModalOpen] = useState(false);
+
+    // Android hardware back button handler: prompt confirmation to avoid accidental exit
+    useEffect(() => {
+        const onBackPress = () => {
+            setLeaveModalOpen(true);
+            return true; // prevent default exit
+        };
+        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+        return () => subscription.remove();
+    }, []);
 
     useEffect(() => {
         async function fetchSession() {
