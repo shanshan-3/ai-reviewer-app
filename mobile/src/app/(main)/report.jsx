@@ -63,6 +63,7 @@ export default function PerformanceReportPage() {
             {/* Navigation Header */}
             <View className="flex-row items-center justify-between border-b border-[#E4E8EE] bg-white px-4 py-3">
                 <Pressable
+                    hitSlop={8}
                     accessibilityRole="button"
                     accessibilityLabel="Go back"
                     onPress={() => router.back()}
@@ -76,12 +77,10 @@ export default function PerformanceReportPage() {
                     <Text className="font-geist-bold text-base text-[#001428]">
                         Performance Report
                     </Text>
-                    <Text className="font-geist text-[11px] text-[#526071]">
-                        Personal Preparation Diagnostics
-                    </Text>
                 </View>
 
                 <Pressable
+                    hitSlop={8}
                     accessibilityRole="button"
                     accessibilityLabel="Refresh report"
                     onPress={() => loadReport(true)}

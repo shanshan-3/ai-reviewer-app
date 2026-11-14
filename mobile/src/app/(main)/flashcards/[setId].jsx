@@ -224,6 +224,8 @@ export default function FlashcardStudyPage() {
             <View className="flex-row items-center justify-between border-b border-[#E4E8EE] bg-white px-5 py-3.5">
                 <Pressable
                     hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel="Go back"
                     onPress={() => router.back()}
                     className="rounded-full p-1 active:bg-[#F1F4F8]"
                 >
@@ -241,6 +243,8 @@ export default function FlashcardStudyPage() {
 
                 <Pressable
                     hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel="Shuffle cards"
                     onPress={handleShuffle}
                     className="rounded-full p-1.5 active:bg-[#F1F4F8]"
                 >
@@ -323,8 +327,10 @@ export default function FlashcardStudyPage() {
             <View className="flex-row items-center justify-between border-t border-[#E4E8EE] bg-white px-6 py-4">
                 <Pressable
                     disabled={currentIndex === 0}
+                    accessibilityRole="button"
+                    accessibilityLabel="Previous card"
                     onPress={handlePrev}
-                    className={`flex-row items-center gap-1 rounded-2xl border border-[#E4E8EE] px-4 py-3 active:bg-[#F1F4F8] ${
+                    className={`min-h-[48px] flex-row items-center gap-1 rounded-2xl border border-[#E4E8EE] px-4 py-3 active:bg-[#F1F4F8] ${
                         currentIndex === 0 ? 'opacity-30' : ''
                     }`}
                     style={{ borderCurve: 'continuous' }}
@@ -340,8 +346,10 @@ export default function FlashcardStudyPage() {
                 </View>
 
                 <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={currentIndex === totalCards - 1 ? 'Finish deck' : 'Next card'}
                     onPress={handleNext}
-                    className="flex-row items-center gap-1 rounded-2xl bg-[#001428] px-5 py-3 active:opacity-90"
+                    className="min-h-[48px] flex-row items-center gap-1 rounded-2xl bg-[#001428] px-5 py-3 active:opacity-90"
                     style={{ borderCurve: 'continuous' }}
                 >
                     <Text className="font-geist-medium text-xs text-white">
