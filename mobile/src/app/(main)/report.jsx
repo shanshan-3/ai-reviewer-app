@@ -25,7 +25,6 @@ import IconArrowRight from '@tabler/icons-react-native/IconArrowRight';
 import IconTrendingUp from '@tabler/icons-react-native/IconTrendingUp';
 import { getUserReport, getUserStreak } from '@/lib/progress';
 import { listUserQuizzes } from '@/lib/quizzes';
-import { getCurrentWeekDays, getDeviceTimeZone } from '@/lib/study-date';
 
 export default function PerformanceReportPage() {
     const router = useRouter();
@@ -37,7 +36,6 @@ export default function PerformanceReportPage() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
-    const [selectedDayIdx, setSelectedDayIdx] = useState(null);
 
     const loadData = useCallback(async (isRefresh = false) => {
         if (isRefresh) setRefreshing(true);
@@ -97,21 +95,6 @@ export default function PerformanceReportPage() {
     const quizScoreTrend = report?.quizScoreTrend?.length
         ? report.quizScoreTrend
         : completedQuizScores;
-
-    // Build client-resilient 7-day velocity from current calendar week
-    const timeZone = getDeviceTimeZone();
-    const currentWeek = getCurrentWeekDays(timeZone);
-    const studiedDatesSet = new Set(streakData?.recentDays || report?.recentDays || []);
-
-    const weekVelocity = currentWeek.map(day => {
-        const hasStudied = studiedDatesSet.has(day.dateString);
-        return {
-            ...day,
-            hasStudied,
-            // Visual height ratio: studied days receive prominent activity bar
-            intensity: hasStudied ? 1.0 : day.isToday ? 0.35 : 0.1,
-        };
-    });
 
     const eligibleCount = estimates.filter(e => e.eligible).length;
     const proficientCount = Math.max(0, eligibleCount - strengths.length - weaknesses.length);
@@ -400,87 +383,7 @@ export default function PerformanceReportPage() {
                         </View>
                     </View>
 
-                    {/* 2. 7-Day Study Velocity Chart */}
-                    <View
-                        className="overflow-hidden rounded-2xl border border-[#E4E8EE] bg-white p-4 shadow-2xs"
-                        style={{ borderCurve: 'continuous' }}
-                    >
-                        <View className="flex-row items-center justify-between mb-3">
-                            <View className="flex-1 pr-2">
-                                <Text className="font-geist-bold text-sm text-[#001428]">
-                                    7-Day Study Velocity
-                                </Text>
-                                <Text className="font-geist text-xs text-[#526071]">
-                                    Weekly consistency • Amber bars indicate logged study days
-                                </Text>
-                            </View>
-                            <View className="flex-row items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 border border-amber-200">
-                                <IconFlame size={13} color="#D97706" fill={currentStreak > 0 ? '#FDE68A' : 'none'} />
-                                <Text className="font-geist-bold text-xs text-amber-900">
-                                    {currentStreak}d Streak
-                                </Text>
-                            </View>
-                        </View>
-
-                        {/* Interactive 7-Day Bars */}
-                        <View className="flex-row items-end justify-between pt-4 pb-2 px-1 gap-2">
-                            {weekVelocity.map((day, idx) => {
-                                const isSelected = selectedDayIdx === idx;
-                                const barH = Math.max(12, Math.round(day.intensity * 75));
-                                const barColor = day.hasStudied
-                                    ? 'bg-amber-500'
-                                    : day.isToday
-                                    ? 'bg-[#001428]'
-                                    : 'bg-[#CBD5E1]';
-
-                                return (
-                                    <Pressable
-                                        key={day.dateString}
-                                        onPress={() => setSelectedDayIdx(isSelected ? null : idx)}
-                                        className="flex-1 items-center gap-2 active:opacity-75"
-                                    >
-                                        {/* Status indicator indicator on top */}
-                                        <View className="h-4 items-center justify-center">
-                                            {day.hasStudied ? (
-                                                <IconFlame size={13} color="#D97706" fill="#FDE68A" />
-                                            ) : day.isToday ? (
-                                                <View className="h-1.5 w-1.5 rounded-full bg-[#001428]" />
-                                            ) : null}
-                                        </View>
-
-                                        {/* Visual Bar Pill */}
-                                        <View className="h-[80px] w-full items-center justify-end">
-                                            <View
-                                                className={`w-full max-w-[28px] rounded-full ${barColor}`}
-                                                style={{ height: barH }}
-                                            />
-                                        </View>
-
-                                        {/* Day labels */}
-                                        <View className="items-center">
-                                            <Text
-                                                className={`font-geist text-[11px] ${
-                                                    day.isToday ? 'font-geist-bold text-[#001428]' : 'text-[#526071]'
-                                                }`}
-                                            >
-                                                {day.dayLabel}
-                                            </Text>
-                                            <Text
-                                                style={{ fontVariant: ['tabular-nums'] }}
-                                                className={`font-geist text-[10px] ${
-                                                    day.isToday ? 'font-geist-bold text-[#001428]' : 'text-[#94A3B8]'
-                                                }`}
-                                            >
-                                                {day.dayNumber}
-                                            </Text>
-                                        </View>
-                                    </Pressable>
-                                );
-                            })}
-                        </View>
-                    </View>
-
-                    {/* 3. Quiz Score Trajectory Graph */}
+                    {/* 2. Quiz Score Trajectory Graph */}
                     <View
                         className="overflow-hidden rounded-2xl border border-[#E4E8EE] bg-white p-4 shadow-2xs"
                         style={{ borderCurve: 'continuous' }}
