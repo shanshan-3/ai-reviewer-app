@@ -8,7 +8,7 @@ import MaterialCard from '@/components/material-card';
 import { deleteMaterial, listMaterials } from '@/lib/materials';
 import { listUserQuizzes } from '@/lib/quizzes';
 import { getTopicRecommendations, getUserStreak } from '@/lib/progress';
-import { WeeklyDateStrip } from '@/components/progress-summary';
+import { getCurrentWeekDays, getDeviceTimeZone } from '@/lib/study-date';
 import { useSession } from '@/providers/session-provider';
 
 
@@ -129,6 +129,19 @@ export default function DashboardPage() {
         ], { cancelable: false });
     }
 
+    const timeZone = getDeviceTimeZone();
+    const currentWeek = getCurrentWeekDays(timeZone);
+    const studiedDatesSet = new Set(streak?.recentDays || []);
+
+    const weekVelocity = currentWeek.map(day => {
+        const hasStudied = studiedDatesSet.has(day.dateString);
+        return {
+            ...day,
+            hasStudied,
+            intensity: hasStudied ? 1.0 : day.isToday ? 0.35 : 0.1,
+        };
+    });
+
     return (
         <SafeAreaView className="flex-1 bg-background" edges={['left', 'right']}>
             <FlatList data={materials} keyExtractor={material => material.id}
@@ -207,43 +220,112 @@ export default function DashboardPage() {
                         </View>
                     </View>
 
-                    {/* Weekly Study Streak Calendar Strip */}
+                    {/* 7-Day Study Velocity & Consistency Strip (Compact) */}
                     <View
                         className="overflow-hidden rounded-2xl border border-[#E4E8EE] bg-white p-3.5 shadow-xs"
                         style={{ borderCurve: 'continuous' }}
                     >
-                        <View className="mb-2.5 flex-row items-center justify-between">
+                        <View className="mb-2 flex-row items-center justify-between">
+                            <View className="flex-1 pr-2">
+                                <Text className="font-geist-bold text-xs text-[#001428]">
+                                    7-Day Study Velocity
+                                </Text>
+                                <Text className="mt-0.5 font-geist text-[11px] text-[#526071]">
+                                    {streak?.hasStudiedToday
+                                        ? 'Daily goal completed • Streak active'
+                                        : 'Study today to maintain your consistency'}
+                                </Text>
+                            </View>
                             <Pressable
                                 accessibilityRole="button"
-                                accessibilityLabel="View full performance report"
+                                accessibilityLabel={`Study streak: ${streak?.currentStreak ?? 0} days. View performance report.`}
                                 onPress={() => router.push('/(main)/report')}
-                                className="flex-row items-center gap-1.5 active:opacity-75"
+                                className="flex-row items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 active:opacity-75"
                             >
                                 <IconFlame
-                                    size={15}
-                                    color={streak?.hasStudiedToday && (streak?.currentStreak ?? 0) > 0 ? '#D97706' : '#94A3B8'}
-                                    fill={streak?.hasStudiedToday && (streak?.currentStreak ?? 0) > 0 ? '#FDE68A' : 'none'}
+                                    size={12}
+                                    color="#D97706"
+                                    fill={(streak?.currentStreak ?? 0) > 0 ? '#FDE68A' : 'none'}
                                     strokeWidth={2}
                                 />
-                                <Text className="font-geist-semibold text-xs text-[#001428]">
-                                    {streak?.currentStreak ?? 0} {streak?.currentStreak === 1 ? 'Day Streak' : 'Days Streak'}
-                                </Text>
-                            </Pressable>
-                            <Pressable
-                                accessibilityRole="button"
-                                accessibilityLabel="View performance report"
-                                onPress={() => router.push('/(main)/report')}
-                                className="flex-row items-center gap-1 active:opacity-75"
-                            >
-                                <Text className="font-geist-medium text-[11px] text-[#2563EB]">
-                                    Report →
+                                <Text
+                                    style={{ fontVariant: ['tabular-nums'] }}
+                                    className="font-geist-bold text-[11px] text-amber-900"
+                                >
+                                    {streak?.currentStreak ?? 0}d Streak
                                 </Text>
                             </Pressable>
                         </View>
-                        <WeeklyDateStrip
-                            recentDays={streak?.recentDays ?? []}
-                            onDayPress={() => router.push('/(main)/report')}
-                        />
+
+                        {/* Compact 7-Day Velocity Bars */}
+                        <View className="flex-row items-end justify-between px-1 pt-1.5 pb-0.5 gap-2">
+                            {weekVelocity.map((day) => {
+                                const barH = Math.max(8, Math.round(day.intensity * 38));
+                                const barColor = day.hasStudied
+                                    ? 'bg-amber-500'
+                                    : day.isToday
+                                    ? 'bg-[#001428]'
+                                    : 'bg-[#CBD5E1]';
+
+                                return (
+                                    <Pressable
+                                        key={day.dateString}
+                                        accessibilityRole="button"
+                                        accessibilityLabel={`${day.dayLabel}, ${day.dayNumber}: ${
+                                            day.hasStudied
+                                                ? 'Study session completed'
+                                                : day.isToday
+                                                ? 'Due today'
+                                                : 'No recorded activity'
+                                        }`}
+                                        className="flex-1 items-center gap-1 active:opacity-75"
+                                    >
+                                        {/* Status glyph on top of the bar */}
+                                        <View className="h-3.5 items-center justify-center">
+                                            {day.hasStudied ? (
+                                                <IconFlame size={12} color="#D97706" fill="#FDE68A" strokeWidth={2} />
+                                            ) : day.isToday ? (
+                                                <View className="h-1.5 w-1.5 rounded-full bg-[#001428]" />
+                                            ) : null}
+                                        </View>
+
+                                        {/* Visual Bar Pill */}
+                                        <View className="h-[38px] w-full items-center justify-end">
+                                            <View
+                                                className={`w-full max-w-[20px] rounded-full ${barColor}`}
+                                                style={{ height: barH }}
+                                            />
+                                        </View>
+
+                                        {/* Day & Date Labels */}
+                                        <View className="items-center">
+                                            <Text
+                                                className={`font-geist text-[10px] ${
+                                                    day.isToday ? 'font-geist-bold text-[#001428]' : 'text-[#526071]'
+                                                }`}
+                                            >
+                                                {day.dayLabel}
+                                            </Text>
+                                            <Text
+                                                style={{ fontVariant: ['tabular-nums'] }}
+                                                className={`font-geist text-[9px] ${
+                                                    day.isToday ? 'font-geist-bold text-[#001428]' : 'text-[#94A3B8]'
+                                                }`}
+                                            >
+                                                {day.dayNumber}
+                                            </Text>
+                                        </View>
+                                    </Pressable>
+                                );
+                            })}
+                        </View>
+
+                        {/* Bottom Footer Action Link */}
+                        <View className="mt-2.5 flex-row items-center justify-between border-t border-[#F1F4F8] pt-2">
+                            <Text className="font-geist text-[10px] text-[#526071]">
+                                Weekly consistency • Amber indicates study
+                            </Text>
+                        </View>
                     </View>
 
 
