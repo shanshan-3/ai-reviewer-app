@@ -1,9 +1,4 @@
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import Animated, {
-    Easing,
-    ReduceMotion,
-    ZoomIn,
-} from 'react-native-reanimated';
 
 const DIFFICULTY_CONFIG = {
     easy: {
@@ -116,13 +111,8 @@ export default function QuestionCard({
                             accessibilityState={{ selected: isSelected, disabled }}
                             accessibilityLabel={`Option ${opt.id.toUpperCase()}: ${opt.text}`}
                             onPress={() => onSelectOption(opt.id)}
-                            style={({ pressed }) => [
-                                {
-                                    borderCurve: 'continuous',
-                                    transform: [{ scale: pressed && !disabled ? 0.98 : 1 }],
-                                },
-                            ]}
-                            className={`min-h-[56px] flex-row items-center rounded-2xl border p-4 ${
+                            style={{ borderCurve: 'continuous' }}
+                            className={`min-h-[56px] flex-row items-center rounded-2xl border p-4 active:scale-[0.98] ${
                                 isSelected
                                     ? 'border-[#001428] bg-[#F1F4F8] shadow-sm'
                                     : 'border-[#E4E8EE] bg-white active:bg-[#F8FAFC]'
@@ -137,10 +127,7 @@ export default function QuestionCard({
                                 }`}
                             >
                                 {isSelected ? (
-                                    <Animated.View
-                                        entering={ZoomIn.duration(140).easing(Easing.bezier(0.23, 1, 0.32, 1)).reduceMotion(ReduceMotion.System)}
-                                        className="h-2.5 w-2.5 rounded-full bg-white"
-                                    />
+                                    <View className="h-2.5 w-2.5 rounded-full bg-white" />
                                 ) : (
                                     <Text className="font-geist-medium text-xs text-[#526071]">
                                         {opt.id.toUpperCase()}
