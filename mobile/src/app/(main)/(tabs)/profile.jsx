@@ -4,9 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import AuthButton from '@/components/AuthButton';
 import AuthMessage from '@/components/AuthMessage';
-import ProgressSummary from '@/components/progress-summary';
 import TopicEstimatesCard from '@/components/topic-estimates-card';
-import { getUserStreak, getTopicEstimates } from '@/lib/progress';
+import { getTopicEstimates } from '@/lib/progress';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
 import IconUser from '@tabler/icons-react-native/IconUser';
@@ -19,16 +18,11 @@ export default function ProfilePage() {
     const pending = useRef(false);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
-    const [streak, setStreak] = useState(null);
     const [estimates, setEstimates] = useState([]);
     const [estimatesLoading, setEstimatesLoading] = useState(true);
 
     useFocusEffect(
         useCallback(() => {
-            getUserStreak()
-                .then(res => setStreak(res.streak ?? null))
-                .catch(() => {});
-
             setEstimatesLoading(true);
             getTopicEstimates()
                 .then(res => setEstimates(res.estimates ?? []))
@@ -84,17 +78,6 @@ export default function ProfilePage() {
                     </View>
                 </View>
 
-                {/* Study Streak & Activity Card */}
-                <View className="gap-2">
-                    <Text className="font-geist-semibold text-xs uppercase tracking-wider text-[#526071]">
-                        Study Streak & Activity
-                    </Text>
-                    <ProgressSummary
-                        streak={streak || {}}
-                        onPress={() => router.push('/(main)/report')}
-                    />
-                </View>
-
                 {/* Topic Practice Estimates Section */}
                 <View className="gap-2">
                     <TopicEstimatesCard
@@ -114,8 +97,13 @@ export default function ProfilePage() {
                         accessibilityRole="button"
                         accessibilityLabel="View personal performance report"
                         onPress={() => router.push('/(main)/report')}
-                        className="flex-row items-center justify-between rounded-2xl border border-[#E4E8EE] bg-white p-4 shadow-2xs active:opacity-85"
-                        style={{ borderCurve: 'continuous' }}
+                        className="flex-row items-center justify-between rounded-2xl border border-[#E4E8EE] bg-white p-4 shadow-2xs active:opacity-90"
+                        style={({ pressed }) => [
+                            {
+                                borderCurve: 'continuous',
+                                transform: [{ scale: pressed ? 0.985 : 1 }],
+                            },
+                        ]}
                     >
                         <View className="flex-row items-center gap-3">
                             <View
