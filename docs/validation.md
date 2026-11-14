@@ -1,5 +1,32 @@
 # Phase 1: PDF/DOCX extraction validation
 
+## Phase 5: Progress reporting, estimates thresholds, rolling window, streak invariants, and review flow UX - 2026-11-14
+
+All Phase 5 progress reporting requirements, rolling window metrics, eligibility thresholds, timezone boundary conversions, dashboard/report agreement, module deletion recalculations, and mobile accessibility checks passed validation on 2026-11-14:
+
+- **Empty history & safe zeroes**:
+  - `getUserReport` on a user with no practice history returns `isEmpty: true`, `hasSparseData: false`, 0 questions answered, 0 accuracy, 0 streak, and empty arrays for strengths, weaknesses, and topic estimates.
+  - `getUserRecommendations` returns `hasRecommendations: false` and empty recommendations without errors.
+- **Four vs. five-answer thresholds**:
+  - 4 answered questions for a topic result in `sampleCount: 4`, `eligible: false`, `status: 'insufficient_data'`, and `hasSparseData: true`. Ineligible topics are excluded from strength badges and weak-topic suggestions.
+  - Adding the 5th answer unlocks `eligible: true`, computing accuracy and categorizing status (`mastered` for >=80%, `proficient` for 60-79%, `needs_practice` for <60%).
+- **Rolling 20-answer window truncation**:
+  - For topics with >20 answers (tested with 25 answers), `calculateTopicEstimates` limits calculation to exactly the latest 20 first-submission answers, correctly dropping older historical answers from the calculation window.
+- **Repeated completion & study streak deduplication**:
+  - Multiple completions (e.g. 2 completed quizzes and 3 completed flashcard deck reviews) on the same calendar day correctly increment overall activity counts while deduplicating to exactly 1 qualifying study day for the current streak.
+- **Timezone boundaries & preserved completion dates**:
+  - Tested timestamps at UTC date boundaries (e.g., `2026-11-13T23:30:00Z`). Accurately calculates local calendar dates across timezones (`2026-11-13` in UTC / America/New_York vs. `2026-11-14` in Asia/Manila UTC+8) while preserving underlying ISO timestamps.
+- **Report and Dashboard agreement**:
+  - `getUserReport` metrics strictly match `getUserEstimates` and `getUserStreak` outputs for current streak, longest streak, total study days, and topic practice accuracy.
+- **Confirmed module deletion cascades & progress recalculation**:
+  - Simulated deletion of a module with cascading cleanup across `quiz_generations`, `quizzes`, `study_sessions`, `submitted_answers`, and `flashcard_reviews`.
+  - Recalculated report and estimates verify that all answers and study days tied to the deleted module are removed, while unrelated topic-only history and other modules remain completely unaltered.
+- **Mobile UX, touch targets, and Android navigation audit**:
+  - Minimum touch targets (>=48dp) enforced across navigation headers, option cards (`min-h-[56px]`), bottom action bars (`min-h-[48px]`), and buttons with `hitSlop`.
+  - Screen reader attributes verified (`accessibilityRole="radio"`, `accessibilityRole="button"`, `accessibilityRole="tab"`, `accessibilityLabel`, `accessibilityState`).
+  - Code snippet horizontal scrolling verified via `ScrollView horizontal` with `selectable` text.
+  - Android system-back navigation integrated in `quizzes/[sessionId]/index.jsx` with an exit confirmation modal preventing accidental abandonment, and clean navigation on results.
+
 ## Phase 4: Study session lifecycle, difficulty limits, pool exhaustion, and flashcard review validation - 2026-11-13
 
 All Phase 4 study session dynamics, difficulty bounds, mixed sequence answering, pool exhaustion, session resumption, empty flashcard set guards, and repeated review-completion streak invariants passed **14 automated integration checks** in `server/test/phase4_study_lifecycle.test.js` against hosted Supabase:
