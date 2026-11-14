@@ -2,6 +2,13 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, BackHandler, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import Animated, {
+    Easing,
+    FadeInDown,
+    FadeOutUp,
+    LinearTransition,
+    ReduceMotion,
+} from 'react-native-reanimated';
 import IconArrowLeft from '@tabler/icons-react-native/IconArrowLeft';
 import IconCheck from '@tabler/icons-react-native/IconCheck';
 import IconX from '@tabler/icons-react-native/IconX';
@@ -211,8 +218,9 @@ export default function ResultsPage() {
                             const correctOption = item.options?.find(o => o.id === item.correctOptionId);
 
                             return (
-                                <View
+                                <Animated.View
                                     key={item.questionId}
+                                    layout={LinearTransition.duration(200).easing(Easing.bezier(0.23, 1, 0.32, 1)).reduceMotion(ReduceMotion.System)}
                                     className="overflow-hidden rounded-2xl border border-[#E4E8EE] bg-white"
                                     style={{ borderCurve: 'continuous' }}
                                 >
@@ -268,7 +276,11 @@ export default function ResultsPage() {
 
                                     {/* Expanded Details */}
                                     {isExpanded && (
-                                        <View className="border-t border-[#E4E8EE] bg-[#F1F4F8] p-4 gap-3">
+                                        <Animated.View
+                                            entering={FadeInDown.duration(160).easing(Easing.bezier(0.23, 1, 0.32, 1)).reduceMotion(ReduceMotion.System)}
+                                            exiting={FadeOutUp.duration(120).easing(Easing.bezier(0.23, 1, 0.32, 1)).reduceMotion(ReduceMotion.System)}
+                                            className="border-t border-[#E4E8EE] bg-[#F1F4F8] p-4 gap-3"
+                                        >
                                             {/* Code Snippet if present */}
                                             {item.code?.text && (
                                                 <View className="overflow-hidden rounded-xl bg-[#001428] p-3">
@@ -332,9 +344,9 @@ export default function ResultsPage() {
                                                     ))}
                                                 </View>
                                             )}
-                                        </View>
+                                        </Animated.View>
                                     )}
-                                </View>
+                                </Animated.View>
                             );
                         })
                     )}

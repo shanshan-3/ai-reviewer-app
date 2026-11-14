@@ -6,9 +6,11 @@ import {
     ScrollView,
     Text,
     View,
+    useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { DonutChart, BarChart, LineChart } from 'expo-charts';
 import IconArrowLeft from '@tabler/icons-react-native/IconArrowLeft';
 import IconRotate from '@tabler/icons-react-native/IconRotate';
 import IconFlame from '@tabler/icons-react-native/IconFlame';
@@ -24,6 +26,8 @@ import { getUserReport } from '@/lib/progress';
 
 export default function PerformanceReportPage() {
     const router = useRouter();
+    const { width: windowWidth } = useWindowDimensions();
+    const [cardWidth, setCardWidth] = useState(Math.min(windowWidth - 32, 680));
     const [report, setReport] = useState(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -55,8 +59,27 @@ export default function PerformanceReportPage() {
     const estimates = report?.estimates ?? [];
     const strengths = report?.strengths ?? [];
     const weaknesses = report?.weaknesses ?? [];
+    const dailyActivity = report?.dailyActivity ?? [];
+    const quizScoreTrend = report?.quizScoreTrend ?? [];
     const isEmpty = report?.isEmpty ?? false;
     const hasSparseData = report?.hasSparseData ?? false;
+
+    const eligibleCount = estimates.filter(e => e.eligible).length;
+    const proficientCount = Math.max(0, eligibleCount - strengths.length - weaknesses.length);
+
+    // DonutChart dataset for overall topic mastery breakdown
+    const rawDonutData = [
+        { label: 'Mastered', value: strengths.length || 0, color: '#059669' },
+        { label: 'Proficient', value: proficientCount || 0, color: '#001428' },
+        { label: 'Focus', value: weaknesses.length || 0, color: '#D97706' },
+    ];
+    const hasDonutSlices = rawDonutData.some(d => d.value > 0);
+    const donutData = hasDonutSlices
+        ? rawDonutData.filter(d => d.value > 0)
+        : [{ label: 'Practice', value: 1, color: '#E4E8EE' }];
+
+    const velocityCounts = dailyActivity.length > 0 ? dailyActivity.map(d => d.count) : [0, 0, 0, 0, 0, 0, 0];
+    const chartRenderWidth = Math.max(cardWidth - 28, 240);
 
     return (
         <SafeAreaView className="flex-1 bg-[#F8F8FF]" edges={['top', 'left', 'right']}>
@@ -136,44 +159,100 @@ export default function PerformanceReportPage() {
                         />
                     }
                 >
-                    {/* Overall Score & Activity Card */}
+                    {/* Overall Score & ExpoKit Donut Mastery Card */}
                     <View
-                        className="overflow-hidden rounded-2xl border border-[#E4E8EE] bg-white p-5 shadow-2xs"
+                        onLayout={(e) => setCardWidth(e.nativeEvent.layout.width)}
+                        className="overflow-hidden rounded-2xl border border-[#E4E8EE] bg-white p-4 shadow-2xs"
                         style={{ borderCurve: 'continuous' }}
                     >
-                        <View className="flex-row items-center justify-between">
-                            <View className="flex-1">
+                        <View className="flex-row items-center justify-between pb-3 border-b border-[#F1F4F8]">
+                            <View>
                                 <Text className="font-geist-semibold text-xs uppercase tracking-wider text-[#526071]">
-                                    Overall Practice Accuracy
+                                    Overall Practice Mastery
                                 </Text>
-                                <View className="mt-1 flex-row items-baseline gap-2">
-                                    <Text
-                                        style={{ fontVariant: ['tabular-nums'] }}
-                                        className="font-geist-bold text-4xl text-[#001428]"
-                                    >
-                                        {summary.overallAccuracy ?? 0}%
-                                    </Text>
-                                    <Text className="font-geist text-xs text-[#526071]">
-                                        across {summary.totalQuestionsAnswered ?? 0} answers
-                                    </Text>
-                                </View>
+                                <Text className="mt-0.5 font-geist text-xs text-[#526071]">
+                                    Across {summary.totalQuestionsAnswered ?? 0} answers
+                                </Text>
                             </View>
-
-                            <View
-                                className="h-14 w-14 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50"
-                                style={{ borderCurve: 'continuous' }}
-                            >
+                            <View className="flex-row items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1">
                                 <IconFlame
-                                    size={28}
+                                    size={14}
                                     color="#D97706"
                                     fill={summary.currentStreak > 0 ? '#FDE68A' : 'none'}
                                 />
+                                <Text className="font-geist-bold text-xs text-amber-900">
+                                    {summary.currentStreak ?? 0}d Streak
+                                </Text>
+                            </View>
+                        </View>
+
+                        {/* Donut Chart & Visual Breakdown */}
+                        <View className="flex-row items-center justify-between pt-2">
+                            <View className="items-center justify-center">
+                                <DonutChart
+                                    data={donutData}
+                                    width={160}
+                                    height={160}
+                                    donutRadius={56}
+                                    strokeWidth={2}
+                                    centerValue={`${summary.overallAccuracy ?? 0}%`}
+                                    centerLabel="Accuracy"
+                                    centerTextColor="#001428"
+                                    centerLabelColor="#526071"
+                                    showLabels={false}
+                                    showLegend={false}
+                                    showPercentages={false}
+                                    animate={true}
+                                />
+                            </View>
+
+                            <View className="flex-1 justify-center pl-3">
+                                <Text className="font-geist-bold text-base text-[#001428]">
+                                    Topic Readiness
+                                </Text>
+                                <Text className="mt-0.5 font-geist text-[11px] leading-4 text-[#526071]">
+                                    {eligibleCount > 0
+                                        ? `${eligibleCount} evaluated topics meeting 5-answer threshold`
+                                        : 'Evaluating topics (5 answers required)'}
+                                </Text>
+
+                                <View className="mt-3 gap-1.5">
+                                    <View className="flex-row items-center justify-between rounded-lg bg-emerald-50/70 px-2 py-1">
+                                        <View className="flex-row items-center gap-1.5">
+                                            <View className="h-2 w-2 rounded-full bg-emerald-600" />
+                                            <Text className="font-geist-medium text-[11px] text-emerald-950">Mastered (≥80%)</Text>
+                                        </View>
+                                        <Text style={{ fontVariant: ['tabular-nums'] }} className="font-geist-bold text-[11px] text-emerald-950">
+                                            {strengths.length}
+                                        </Text>
+                                    </View>
+
+                                    <View className="flex-row items-center justify-between rounded-lg bg-[#F1F4F8] px-2 py-1">
+                                        <View className="flex-row items-center gap-1.5">
+                                            <View className="h-2 w-2 rounded-full bg-[#001428]" />
+                                            <Text className="font-geist-medium text-[11px] text-[#001428]">Proficient (60–79%)</Text>
+                                        </View>
+                                        <Text style={{ fontVariant: ['tabular-nums'] }} className="font-geist-bold text-[11px] text-[#001428]">
+                                            {proficientCount}
+                                        </Text>
+                                    </View>
+
+                                    <View className="flex-row items-center justify-between rounded-lg bg-amber-50/70 px-2 py-1">
+                                        <View className="flex-row items-center gap-1.5">
+                                            <View className="h-2 w-2 rounded-full bg-amber-600" />
+                                            <Text className="font-geist-medium text-[11px] text-amber-950">Needs Practice (&lt;70%)</Text>
+                                        </View>
+                                        <Text style={{ fontVariant: ['tabular-nums'] }} className="font-geist-bold text-[11px] text-amber-950">
+                                            {weaknesses.length}
+                                        </Text>
+                                    </View>
+                                </View>
                             </View>
                         </View>
 
                         {/* 4-Column Activity Grid */}
                         <View
-                            className="mt-5 grid grid-cols-2 flex-row flex-wrap divide-x divide-y divide-[#E4E8EE] rounded-xl border border-[#E4E8EE] bg-[#F8F8FF]"
+                            className="mt-4 grid grid-cols-2 flex-row flex-wrap divide-x divide-y divide-[#E4E8EE] rounded-xl border border-[#E4E8EE] bg-[#F8F8FF]"
                             style={{ borderCurve: 'continuous' }}
                         >
                             <View className="w-1/2 p-3">
@@ -258,6 +337,90 @@ export default function PerformanceReportPage() {
                         </View>
                     ) : (
                         <>
+                            {/* ExpoKit BarChart: 7-Day Study Velocity */}
+                            <View
+                                className="overflow-hidden rounded-2xl border border-[#E4E8EE] bg-white p-4 shadow-2xs"
+                                style={{ borderCurve: 'continuous' }}
+                            >
+                                <View className="flex-row items-center justify-between mb-2">
+                                    <View className="flex-1 pr-2">
+                                        <Text className="font-geist-bold text-sm text-[#001428]">
+                                            7-Day Study Velocity
+                                        </Text>
+                                        <Text className="font-geist text-xs text-[#526071]">
+                                            Daily answered questions (amber indicates study streak logged)
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                <View className="mt-2 items-center justify-center">
+                                    <BarChart
+                                        data={velocityCounts}
+                                        width={chartRenderWidth}
+                                        height={160}
+                                        primaryColor="#001428"
+                                        getBarColor={(_, idx) => (dailyActivity[idx]?.hasStudied ? '#D97706' : '#001428')}
+                                        formatLabel={(idx) => {
+                                            if (dailyActivity[idx]?.date) {
+                                                const parts = dailyActivity[idx].date.split('-');
+                                                if (parts.length === 3) {
+                                                    const d = new Date(Date.UTC(+parts[0], +parts[1] - 1, +parts[2]));
+                                                    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                                                    return days[d.getUTCDay()];
+                                                }
+                                            }
+                                            const fallbackDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                                            return fallbackDays[idx] || `${idx + 1}`;
+                                        }}
+                                        formatValue={(v) => String(v)}
+                                        showGrid={true}
+                                        animate={true}
+                                        style={{ backgroundColor: 'transparent' }}
+                                    />
+                                </View>
+                            </View>
+
+                            {/* ExpoKit LineChart: Quiz Score Progression */}
+                            {quizScoreTrend && quizScoreTrend.length >= 2 && (
+                                <View
+                                    className="overflow-hidden rounded-2xl border border-[#E4E8EE] bg-white p-4 shadow-2xs"
+                                    style={{ borderCurve: 'continuous' }}
+                                >
+                                    <View className="flex-row items-center justify-between mb-2">
+                                        <View className="flex-1 pr-2">
+                                            <Text className="font-geist-bold text-sm text-[#001428]">
+                                                Quiz Score Trajectory
+                                            </Text>
+                                            <Text className="font-geist text-xs text-[#526071]">
+                                                Score trend across your last {quizScoreTrend.length} completed sessions
+                                            </Text>
+                                        </View>
+                                        <View className="rounded-full bg-blue-50 px-2 py-0.5 border border-blue-200">
+                                            <Text className="font-geist-bold text-xs text-blue-900">
+                                                {quizScoreTrend[quizScoreTrend.length - 1]}% Latest
+                                            </Text>
+                                        </View>
+                                    </View>
+
+                                    <View className="mt-2 items-center justify-center">
+                                        <LineChart
+                                            data={quizScoreTrend}
+                                            width={chartRenderWidth}
+                                            height={160}
+                                            lineColor="#001428"
+                                            accentColor="#D97706"
+                                            showDots={true}
+                                            showArea={true}
+                                            showGrid={true}
+                                            formatValue={(v) => `${v}%`}
+                                            formatLabel={(idx) => `Q${idx + 1}`}
+                                            animate={true}
+                                            style={{ backgroundColor: 'transparent' }}
+                                        />
+                                    </View>
+                                </View>
+                            )}
+
                             {/* Strengths & Focus Areas Section */}
                             <View className="gap-3">
                                 <Text className="font-geist-bold text-sm text-[#001428]">

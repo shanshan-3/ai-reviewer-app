@@ -1,7 +1,16 @@
+/* eslint-disable react-hooks/immutability */
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import Animated, {
+    Easing,
+    ReduceMotion,
+    interpolate,
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming,
+} from 'react-native-reanimated';
 import IconArrowLeft from '@tabler/icons-react-native/IconArrowLeft';
 import IconRotate from '@tabler/icons-react-native/IconRotate';
 import IconSparkles from '@tabler/icons-react-native/IconSparkles';
@@ -28,6 +37,31 @@ export default function FlashcardStudyPage() {
     const [recordingReview, setRecordingReview] = useState(false);
     const [reviewRecorded, setReviewRecorded] = useState(false);
 
+    // Reanimated 3D flip animation
+    const spin = useSharedValue(0);
+
+    const frontAnimatedStyle = useAnimatedStyle(() => {
+        const rotateValue = interpolate(spin.value, [0, 180], [0, 180]);
+        return {
+            transform: [
+                { perspective: 1000 },
+                { rotateY: `${rotateValue}deg` },
+            ],
+            backfaceVisibility: 'hidden',
+        };
+    });
+
+    const backAnimatedStyle = useAnimatedStyle(() => {
+        const rotateValue = interpolate(spin.value, [0, 180], [180, 360]);
+        return {
+            transform: [
+                { perspective: 1000 },
+                { rotateY: `${rotateValue}deg` },
+            ],
+            backfaceVisibility: 'hidden',
+        };
+    });
+
     useEffect(() => {
         async function loadDeck() {
             setLoading(true);
@@ -48,15 +82,21 @@ export default function FlashcardStudyPage() {
     const handleFlip = useCallback(() => {
         setIsFlipped(prev => {
             const next = !prev;
+            spin.value = withTiming(next ? 180 : 0, {
+                duration: 300,
+                easing: Easing.bezier(0.23, 1, 0.32, 1),
+                reduceMotion: ReduceMotion.System,
+            });
             if (next) {
                 setViewedBacks(current => new Set(current).add(currentIndex));
             }
             return next;
         });
-    }, [currentIndex]);
+    }, [currentIndex, spin]);
 
     function handleNext() {
         if (currentIndex < cards.length - 1) {
+            spin.value = 0;
             setIsFlipped(false);
             setCurrentIndex(prev => prev + 1);
         } else {
@@ -66,6 +106,7 @@ export default function FlashcardStudyPage() {
 
     function handlePrev() {
         if (currentIndex > 0) {
+            spin.value = 0;
             setIsFlipped(false);
             setCurrentIndex(prev => prev - 1);
         }
@@ -91,6 +132,7 @@ export default function FlashcardStudyPage() {
     }
 
     function handleRestart() {
+        spin.value = 0;
         setCurrentIndex(0);
         setIsFlipped(false);
         setViewedBacks(new Set());
@@ -98,6 +140,7 @@ export default function FlashcardStudyPage() {
     }
 
     function handleShuffle() {
+        spin.value = 0;
         const shuffled = [...cards].sort(() => Math.random() - 0.5);
         setCards(shuffled);
         setCurrentIndex(0);
@@ -263,30 +306,64 @@ export default function FlashcardStudyPage() {
             {/* Main Interactive Flashcard View */}
             <View className="flex-1 p-6 justify-center">
                 <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Flashcard: ${currentCard?.term || ''}. ${isFlipped ? 'Showing definition' : 'Showing term'}. Tap to flip card.`}
                     onPress={handleFlip}
-                    className="w-full min-h-[360px] rounded-3xl border border-[#E4E8EE] bg-white p-6 shadow-sm active:opacity-95 justify-between"
-                    style={{ borderCurve: 'continuous' }}
+                    className="w-full min-h-[360px] relative justify-center active:opacity-95"
                 >
-                    {/* Card Side Pill */}
-                    <View className="flex-row items-center justify-between">
-                        <View className="rounded-full bg-[#F1F4F8] px-3 py-1">
-                            <Text className="font-geist-semibold text-[10px] uppercase tracking-wider text-[#001428]">
-                                {isFlipped ? 'Back • Definition' : 'Front • Term'}
-                            </Text>
+                    {/* Front Face (Term) */}
+                    <Animated.View
+                        style={[{ borderCurve: 'continuous' }, frontAnimatedStyle]}
+                        className="w-full min-h-[360px] rounded-3xl border border-[#E4E8EE] bg-white p-6 shadow-sm justify-between"
+                    >
+                        {/* Card Side Pill */}
+                        <View className="flex-row items-center justify-between">
+                            <View className="rounded-full bg-[#F1F4F8] px-3 py-1">
+                                <Text className="font-geist-semibold text-[10px] uppercase tracking-wider text-[#001428]">
+                                    Front • Term
+                                </Text>
+                            </View>
+                            <View className="flex-row items-center gap-1">
+                                <IconRotate size={14} color="#9CA3AF" />
+                                <Text className="font-geist text-[11px] text-[#9CA3AF]">Tap to flip</Text>
+                            </View>
                         </View>
-                        <View className="flex-row items-center gap-1">
-                            <IconRotate size={14} color="#9CA3AF" />
-                            <Text className="font-geist text-[11px] text-[#9CA3AF]">Tap to flip</Text>
-                        </View>
-                    </View>
 
-                    {/* Card Content Area */}
-                    <View className="py-8 items-center justify-center">
-                        {!isFlipped ? (
+                        {/* Card Content Area */}
+                        <View className="py-8 items-center justify-center">
                             <Text className="text-center font-geist-semibold text-2xl text-[#001428]">
                                 {currentCard?.term}
                             </Text>
-                        ) : (
+                        </View>
+
+                        {/* Card Bottom Hint */}
+                        <View className="items-center border-t border-[#F1F4F8] pt-3">
+                            <Text className="font-geist text-[11px] text-[#526071]">
+                                Tap card to reveal definition
+                            </Text>
+                        </View>
+                    </Animated.View>
+
+                    {/* Back Face (Definition & Source) */}
+                    <Animated.View
+                        style={[{ borderCurve: 'continuous', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, backAnimatedStyle]}
+                        className="w-full min-h-[360px] rounded-3xl border border-[#E4E8EE] bg-white p-6 shadow-sm justify-between"
+                    >
+                        {/* Card Side Pill */}
+                        <View className="flex-row items-center justify-between">
+                            <View className="rounded-full bg-emerald-50 px-3 py-1 border border-emerald-200">
+                                <Text className="font-geist-semibold text-[10px] uppercase tracking-wider text-emerald-900">
+                                    Back • Definition
+                                </Text>
+                            </View>
+                            <View className="flex-row items-center gap-1">
+                                <IconRotate size={14} color="#9CA3AF" />
+                                <Text className="font-geist text-[11px] text-[#9CA3AF]">Tap to flip</Text>
+                            </View>
+                        </View>
+
+                        {/* Card Content Area */}
+                        <View className="py-8 items-center justify-center">
                             <View className="gap-4 w-full">
                                 <Text className="text-center font-geist text-base leading-6 text-[#001428]">
                                     {currentCard?.definition}
@@ -309,17 +386,15 @@ export default function FlashcardStudyPage() {
                                     </View>
                                 )}
                             </View>
-                        )}
-                    </View>
+                        </View>
 
-                    {/* Card Bottom Hint */}
-                    <View className="items-center border-t border-[#F1F4F8] pt-3">
-                        <Text className="font-geist text-[11px] text-[#526071]">
-                            {isFlipped
-                                ? 'Tap card again to view term'
-                                : 'Tap card to reveal definition'}
-                        </Text>
-                    </View>
+                        {/* Card Bottom Hint */}
+                        <View className="items-center border-t border-[#F1F4F8] pt-3">
+                            <Text className="font-geist text-[11px] text-[#526071]">
+                                Tap card again to view term
+                            </Text>
+                        </View>
+                    </Animated.View>
                 </Pressable>
             </View>
 
