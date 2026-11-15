@@ -6,6 +6,6 @@ The installation guide also explains [Expo Go, the RebyuIT Dev APK, and release 
 
 Before removing Android Studio, the SDK, Java, or build caches, read the [Android development cleanup guide](RebyuIT_Android_Dev_Cleanup_Guide.md). An installed, compatible Dev APK can keep loading JavaScript through Metro over the network after local build tools are removed.
 
-Use the [folder guide](../folder-structure.md) to find files and the [roadmap](../planning/ai-powered-reviewer-roadmap.md) for the agreed features and remaining work.
+Use the [end-to-end system overview](system-overview-e2e.md) for the complete architecture, data flows, and lifecycles. Use the [folder guide](../folder-structure.md) to find files and the [roadmap](../planning/ai-powered-reviewer-roadmap.md) for the agreed features and remaining work.
 
 The [validation evidence](validation.md) records the detailed results and their limits.
