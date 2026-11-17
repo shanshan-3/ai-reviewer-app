@@ -428,10 +428,9 @@ export default function FlashcardsPage() {
 
                         {/* Minimal Centered Title & Description */}
                         <Text
-                            numberOfLines={2}
                             className="font-geist-bold text-base text-[#001428] text-center leading-snug"
                         >
-                            {`Delete “${deckToDelete?.title || 'Deck'}”?`}
+                            Delete this Cards?
                         </Text>
                         <Text className="mt-1.5 font-geist text-xs text-[#64748B] text-center">
                             This action cannot be undone.
