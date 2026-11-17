@@ -111,12 +111,12 @@ export default function FlashcardsPage() {
                     />
                 }
             >
-                {/* Header */}
-                <View className="gap-3 pt-1">
+                {/* Header Action Bar */}
+                <View className="gap-3 pt-0.5">
                     <View className="flex-row items-center justify-between">
                         <View className="flex-1 pr-3">
-                            <Text accessibilityRole="header" className="font-geist-bold text-2xl tracking-tight text-[#001428]">
-                                Flashcards
+                            <Text accessibilityRole="header" className="font-geist-bold text-lg tracking-tight text-[#001428]">
+                                Study Decks
                             </Text>
                             {!loading && (
                                 <Text className="mt-0.5 font-geist text-xs text-[#64748B]">
@@ -277,9 +277,17 @@ export default function FlashcardsPage() {
                 {!loading && filteredDecks.map(deck => {
                     const isDeleting = deletingId === deck.id;
                     const isModule = deck.sourceKind === 'module';
-                    const subtitle = isModule
+                    const rawSubtitle = isModule
                         ? (deck.materialTitle || 'Course Module')
                         : (deck.topicName ? `${deck.subjectName || 'IT'} • ${deck.topicName}` : 'IT Review');
+
+                    // Suppress subtitle if the deck title already contains or equals the source name
+                    const isRedundantSubtitle = Boolean(
+                        rawSubtitle &&
+                        deck.title &&
+                        (deck.title.toLowerCase().includes(rawSubtitle.toLowerCase()) ||
+                         rawSubtitle.toLowerCase().includes(deck.title.toLowerCase()))
+                    );
 
                     return (
                         <View key={deck.id} className="relative pt-1.5">
@@ -329,12 +337,14 @@ export default function FlashcardsPage() {
                                                         {isModule ? 'Module' : 'Topic'}
                                                     </Text>
                                                 </View>
-                                                <Text
-                                                    numberOfLines={1}
-                                                    className="font-geist text-[11px] text-[#64748B] flex-1"
-                                                >
-                                                    {subtitle}
-                                                </Text>
+                                                {!isRedundantSubtitle && (
+                                                    <Text
+                                                        numberOfLines={1}
+                                                        className="font-geist text-[11px] text-[#64748B] flex-1"
+                                                    >
+                                                        {rawSubtitle}
+                                                    </Text>
+                                                )}
                                             </View>
 
                                             <Text
