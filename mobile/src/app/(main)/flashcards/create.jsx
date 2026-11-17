@@ -176,7 +176,7 @@ export default function CreateFlashcardDeckPage() {
                     <Pressable
                         disabled={!isSourceReady || generating}
                         onPress={handleGenerate}
-                        className={`flex-row items-center justify-center gap-2 rounded-2xl py-4 shadow-xs ${
+                        className={`flex-row items-center justify-center gap-2 rounded-2xl py-4 ${
                             !isSourceReady || generating
                                 ? 'bg-[#94A3B8]/30 opacity-70'
                                 : 'bg-[#001428] active:opacity-90'

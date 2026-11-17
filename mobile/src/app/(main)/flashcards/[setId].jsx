@@ -163,7 +163,7 @@ export default function FlashcardStudyPage() {
                 </Text>
                 <Pressable
                     onPress={() => router.back()}
-                    className="rounded-full bg-[#001428] px-5 py-2.5 active:opacity-80 shadow-xs"
+                    className="rounded-full bg-[#001428] px-5 py-2.5 active:opacity-80"
                     style={{ borderCurve: 'continuous' }}
                 >
                     <Text className="font-geist-semibold text-xs text-white">Back</Text>
@@ -201,7 +201,7 @@ export default function FlashcardStudyPage() {
                     showsVerticalScrollIndicator={false}
                 >
                     <View
-                        className="mt-6 h-20 w-20 items-center justify-center rounded-3xl bg-[#001428] shadow-sm"
+                        className="mt-6 h-20 w-20 items-center justify-center rounded-3xl bg-[#001428]"
                         style={{ borderCurve: 'continuous' }}
                     >
                         <IconCheck size={36} color="#FFFFFF" strokeWidth={2.5} />
@@ -218,7 +218,7 @@ export default function FlashcardStudyPage() {
 
                     {/* Streak Status Card */}
                     <View
-                        className="w-full rounded-2xl border border-[#E5E9F0] bg-white p-4 gap-2 shadow-2xs"
+                        className="w-full rounded-2xl border border-[#E5E9F0] bg-white p-4 gap-2"
                         style={{ borderCurve: 'continuous' }}
                     >
                         <View className="flex-row items-center justify-between">
@@ -266,7 +266,7 @@ export default function FlashcardStudyPage() {
                             accessibilityRole="button"
                             accessibilityLabel="Study again"
                             onPress={handleRestart}
-                            className="w-full items-center justify-center rounded-2xl bg-[#001428] py-3.5 shadow-xs"
+                            className="w-full items-center justify-center rounded-2xl bg-[#001428] py-3.5"
                             style={({ pressed }) => [
                                 {
                                     borderCurve: 'continuous',
@@ -359,7 +359,7 @@ export default function FlashcardStudyPage() {
                     {/* Front (Term) */}
                     <Animated.View
                         style={[{ borderCurve: 'continuous' }, frontAnimatedStyle]}
-                        className="w-full min-h-[400px] rounded-3xl border border-[#E5E9F0] bg-white p-6 shadow-sm justify-between"
+                        className="w-full min-h-[400px] rounded-3xl border border-[#E5E9F0] bg-white p-6 justify-between"
                     >
                         <View className="flex-row items-center justify-between">
                             <View
@@ -390,7 +390,7 @@ export default function FlashcardStudyPage() {
                     {/* Back (Definition) */}
                     <Animated.View
                         style={[{ borderCurve: 'continuous', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, backAnimatedStyle]}
-                        className="w-full min-h-[400px] rounded-3xl border border-[#E5E9F0] bg-white p-6 shadow-sm justify-between"
+                        className="w-full min-h-[400px] rounded-3xl border border-[#E5E9F0] bg-white p-6 justify-between"
                     >
                         <View className="flex-row items-center justify-between">
                             <View
@@ -481,7 +481,7 @@ export default function FlashcardStudyPage() {
                     accessibilityRole="button"
                     accessibilityLabel={currentIndex === totalCards - 1 ? 'Finish' : 'Next'}
                     onPress={handleNext}
-                    className="flex-row items-center gap-1.5 rounded-2xl bg-[#001428] px-5 py-3 shadow-xs"
+                    className="flex-row items-center gap-1.5 rounded-2xl bg-[#001428] px-5 py-3"
                     style={({ pressed }) => [
                         {
                             borderCurve: 'continuous',

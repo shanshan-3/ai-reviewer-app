@@ -129,7 +129,7 @@ export default function FlashcardsPage() {
                             accessibilityRole="button"
                             accessibilityLabel="New deck"
                             onPress={() => router.push('/flashcards/create')}
-                            className="flex-row items-center gap-1.5 rounded-full bg-[#001428] px-4 py-2.5 shadow-xs"
+                            className="flex-row items-center gap-1.5 rounded-full bg-[#001428] px-4 py-2.5"
                             style={({ pressed }) => [
                                 {
                                     borderCurve: 'continuous',
@@ -153,7 +153,7 @@ export default function FlashcardsPage() {
                                 onPress={() => setSelectedFilter('all')}
                                 className={`flex-1 items-center justify-center rounded-lg py-1.5 ${
                                     selectedFilter === 'all'
-                                        ? 'bg-white shadow-2xs'
+                                        ? 'bg-white'
                                         : 'bg-transparent'
                                 }`}
                                 style={({ pressed }) => [{ borderCurve: 'continuous', opacity: pressed ? 0.8 : 1 }]}
@@ -173,7 +173,7 @@ export default function FlashcardsPage() {
                                 onPress={() => setSelectedFilter('module')}
                                 className={`flex-1 items-center justify-center rounded-lg py-1.5 ${
                                     selectedFilter === 'module'
-                                        ? 'bg-white shadow-2xs'
+                                        ? 'bg-white'
                                         : 'bg-transparent'
                                 }`}
                                 style={({ pressed }) => [{ borderCurve: 'continuous', opacity: pressed ? 0.8 : 1 }]}
@@ -193,7 +193,7 @@ export default function FlashcardsPage() {
                                 onPress={() => setSelectedFilter('topic')}
                                 className={`flex-1 items-center justify-center rounded-lg py-1.5 ${
                                     selectedFilter === 'topic'
-                                        ? 'bg-white shadow-2xs'
+                                        ? 'bg-white'
                                         : 'bg-transparent'
                                 }`}
                                 style={({ pressed }) => [{ borderCurve: 'continuous', opacity: pressed ? 0.8 : 1 }]}
@@ -215,7 +215,7 @@ export default function FlashcardsPage() {
                 {/* Error */}
                 {error && (
                     <View
-                        className="flex-row items-center justify-between rounded-2xl border border-rose-200 bg-rose-50/80 p-3.5 shadow-2xs"
+                        className="flex-row items-center justify-between rounded-2xl border border-rose-200 bg-rose-50/80 p-3.5"
                         style={{ borderCurve: 'continuous' }}
                     >
                         <Text className="flex-1 font-geist text-xs text-rose-800 leading-snug">
@@ -241,7 +241,7 @@ export default function FlashcardsPage() {
                 {/* Empty State */}
                 {!loading && decks.length === 0 && !error && (
                     <View
-                        className="items-center rounded-3xl border border-[#E5E9F0] bg-white p-8 shadow-2xs text-center"
+                        className="items-center rounded-3xl border border-[#E5E9F0] bg-white p-8 text-center"
                         style={{ borderCurve: 'continuous' }}
                     >
                         <View
@@ -258,7 +258,7 @@ export default function FlashcardsPage() {
                         </Text>
                         <Pressable
                             onPress={() => router.push('/flashcards/create')}
-                            className="mt-5 flex-row items-center gap-1.5 rounded-full bg-[#001428] px-4 py-2.5 shadow-xs"
+                            className="mt-5 flex-row items-center gap-1.5 rounded-full bg-[#001428] px-4 py-2.5"
                             style={({ pressed }) => [
                                 {
                                     borderCurve: 'continuous',
@@ -277,135 +277,125 @@ export default function FlashcardsPage() {
                 {!loading && filteredDecks.map(deck => {
                     const isDeleting = deletingId === deck.id;
                     const isModule = deck.sourceKind === 'module';
-                    const rawSubtitle = isModule
-                        ? (deck.materialTitle || 'Course Module')
-                        : (deck.topicName ? `${deck.subjectName || 'IT'} • ${deck.topicName}` : 'IT Review');
 
-                    // Suppress subtitle if the deck title already contains or equals the source name
-                    const isRedundantSubtitle = Boolean(
-                        rawSubtitle &&
-                        deck.title &&
-                        (deck.title.toLowerCase().includes(rawSubtitle.toLowerCase()) ||
-                         rawSubtitle.toLowerCase().includes(deck.title.toLowerCase()))
-                    );
+                    // For topics: subtitle shows only the curriculum subject (e.g. "Computer Science"),
+                    // never repeating the topic name which is already the deck's main title.
+                    // For modules: only show module title if deck title doesn't already contain it.
+                    const subtitle = isModule
+                        ? (deck.materialTitle && !deck.title.toLowerCase().includes(deck.materialTitle.toLowerCase().trim())
+                            ? deck.materialTitle
+                            : null)
+                        : (deck.subjectName || null);
 
                     return (
-                        <View key={deck.id} className="relative pt-1.5">
-                            {/* Card Stack Backdrop */}
-                            <View
-                                className="absolute top-0 left-3 right-3 h-4 rounded-2xl bg-[#E8ECF2] border border-[#DDE3EB]"
-                                style={{ borderCurve: 'continuous' }}
-                            />
+                        <Pressable
+                            key={deck.id}
+                            disabled={isDeleting}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Open ${deck.title}`}
+                            onPress={() => router.push(`/flashcards/${deck.id}`)}
+                            className={`rounded-3xl border border-[#E5E9F0] bg-white p-4 ${
+                                isDeleting ? 'opacity-40' : ''
+                            }`}
+                            style={({ pressed }) => [
+                                {
+                                    borderCurve: 'continuous',
+                                    transform: [{ scale: pressed ? 0.985 : 1 }],
+                                    backgroundColor: pressed ? '#F8F9FC' : '#FFFFFF',
+                                },
+                            ]}
+                        >
+                            <View className="flex-row items-start justify-between gap-3">
+                                <View className="flex-1 flex-row items-start gap-3">
+                                    <View
+                                        className="h-10 w-10 items-center justify-center rounded-xl bg-[#001428]"
+                                        style={{ borderCurve: 'continuous' }}
+                                    >
+                                        {isModule ? (
+                                            <IconFileText size={18} color="#FFFFFF" strokeWidth={1.8} />
+                                        ) : (
+                                            <IconBook size={18} color="#FFFFFF" strokeWidth={1.8} />
+                                        )}
+                                    </View>
 
-                            {/* Main Card */}
-                            <Pressable
-                                disabled={isDeleting}
-                                accessibilityRole="button"
-                                accessibilityLabel={`Open ${deck.title}`}
-                                onPress={() => router.push(`/flashcards/${deck.id}`)}
-                                className={`rounded-3xl border border-[#E5E9F0] bg-white p-4 shadow-2xs ${
-                                    isDeleting ? 'opacity-40' : ''
-                                }`}
-                                style={({ pressed }) => [
-                                    {
-                                        borderCurve: 'continuous',
-                                        transform: [{ scale: pressed ? 0.985 : 1 }],
-                                        backgroundColor: pressed ? '#F8F9FC' : '#FFFFFF',
-                                    },
-                                ]}
-                            >
-                                <View className="flex-row items-start justify-between gap-3">
-                                    <View className="flex-1 flex-row items-start gap-3">
-                                        <View
-                                            className="h-10 w-10 items-center justify-center rounded-xl bg-[#001428] shadow-xs"
-                                            style={{ borderCurve: 'continuous' }}
-                                        >
-                                            {isModule ? (
-                                                <IconFileText size={18} color="#FFFFFF" strokeWidth={1.8} />
-                                            ) : (
-                                                <IconBook size={18} color="#FFFFFF" strokeWidth={1.8} />
+                                    <View className="flex-1 pr-1">
+                                        <View className="flex-row items-center gap-1.5">
+                                            <View
+                                                className="rounded-full bg-[#F1F4F8] px-2 py-0.5"
+                                                style={{ borderCurve: 'continuous' }}
+                                            >
+                                                <Text className="font-geist-semibold text-[9px] uppercase tracking-wider text-[#64748B]">
+                                                    {isModule ? 'Module' : 'Topic'}
+                                                </Text>
+                                            </View>
+                                            {subtitle && (
+                                                <Text
+                                                    numberOfLines={1}
+                                                    className="font-geist text-[11px] text-[#64748B] flex-1"
+                                                >
+                                                    {subtitle}
+                                                </Text>
                                             )}
                                         </View>
 
-                                        <View className="flex-1 pr-1">
-                                            <View className="flex-row items-center gap-1.5">
-                                                <View
-                                                    className="rounded-full bg-[#F1F4F8] px-2 py-0.5"
-                                                    style={{ borderCurve: 'continuous' }}
-                                                >
-                                                    <Text className="font-geist-semibold text-[9px] uppercase tracking-wider text-[#64748B]">
-                                                        {isModule ? 'Module' : 'Topic'}
-                                                    </Text>
-                                                </View>
-                                                {!isRedundantSubtitle && (
-                                                    <Text
-                                                        numberOfLines={1}
-                                                        className="font-geist text-[11px] text-[#64748B] flex-1"
-                                                    >
-                                                        {rawSubtitle}
-                                                    </Text>
-                                                )}
-                                            </View>
-
-                                            <Text
-                                                numberOfLines={2}
-                                                className="font-geist-bold text-[15px] leading-snug text-[#001428] mt-1"
-                                            >
-                                                {deck.title}
-                                            </Text>
-                                        </View>
+                                        <Text
+                                            numberOfLines={2}
+                                            className="font-geist-bold text-[15px] leading-snug text-[#001428] mt-1"
+                                        >
+                                            {deck.title}
+                                        </Text>
                                     </View>
-
-                                    <Pressable
-                                        hitSlop={12}
-                                        disabled={isDeleting}
-                                        accessibilityRole="button"
-                                        accessibilityLabel={`Delete ${deck.title}`}
-                                        onPress={() => confirmDelete(deck)}
-                                        className="p-1 rounded-lg active:bg-rose-50"
-                                        style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-                                    >
-                                        {isDeleting ? (
-                                            <ActivityIndicator size="small" color="#DC2626" />
-                                        ) : (
-                                            <IconTrash size={16} color="#94A3B8" />
-                                        )}
-                                    </Pressable>
                                 </View>
 
-                                {/* Footer */}
-                                <View className="mt-3.5 flex-row items-center justify-between border-t border-[#F1F3F6] pt-3">
-                                    <View className="flex-row items-center gap-2">
-                                        <View
-                                            className="rounded-full bg-[#F1F4F8] px-2.5 py-0.5"
-                                            style={{ borderCurve: 'continuous' }}
-                                        >
-                                            <Text
-                                                style={{ fontVariant: ['tabular-nums'] }}
-                                                className="font-geist-semibold text-xs text-[#001428]"
-                                            >
-                                                {deck.cardCount} terms
-                                            </Text>
-                                        </View>
+                                <Pressable
+                                    hitSlop={12}
+                                    disabled={isDeleting}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={`Delete ${deck.title}`}
+                                    onPress={() => confirmDelete(deck)}
+                                    className="p-1 rounded-lg active:bg-rose-50"
+                                    style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+                                >
+                                    {isDeleting ? (
+                                        <ActivityIndicator size="small" color="#DC2626" />
+                                    ) : (
+                                        <IconTrash size={16} color="#94A3B8" />
+                                    )}
+                                </Pressable>
+                            </View>
 
-                                        <View className="flex-row items-center gap-1">
-                                            <IconClock size={11} color="#94A3B8" />
-                                            <Text className="font-geist text-[10px] text-[#64748B]">
-                                                {formatRelativeDate(deck.lastReviewedAt)}
-                                            </Text>
-                                        </View>
-                                    </View>
-
+                            {/* Footer */}
+                            <View className="mt-3.5 flex-row items-center justify-between border-t border-[#F1F3F6] pt-3">
+                                <View className="flex-row items-center gap-2">
                                     <View
-                                        className="flex-row items-center gap-1 rounded-full bg-[#001428] px-3 py-1 shadow-xs"
+                                        className="rounded-full bg-[#F1F4F8] px-2.5 py-0.5"
                                         style={{ borderCurve: 'continuous' }}
                                     >
-                                        <Text className="font-geist-semibold text-xs text-white">Study</Text>
-                                        <IconArrowRight size={12} color="#FFFFFF" strokeWidth={2.5} />
+                                        <Text
+                                            style={{ fontVariant: ['tabular-nums'] }}
+                                            className="font-geist-semibold text-xs text-[#001428]"
+                                        >
+                                            {deck.cardCount} terms
+                                        </Text>
+                                    </View>
+
+                                    <View className="flex-row items-center gap-1">
+                                        <IconClock size={11} color="#94A3B8" />
+                                        <Text className="font-geist text-[10px] text-[#64748B]">
+                                            {formatRelativeDate(deck.lastReviewedAt)}
+                                        </Text>
                                     </View>
                                 </View>
-                            </Pressable>
-                        </View>
+
+                                <View
+                                    className="flex-row items-center gap-1 rounded-full bg-[#001428] px-3 py-1"
+                                    style={{ borderCurve: 'continuous' }}
+                                >
+                                    <Text className="font-geist-semibold text-xs text-white">Study</Text>
+                                    <IconArrowRight size={12} color="#FFFFFF" strokeWidth={2.5} />
+                                </View>
+                            </View>
+                        </Pressable>
                     );
                 })}
             </ScrollView>
