@@ -67,28 +67,32 @@ export default function CreateFlashcardDeckPage() {
 
             router.replace(`/flashcards/${res.setId}`);
         } catch (err) {
-            setError(err.message || 'Could not generate flashcard deck. Please try again.');
+            setError(err.message || 'Could not create deck. Please try again.');
         } finally {
             setGenerating(false);
         }
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-[#F8F8FF]" edges={['top', 'left', 'right']}>
+        <SafeAreaView className="flex-1 bg-[#F8F9FB]" edges={['top', 'left', 'right']}>
             {/* Top Bar */}
-            <View className="flex-row items-center gap-3 border-b border-[#E4E8EE] bg-white px-5 py-3.5">
+            <View className="flex-row items-center gap-3 border-b border-[#F1F3F6] bg-white px-5 py-3.5">
                 <Pressable
                     hitSlop={10}
                     disabled={generating}
                     onPress={() => router.back()}
-                    className="rounded-full p-1 active:bg-[#F1F4F8]"
+                    className="h-9 w-9 items-center justify-center rounded-xl bg-[#F1F4F8] active:bg-[#E2E8F0]"
+                    style={{ borderCurve: 'continuous' }}
                 >
-                    <IconArrowLeft size={22} color="#001428" />
+                    <IconArrowLeft size={18} color="#001428" />
                 </Pressable>
-                <Text className="font-geist-semibold text-lg text-[#001428]">New Flashcards</Text>
+                <Text className="font-geist-bold text-base text-[#001428]">New Deck</Text>
             </View>
 
-            <ScrollView contentContainerStyle={{ padding: 20, gap: 24, paddingBottom: 40 }}>
+            <ScrollView
+                contentContainerStyle={{ padding: 18, gap: 20, paddingBottom: 40 }}
+                showsVerticalScrollIndicator={false}
+            >
                 {/* Source Selection */}
                 <SourcePicker
                     sourceKind={sourceKind}
@@ -107,9 +111,9 @@ export default function CreateFlashcardDeckPage() {
                 />
 
                 {/* Card Count Options */}
-                <View className="gap-2.5">
-                    <Text className="font-geist-medium text-xs uppercase tracking-wider text-[#526071]">
-                        Number of Terms
+                <View className="gap-2">
+                    <Text className="font-geist-bold text-xs uppercase tracking-wider text-[#64748B]">
+                        Cards
                     </Text>
                     <View className="flex-row gap-2.5">
                         {[5, 10, 15, 20].map(count => {
@@ -122,23 +126,17 @@ export default function CreateFlashcardDeckPage() {
                                     className={`flex-1 items-center justify-center rounded-2xl border py-3 ${
                                         selected
                                             ? 'border-[#001428] bg-[#001428]'
-                                            : 'border-[#E4E8EE] bg-white active:bg-[#F1F4F8]'
+                                            : 'border-[#E5E9F0] bg-white active:bg-[#F1F4F8]'
                                     }`}
                                     style={{ borderCurve: 'continuous' }}
                                 >
                                     <Text
-                                        className={`font-geist-semibold text-sm ${
+                                        style={{ fontVariant: ['tabular-nums'] }}
+                                        className={`font-geist-bold text-sm ${
                                             selected ? 'text-white' : 'text-[#001428]'
                                         }`}
                                     >
                                         {count}
-                                    </Text>
-                                    <Text
-                                        className={`font-geist text-[10px] ${
-                                            selected ? 'text-white/70' : 'text-[#526071]'
-                                        }`}
-                                    >
-                                        cards
                                     </Text>
                                 </Pressable>
                             );
@@ -146,63 +144,66 @@ export default function CreateFlashcardDeckPage() {
                     </View>
                 </View>
 
-                {/* Custom Deck Title (Optional) */}
+                {/* Deck Title */}
                 <View className="gap-2">
-                    <Text className="font-geist-medium text-xs uppercase tracking-wider text-[#526071]">
-                        Custom Deck Title (Optional)
+                    <Text className="font-geist-bold text-xs uppercase tracking-wider text-[#64748B]">
+                        Deck Title
                     </Text>
                     <TextInput
                         value={customTitle}
                         onChangeText={setCustomTitle}
                         placeholder="Auto-generated if left blank"
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor="#94A3B8"
                         editable={!generating}
-                        className="rounded-2xl border border-[#E4E8EE] bg-white px-4 py-3 font-geist text-sm text-[#001428]"
+                        className="rounded-2xl border border-[#E5E9F0] bg-white px-4 py-3.5 font-geist text-sm text-[#001428]"
                         style={{ borderCurve: 'continuous' }}
-                    />
+                    >
+                    </TextInput>
                 </View>
 
                 {/* Error Banner */}
                 {error && (
                     <View
-                        className="rounded-xl border border-red-200 bg-red-50 p-3.5"
+                        className="rounded-xl border border-rose-200 bg-rose-50 p-3.5"
                         style={{ borderCurve: 'continuous' }}
                     >
-                        <Text className="font-geist text-xs text-red-700">{error}</Text>
+                        <Text className="font-geist text-xs text-rose-800">{error}</Text>
                     </View>
                 )}
 
                 {/* Submit Action */}
-                <View className="gap-2 pt-2">
+                <View className="pt-2">
                     <Pressable
                         disabled={!isSourceReady || generating}
                         onPress={handleGenerate}
-                        className={`flex-row items-center justify-center gap-2 rounded-2xl py-4 shadow-sm ${
+                        className={`flex-row items-center justify-center gap-2 rounded-2xl py-4 shadow-xs ${
                             !isSourceReady || generating
-                                ? 'bg-[#526071]/40 opacity-70'
+                                ? 'bg-[#94A3B8]/30 opacity-70'
                                 : 'bg-[#001428] active:opacity-90'
                         }`}
-                        style={{ borderCurve: 'continuous' }}
+                        style={({ pressed }) => [
+                            {
+                                borderCurve: 'continuous',
+                                transform: [{ scale: pressed && isSourceReady && !generating ? 0.98 : 1 }],
+                            },
+                        ]}
                     >
                         {generating ? (
                             <>
                                 <ActivityIndicator size="small" color="#FFFFFF" />
                                 <Text className="font-geist-semibold text-sm text-white">
-                                    Extracting Terms with AI...
+                                    Creating...
                                 </Text>
                             </>
                         ) : (
                             <>
-                                <IconSparkles size={18} color="#FFFFFF" />
+                                <IconSparkles size={16} color="#FFFFFF" />
                                 <Text className="font-geist-semibold text-sm text-white">
-                                    Generate Flashcards
+                                    Create Deck
                                 </Text>
                             </>
                         )}
                     </Pressable>
-                    <Text className="text-center font-geist text-xs text-[#526071]">
-                        Extracts key concepts, definitions, and code syntax from the source.
-                    </Text>
                 </View>
             </ScrollView>
         </SafeAreaView>

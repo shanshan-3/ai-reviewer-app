@@ -17,7 +17,6 @@ import IconSparkles from '@tabler/icons-react-native/IconSparkles';
 import IconCheck from '@tabler/icons-react-native/IconCheck';
 import IconChevronLeft from '@tabler/icons-react-native/IconChevronLeft';
 import IconChevronRight from '@tabler/icons-react-native/IconChevronRight';
-import IconFileText from '@tabler/icons-react-native/IconFileText';
 import { getFlashcardDeck, recordFlashcardReview } from '@/lib/flashcards';
 
 export default function FlashcardStudyPage() {
@@ -114,7 +113,6 @@ export default function FlashcardStudyPage() {
 
     async function finishStudy() {
         setIsCompleted(true);
-        // Requirement: Only qualifying full-set review qualifies for study streak
         const totalCards = cards.length;
         const allBacksViewed = viewedBacks.size >= totalCards;
 
@@ -150,24 +148,25 @@ export default function FlashcardStudyPage() {
 
     if (loading) {
         return (
-            <SafeAreaView className="flex-1 bg-[#F8F8FF] items-center justify-center gap-3">
+            <SafeAreaView className="flex-1 bg-[#F8F9FB] items-center justify-center gap-3">
                 <ActivityIndicator size="small" color="#001428" />
-                <Text className="font-geist text-xs text-[#526071]">Loading flashcard deck...</Text>
+                <Text className="font-geist text-xs text-[#64748B]">Loading...</Text>
             </SafeAreaView>
         );
     }
 
     if (error || !deck) {
         return (
-            <SafeAreaView className="flex-1 bg-[#F8F8FF] p-6 items-center justify-center gap-4">
-                <Text className="font-geist-semibold text-base text-[#001428]">
+            <SafeAreaView className="flex-1 bg-[#F8F9FB] p-6 items-center justify-center gap-4">
+                <Text className="font-geist-bold text-base text-[#001428]">
                     {error || 'Deck not found'}
                 </Text>
                 <Pressable
                     onPress={() => router.back()}
-                    className="rounded-full bg-[#001428] px-5 py-2.5 active:opacity-80"
+                    className="rounded-full bg-[#001428] px-5 py-2.5 active:opacity-80 shadow-xs"
+                    style={{ borderCurve: 'continuous' }}
                 >
-                    <Text className="font-geist-medium text-xs text-white">Go Back</Text>
+                    <Text className="font-geist-semibold text-xs text-white">Back</Text>
                 </Pressable>
             </SafeAreaView>
         );
@@ -181,57 +180,82 @@ export default function FlashcardStudyPage() {
     // Completion View
     if (isCompleted) {
         return (
-            <SafeAreaView className="flex-1 bg-[#F8F8FF]" edges={['top', 'left', 'right']}>
-                <View className="flex-row items-center border-b border-[#E4E8EE] bg-white px-5 py-3.5">
+            <SafeAreaView className="flex-1 bg-[#F8F9FB]" edges={['top', 'left', 'right']}>
+                {/* Header */}
+                <View className="flex-row items-center border-b border-[#F1F3F6] bg-white px-5 py-3.5">
                     <Pressable
                         hitSlop={10}
                         onPress={() => router.back()}
-                        className="rounded-full p-1 active:bg-[#F1F4F8]"
+                        className="h-9 w-9 items-center justify-center rounded-xl bg-[#F1F4F8] active:bg-[#E2E8F0]"
+                        style={{ borderCurve: 'continuous' }}
                     >
-                        <IconArrowLeft size={22} color="#001428" />
+                        <IconArrowLeft size={18} color="#001428" />
                     </Pressable>
-                    <Text className="ml-2 font-geist-semibold text-lg text-[#001428]">
-                        Review Complete
+                    <Text className="ml-3 font-geist-bold text-base text-[#001428]">
+                        Complete
                     </Text>
                 </View>
 
-                <ScrollView contentContainerStyle={{ padding: 24, alignItems: 'center', gap: 20 }}>
-                    <View className="mt-8 h-20 w-20 items-center justify-center rounded-full bg-[#F1F4F8]">
-                        <IconCheck size={36} color="#001428" />
+                <ScrollView
+                    contentContainerStyle={{ padding: 24, alignItems: 'center', gap: 20, paddingBottom: 60 }}
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View
+                        className="mt-6 h-20 w-20 items-center justify-center rounded-3xl bg-[#001428] shadow-sm"
+                        style={{ borderCurve: 'continuous' }}
+                    >
+                        <IconCheck size={36} color="#FFFFFF" strokeWidth={2.5} />
                     </View>
 
                     <View className="items-center gap-1">
-                        <Text className="font-geist-semibold text-2xl text-[#001428]">
-                            Deck Completed!
+                        <Text className="font-geist-bold text-2xl text-[#001428] tracking-tight">
+                            Deck Complete
                         </Text>
-                        <Text className="text-center font-geist text-sm text-[#526071]">
-                            {`You reviewed all ${totalCards} technical terms in "${deck.title}".`}
+                        <Text className="text-center font-geist text-xs text-[#64748B] max-w-xs">
+                            {`${totalCards} terms reviewed in "${deck.title}".`}
                         </Text>
                     </View>
 
-                    {/* Streak Qualification Card */}
+                    {/* Streak Status Card */}
                     <View
-                        className="w-full rounded-2xl border border-[#E4E8EE] bg-white p-4 gap-2"
+                        className="w-full rounded-2xl border border-[#E5E9F0] bg-white p-4 gap-2 shadow-2xs"
                         style={{ borderCurve: 'continuous' }}
                     >
-                        <View className="flex-row items-center gap-2">
-                            <IconSparkles size={18} color="#001428" />
-                            <Text className="font-geist-semibold text-sm text-[#001428]">
-                                Study Day Qualification
-                            </Text>
+                        <View className="flex-row items-center justify-between">
+                            <View className="flex-row items-center gap-2">
+                                <IconSparkles size={16} color="#001428" />
+                                <Text className="font-geist-bold text-xs uppercase tracking-wider text-[#001428]">
+                                    Study Streak
+                                </Text>
+                            </View>
+                            <View
+                                className={`rounded-full px-2 py-0.5 ${
+                                    allBacksViewed ? 'bg-emerald-50 border border-emerald-100' : 'bg-amber-50 border border-amber-100'
+                                }`}
+                                style={{ borderCurve: 'continuous' }}
+                            >
+                                <Text
+                                    className={`font-geist-semibold text-[10px] ${
+                                        allBacksViewed ? 'text-emerald-800' : 'text-amber-800'
+                                    }`}
+                                >
+                                    {allBacksViewed ? 'Recorded' : 'Incomplete'}
+                                </Text>
+                            </View>
                         </View>
+
                         {recordingReview ? (
                             <View className="flex-row items-center gap-2 py-1">
                                 <ActivityIndicator size="small" color="#001428" />
-                                <Text className="font-geist text-xs text-[#526071]">Recording study session...</Text>
+                                <Text className="font-geist text-xs text-[#64748B]">Recording streak...</Text>
                             </View>
                         ) : allBacksViewed ? (
-                            <Text className="font-geist text-xs leading-5 text-emerald-700 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
-                                ✓ Full-deck review verified: all card backs were inspected. This session qualifies toward your study streak!
+                            <Text className="font-geist text-xs text-emerald-800">
+                                {"Today's study streak has been recorded."}
                             </Text>
                         ) : (
-                            <Text className="font-geist text-xs leading-5 text-amber-700 bg-amber-50 p-2.5 rounded-xl border border-amber-200">
-                                Notice: Only full reviews where every card back is viewed qualify for study streaks. ({viewedBacks.size}/{totalCards} backs viewed).
+                            <Text className="font-geist text-xs text-amber-800">
+                                Review all card backs to record your streak ({viewedBacks.size}/{totalCards}).
                             </Text>
                         )}
                     </View>
@@ -239,20 +263,35 @@ export default function FlashcardStudyPage() {
                     {/* Actions */}
                     <View className="w-full gap-3 mt-4">
                         <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Study again"
                             onPress={handleRestart}
-                            className="w-full items-center justify-center rounded-2xl bg-[#001428] py-4 active:opacity-90"
-                            style={{ borderCurve: 'continuous' }}
+                            className="w-full items-center justify-center rounded-2xl bg-[#001428] py-3.5 shadow-xs"
+                            style={({ pressed }) => [
+                                {
+                                    borderCurve: 'continuous',
+                                    transform: [{ scale: pressed ? 0.98 : 1 }],
+                                },
+                            ]}
                         >
-                            <Text className="font-geist-semibold text-sm text-white">Restart Deck</Text>
+                            <Text className="font-geist-semibold text-sm text-white">Study Again</Text>
                         </Pressable>
 
                         <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Done"
                             onPress={() => router.back()}
-                            className="w-full items-center justify-center rounded-2xl border border-[#E4E8EE] bg-white py-4 active:bg-[#F1F4F8]"
-                            style={{ borderCurve: 'continuous' }}
+                            className="w-full items-center justify-center rounded-2xl bg-[#F1F4F8] py-3.5"
+                            style={({ pressed }) => [
+                                {
+                                    borderCurve: 'continuous',
+                                    transform: [{ scale: pressed ? 0.98 : 1 }],
+                                    backgroundColor: pressed ? '#E2E8F0' : '#F1F4F8',
+                                },
+                            ]}
                         >
                             <Text className="font-geist-semibold text-sm text-[#001428]">
-                                Back to Flashcards
+                                Done
                             </Text>
                         </Pressable>
                     </View>
@@ -262,124 +301,126 @@ export default function FlashcardStudyPage() {
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-[#F8F8FF]" edges={['top', 'left', 'right']}>
-            {/* Top Navigation */}
-            <View className="flex-row items-center justify-between border-b border-[#E4E8EE] bg-white px-5 py-3.5">
+        <SafeAreaView className="flex-1 bg-[#F8F9FB]" edges={['top', 'left', 'right']}>
+            {/* Header */}
+            <View className="flex-row items-center justify-between border-b border-[#F1F3F6] bg-white px-5 py-3">
                 <Pressable
                     hitSlop={10}
                     accessibilityRole="button"
-                    accessibilityLabel="Go back"
+                    accessibilityLabel="Back"
                     onPress={() => router.back()}
-                    className="rounded-full p-1 active:bg-[#F1F4F8]"
+                    className="h-9 w-9 items-center justify-center rounded-xl bg-[#F1F4F8] active:bg-[#E2E8F0]"
+                    style={{ borderCurve: 'continuous' }}
                 >
-                    <IconArrowLeft size={22} color="#001428" />
+                    <IconArrowLeft size={18} color="#001428" />
                 </Pressable>
 
-                <View className="items-center">
-                    <Text numberOfLines={1} className="max-w-[200px] font-geist-semibold text-sm text-[#001428]">
+                <View className="items-center max-w-[200px]">
+                    <Text numberOfLines={1} className="font-geist-bold text-sm text-[#001428]">
                         {deck.title}
                     </Text>
-                    <Text className="font-geist text-[11px] text-[#526071]">
-                        Card {currentIndex + 1} of {totalCards}
+                    <Text
+                        style={{ fontVariant: ['tabular-nums'] }}
+                        className="font-geist text-[11px] text-[#64748B] mt-0.5"
+                    >
+                        {currentIndex + 1} of {totalCards}
                     </Text>
                 </View>
 
                 <Pressable
                     hitSlop={10}
                     accessibilityRole="button"
-                    accessibilityLabel="Shuffle cards"
+                    accessibilityLabel="Shuffle"
                     onPress={handleShuffle}
-                    className="rounded-full p-1.5 active:bg-[#F1F4F8]"
+                    className="h-9 w-9 items-center justify-center rounded-xl bg-[#F1F4F8] active:bg-[#E2E8F0]"
+                    style={{ borderCurve: 'continuous' }}
                 >
-                    <IconRotate size={18} color="#001428" />
+                    <IconRotate size={16} color="#001428" />
                 </Pressable>
             </View>
 
             {/* Progress Bar */}
-            <View className="h-1 w-full bg-[#E4E8EE]">
+            <View className="h-1.5 w-full bg-[#F1F3F6]">
                 <View
-                    className="h-full bg-[#001428]"
-                    style={{ width: `${progressPercent}%` }}
+                    className="h-full bg-[#001428] rounded-full"
+                    style={{ width: `${progressPercent}%`, borderCurve: 'continuous' }}
                 />
             </View>
 
-            {/* Main Interactive Flashcard View */}
-            <View className="flex-1 p-6 justify-center">
+            {/* 3D Card Stage */}
+            <View className="flex-1 p-5 justify-center">
                 <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={`Flashcard: ${currentCard?.term || ''}. ${isFlipped ? 'Showing definition' : 'Showing term'}. Tap to flip card.`}
+                    accessibilityLabel={`Flashcard: ${currentCard?.term || ''}. ${isFlipped ? 'Definition' : 'Term'}. Tap to flip.`}
                     onPress={handleFlip}
-                    className="w-full min-h-[360px] relative justify-center active:opacity-95"
+                    className="w-full min-h-[400px] relative justify-center"
+                    style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.99 : 1 }] }]}
                 >
-                    {/* Front Face (Term) */}
+                    {/* Front (Term) */}
                     <Animated.View
                         style={[{ borderCurve: 'continuous' }, frontAnimatedStyle]}
-                        className="w-full min-h-[360px] rounded-3xl border border-[#E4E8EE] bg-white p-6 shadow-sm justify-between"
+                        className="w-full min-h-[400px] rounded-3xl border border-[#E5E9F0] bg-white p-6 shadow-sm justify-between"
                     >
-                        {/* Card Side Pill */}
                         <View className="flex-row items-center justify-between">
-                            <View className="rounded-full bg-[#F1F4F8] px-3 py-1">
-                                <Text className="font-geist-semibold text-[10px] uppercase tracking-wider text-[#001428]">
-                                    Front • Term
+                            <View
+                                className="rounded-full bg-[#F1F4F8] px-2.5 py-0.5"
+                                style={{ borderCurve: 'continuous' }}
+                            >
+                                <Text className="font-geist-bold text-[10px] uppercase tracking-wider text-[#64748B]">
+                                    Term
                                 </Text>
-                            </View>
-                            <View className="flex-row items-center gap-1">
-                                <IconRotate size={14} color="#9CA3AF" />
-                                <Text className="font-geist text-[11px] text-[#9CA3AF]">Tap to flip</Text>
                             </View>
                         </View>
 
-                        {/* Card Content Area */}
-                        <View className="py-8 items-center justify-center">
-                            <Text className="text-center font-geist-semibold text-2xl text-[#001428]">
+                        {/* Center */}
+                        <View className="py-10 items-center justify-center px-2">
+                            <Text className="text-center font-geist-bold text-2xl text-[#001428] tracking-tight leading-snug">
                                 {currentCard?.term}
                             </Text>
                         </View>
 
-                        {/* Card Bottom Hint */}
-                        <View className="items-center border-t border-[#F1F4F8] pt-3">
-                            <Text className="font-geist text-[11px] text-[#526071]">
-                                Tap card to reveal definition
+                        {/* Bottom */}
+                        <View className="items-center border-t border-[#F1F3F6] pt-2.5">
+                            <Text className="font-geist text-[11px] text-[#94A3B8]">
+                                Tap to flip
                             </Text>
                         </View>
                     </Animated.View>
 
-                    {/* Back Face (Definition & Source) */}
+                    {/* Back (Definition) */}
                     <Animated.View
                         style={[{ borderCurve: 'continuous', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, backAnimatedStyle]}
-                        className="w-full min-h-[360px] rounded-3xl border border-[#E4E8EE] bg-white p-6 shadow-sm justify-between"
+                        className="w-full min-h-[400px] rounded-3xl border border-[#E5E9F0] bg-white p-6 shadow-sm justify-between"
                     >
-                        {/* Card Side Pill */}
                         <View className="flex-row items-center justify-between">
-                            <View className="rounded-full bg-emerald-50 px-3 py-1 border border-emerald-200">
-                                <Text className="font-geist-semibold text-[10px] uppercase tracking-wider text-emerald-900">
-                                    Back • Definition
+                            <View
+                                className="rounded-full bg-emerald-50 px-2.5 py-0.5 border border-emerald-100"
+                                style={{ borderCurve: 'continuous' }}
+                            >
+                                <Text className="font-geist-bold text-[10px] uppercase tracking-wider text-emerald-800">
+                                    Definition
                                 </Text>
-                            </View>
-                            <View className="flex-row items-center gap-1">
-                                <IconRotate size={14} color="#9CA3AF" />
-                                <Text className="font-geist text-[11px] text-[#9CA3AF]">Tap to flip</Text>
                             </View>
                         </View>
 
-                        {/* Card Content Area */}
-                        <View className="py-8 items-center justify-center">
-                            <View className="gap-4 w-full">
-                                <Text className="text-center font-geist text-base leading-6 text-[#001428]">
+                        {/* Center */}
+                        <View className="py-6 items-center justify-center">
+                            <View className="gap-3 w-full">
+                                <Text className="text-center font-geist text-base leading-relaxed text-[#001428]">
                                     {currentCard?.definition}
                                 </Text>
 
                                 {currentCard?.sourceExcerpt && (
-                                    <View className="rounded-xl border border-[#E4E8EE] bg-[#F8F8FF] p-3 gap-1">
-                                        <View className="flex-row items-center gap-1">
-                                            <IconFileText size={12} color="#526071" />
-                                            <Text className="font-geist-medium text-[10px] uppercase text-[#526071]">
-                                                Source Reference
-                                            </Text>
-                                        </View>
+                                    <View
+                                        className="rounded-2xl border border-[#E5E9F0] bg-[#F8F9FC] p-3 gap-1"
+                                        style={{ borderCurve: 'continuous' }}
+                                    >
+                                        <Text className="font-geist-semibold text-[9px] uppercase tracking-wider text-[#64748B]">
+                                            Source
+                                        </Text>
                                         <Text
                                             numberOfLines={3}
-                                            className="font-geist text-xs italic text-[#526071]"
+                                            className="font-geist text-xs italic text-[#64748B]"
                                         >
                                             {`"${currentCard.sourceExcerpt}"`}
                                         </Text>
@@ -388,52 +429,73 @@ export default function FlashcardStudyPage() {
                             </View>
                         </View>
 
-                        {/* Card Bottom Hint */}
-                        <View className="items-center border-t border-[#F1F4F8] pt-3">
-                            <Text className="font-geist text-[11px] text-[#526071]">
-                                Tap card again to view term
+                        {/* Bottom */}
+                        <View className="items-center border-t border-[#F1F3F6] pt-2.5">
+                            <Text className="font-geist text-[11px] text-[#94A3B8]">
+                                Tap to flip
                             </Text>
                         </View>
                     </Animated.View>
                 </Pressable>
             </View>
 
-            {/* Bottom Navigation Toolbar */}
-            <View className="flex-row items-center justify-between border-t border-[#E4E8EE] bg-white px-6 py-4">
+            {/* Bottom Toolbar */}
+            <View className="flex-row items-center justify-between border-t border-[#F1F3F6] bg-white px-6 py-4">
                 <Pressable
                     disabled={currentIndex === 0}
                     accessibilityRole="button"
-                    accessibilityLabel="Previous card"
+                    accessibilityLabel="Previous"
                     onPress={handlePrev}
-                    className={`min-h-[48px] flex-row items-center gap-1 rounded-2xl border border-[#E4E8EE] px-4 py-3 active:bg-[#F1F4F8] ${
-                        currentIndex === 0 ? 'opacity-30' : ''
+                    className={`flex-row items-center gap-1 rounded-2xl bg-[#F1F4F8] px-4 py-3 ${
+                        currentIndex === 0 ? 'opacity-30' : 'active:bg-[#E2E8F0]'
+                    }`}
+                    style={({ pressed }) => [
+                        {
+                            borderCurve: 'continuous',
+                            transform: [{ scale: pressed && currentIndex > 0 ? 0.96 : 1 }],
+                        },
+                    ]}
+                >
+                    <IconChevronLeft size={16} color="#001428" strokeWidth={2} />
+                    <Text className="font-geist-semibold text-xs text-[#001428]">Prev</Text>
+                </Pressable>
+
+                <View
+                    className={`rounded-full px-2.5 py-1 ${
+                        viewedBacks.has(currentIndex)
+                            ? 'bg-emerald-50 border border-emerald-100'
+                            : 'bg-[#F1F4F8]'
                     }`}
                     style={{ borderCurve: 'continuous' }}
                 >
-                    <IconChevronLeft size={18} color="#001428" />
-                    <Text className="font-geist-medium text-xs text-[#001428]">Previous</Text>
-                </Pressable>
-
-                <View className="items-center">
-                    <Text className="font-geist-semibold text-xs text-[#001428]">
+                    <Text
+                        className={`font-geist-semibold text-[11px] ${
+                            viewedBacks.has(currentIndex) ? 'text-emerald-800' : 'text-[#64748B]'
+                        }`}
+                    >
                         {viewedBacks.has(currentIndex) ? '✓ Viewed' : 'Unviewed'}
                     </Text>
                 </View>
 
                 <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={currentIndex === totalCards - 1 ? 'Finish deck' : 'Next card'}
+                    accessibilityLabel={currentIndex === totalCards - 1 ? 'Finish' : 'Next'}
                     onPress={handleNext}
-                    className="min-h-[48px] flex-row items-center gap-1 rounded-2xl bg-[#001428] px-5 py-3 active:opacity-90"
-                    style={{ borderCurve: 'continuous' }}
+                    className="flex-row items-center gap-1.5 rounded-2xl bg-[#001428] px-5 py-3 shadow-xs"
+                    style={({ pressed }) => [
+                        {
+                            borderCurve: 'continuous',
+                            transform: [{ scale: pressed ? 0.96 : 1 }],
+                        },
+                    ]}
                 >
-                    <Text className="font-geist-medium text-xs text-white">
+                    <Text className="font-geist-semibold text-xs text-white">
                         {currentIndex === totalCards - 1 ? 'Finish' : 'Next'}
                     </Text>
                     {currentIndex === totalCards - 1 ? (
-                        <IconCheck size={16} color="#FFFFFF" />
+                        <IconCheck size={15} color="#FFFFFF" strokeWidth={2.5} />
                     ) : (
-                        <IconChevronRight size={16} color="#FFFFFF" />
+                        <IconChevronRight size={15} color="#FFFFFF" strokeWidth={2.5} />
                     )}
                 </Pressable>
             </View>
