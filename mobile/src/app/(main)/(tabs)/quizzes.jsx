@@ -191,18 +191,24 @@ export default function QuizzesPage() {
                                         <View className="flex-row items-center justify-between p-3.5">
                                             <Pressable
                                                 accessibilityRole="button"
-                                                accessibilityLabel={`Resume active quiz for ${activeItem.sourceTitle || 'Quiz in progress'}, ${activeProgress}% complete`}
+                                                accessibilityLabel={`Resume active quiz for ${activeItem.sourceTitle || activeItem.topicName || 'IT Topic Practice'}, ${activeProgress}% complete`}
                                                 accessibilityHint="Navigates to the active quiz session"
                                                 disabled={Boolean(deletingId)}
                                                 onPress={() => router.push(`/(main)/quizzes/${activeItem.session.id}`)}
                                                 className="min-w-0 flex-1 pr-3 active:opacity-70"
                                             >
-                                                <Text className="font-geist-semibold text-[11px] uppercase tracking-wider text-emerald-700">
-                                                    In Progress ({activeProgress}%)
-                                                </Text>
+                                                <View className="flex-row items-center gap-1.5">
+                                                    <Text className="font-geist-semibold text-[11px] uppercase tracking-wider text-emerald-700">
+                                                        In Progress ({activeProgress}%)
+                                                    </Text>
+                                                    {Boolean(activeItem.subjectName) && (
+                                                        <Text numberOfLines={1} className="font-geist text-[11px] text-[#64748B]">
+                                                            • {activeItem.subjectName}
+                                                        </Text>
+                                                    )}
+                                                </View>
                                                 <Text numberOfLines={1} className="mt-1 font-geist-bold text-sm text-[#001428]">
-
-                                                    {activeItem.sourceTitle || 'Quiz in progress'}
+                                                    {activeItem.sourceTitle || activeItem.topicName || 'IT Topic Practice'}
                                                 </Text>
                                                 <View className="mt-1 flex-row flex-wrap items-center gap-1.5">
                                                     <Text numberOfLines={1} className="font-geist text-[11px] text-[#526071]">
@@ -363,14 +369,34 @@ export default function QuizzesPage() {
                                         >
                                             <Pressable
                                                 accessibilityRole="button"
-                                                accessibilityLabel={`View results for ${item.sourceTitle || 'General Practice'}`}
+                                                accessibilityLabel={`View results for ${item.sourceTitle || item.topicName || 'IT Topic Practice'}`}
                                                 accessibilityHint="Opens detailed score and question review."
                                                 disabled={Boolean(deletingId)}
                                                 onPress={() => router.push(`/(main)/quizzes/${item.session.id}/results`)}
                                                 className="min-w-0 flex-1 pr-3 active:opacity-70"
                                             >
+                                                {/* Topic / Module badge + Subject Name */}
+                                                <View className="mb-1 flex-row items-center gap-1.5">
+                                                    <View
+                                                        className="rounded-full bg-[#F1F4F8] px-2 py-0.5"
+                                                        style={{ borderCurve: 'continuous' }}
+                                                    >
+                                                        <Text className="font-geist-semibold text-[9px] uppercase tracking-wider text-[#64748B]">
+                                                            {item.sourceKind === 'module' ? 'Module' : 'Topic'}
+                                                        </Text>
+                                                    </View>
+                                                    {Boolean(item.subjectName) && (
+                                                        <Text
+                                                            numberOfLines={1}
+                                                            className="font-geist text-[11px] text-[#64748B] flex-1"
+                                                        >
+                                                            {item.subjectName}
+                                                        </Text>
+                                                    )}
+                                                </View>
+
                                                 <Text numberOfLines={1} className="font-geist-semibold text-base text-[#001428]">
-                                                    {item.sourceTitle || 'General Practice'}
+                                                    {item.sourceTitle || item.topicName || 'IT Topic Practice'}
                                                 </Text>
                                                 <View className="mt-1 flex-row flex-wrap items-center gap-2">
                                                     <Text className="font-geist text-xs text-[#526071]">
@@ -405,7 +431,7 @@ export default function QuizzesPage() {
 
                                                 <Pressable
                                                     accessibilityRole="button"
-                                                    accessibilityLabel={`Delete quiz: ${item.sourceTitle || 'General Practice'}`}
+                                                    accessibilityLabel={`Delete quiz: ${item.sourceTitle || item.topicName || 'IT Topic Practice'}`}
                                                     accessibilityHint="Opens confirmation dialog to delete this quiz record."
                                                     accessibilityState={{ busy: isDeleting }}
                                                     disabled={Boolean(deletingId)}
