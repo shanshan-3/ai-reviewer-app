@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import IconCards from '@tabler/icons-react-native/IconCards';
@@ -37,6 +37,7 @@ export default function FlashcardsPage() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
+    const [deckToDelete, setDeckToDelete] = useState(null);
     const [error, setError] = useState(null);
     const [selectedFilter, setSelectedFilter] = useState('all'); // 'all' | 'module' | 'topic'
 
@@ -63,29 +64,23 @@ export default function FlashcardsPage() {
 
     function confirmDelete(deck) {
         if (deletingId) return;
-        Alert.alert(
-            'Delete Deck?',
-            `Delete "${deck.title}"? This cannot be undone.`,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: async () => {
-                        setDeletingId(deck.id);
-                        try {
-                            await deleteFlashcardDeck(deck.id);
-                            setDecks(prev => prev.filter(d => d.id !== deck.id));
-                            showToast('Deck deleted');
-                        } catch (err) {
-                            Alert.alert('Could not delete', err.message || 'Please try again.');
-                        } finally {
-                            setDeletingId(null);
-                        }
-                    },
-                },
-            ]
-        );
+        setDeckToDelete(deck);
+    }
+
+    async function handleDeleteDeck() {
+        if (!deckToDelete || deletingId) return;
+        const targetId = deckToDelete.id;
+        setDeletingId(targetId);
+        try {
+            await deleteFlashcardDeck(targetId);
+            setDecks(prev => prev.filter(d => d.id !== targetId));
+            setDeckToDelete(null);
+            showToast('Deck deleted');
+        } catch (err) {
+            Alert.alert('Could not delete', err.message || 'Please try again.');
+        } finally {
+            setDeletingId(null);
+        }
     }
 
     const moduleDecks = useMemo(() => decks.filter(d => d.sourceKind === 'module'), [decks]);
@@ -399,6 +394,92 @@ export default function FlashcardsPage() {
                     );
                 })}
             </ScrollView>
+
+            {/* Custom Delete Confirmation Modal */}
+            <Modal
+                visible={Boolean(deckToDelete)}
+                transparent
+                animationType="fade"
+                onRequestClose={() => {
+                    if (!deletingId) setDeckToDelete(null);
+                }}
+            >
+                <View
+                    className="flex-1 items-center justify-center p-6"
+                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.45)' }}
+                >
+                    <Pressable
+                        className="absolute inset-0"
+                        onPress={() => {
+                            if (!deletingId) setDeckToDelete(null);
+                        }}
+                    />
+                    <View
+                        className="w-full max-w-sm rounded-3xl bg-white p-6 border border-[#E5E9F0]"
+                        style={{ borderCurve: 'continuous' }}
+                    >
+                        {/* Red Icon Badge */}
+                        <View
+                            className="h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 border border-rose-100/80 mb-4"
+                            style={{ borderCurve: 'continuous' }}
+                        >
+                            <IconTrash size={22} color="#DC2626" strokeWidth={1.8} />
+                        </View>
+
+                        <Text className="font-geist-bold text-lg text-[#001428] leading-tight">
+                            {`Delete “${deckToDelete?.title || 'Deck'}”?`}
+                        </Text>
+                        <Text className="mt-2 font-geist text-xs text-[#64748B] leading-relaxed">
+                            {`This will permanently remove this deck with its ${deckToDelete?.cardCount || 0} terms and study history. This cannot be undone.`}
+                        </Text>
+
+                        {/* Action Buttons */}
+                        <View className="mt-6 flex-row gap-3">
+                            <Pressable
+                                disabled={Boolean(deletingId)}
+                                onPress={() => setDeckToDelete(null)}
+                                className="flex-1 items-center justify-center rounded-2xl bg-[#F1F4F8] py-3.5 active:bg-[#E2E8F0]"
+                                style={({ pressed }) => [
+                                    {
+                                        borderCurve: 'continuous',
+                                        transform: [{ scale: pressed && !deletingId ? 0.98 : 1 }],
+                                    },
+                                ]}
+                            >
+                                <Text className="font-geist-semibold text-xs text-[#001428]">
+                                    Cancel
+                                </Text>
+                            </Pressable>
+
+                            <Pressable
+                                disabled={Boolean(deletingId)}
+                                onPress={handleDeleteDeck}
+                                className="flex-1 flex-row items-center justify-center gap-2 rounded-2xl bg-rose-600 py-3.5 active:bg-rose-700"
+                                style={({ pressed }) => [
+                                    {
+                                        borderCurve: 'continuous',
+                                        transform: [{ scale: pressed && !deletingId ? 0.98 : 1 }],
+                                        opacity: deletingId ? 0.7 : 1,
+                                    },
+                                ]}
+                            >
+                                {deletingId ? (
+                                    <>
+                                        <ActivityIndicator size="small" color="#FFFFFF" />
+                                        <Text className="font-geist-semibold text-xs text-white">
+                                            Deleting...
+                                        </Text>
+                                    </>
+                                ) : (
+                                    <Text className="font-geist-semibold text-xs text-white">
+                                        Delete
+                                    </Text>
+                                )}
+                            </Pressable>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }

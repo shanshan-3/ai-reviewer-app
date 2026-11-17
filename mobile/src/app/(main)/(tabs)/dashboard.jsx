@@ -101,9 +101,12 @@ export default function DashboardPage() {
         if (working.current || confirmationOpen.current || material.status === 'processing') return;
         confirmationOpen.current = true;
         const epoch = requestId.current;
-        Alert.alert('Delete module?', `Permanently delete "${material.title}"? Its uploaded file, extracted text, and any linked quizzes, flashcards, and study results will be lost. This cannot be undone.`, [
-            { text: 'Cancel', style: 'cancel', onPress: () => { confirmationOpen.current = false; } },
-            { text: 'Delete', style: 'destructive', onPress: async () => {
+        Alert.alert(
+            `Delete “${material.title}”?`,
+            'This will permanently remove this module along with its linked quizzes, flashcards, and study history. This cannot be undone.',
+            [
+                { text: 'Cancel', style: 'cancel', onPress: () => { confirmationOpen.current = false; } },
+                { text: 'Delete', style: 'destructive', onPress: async () => {
                 confirmationOpen.current = false;
                 if (epoch !== requestId.current || working.current) return;
                 working.current = true;

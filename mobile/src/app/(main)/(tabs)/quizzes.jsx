@@ -54,8 +54,8 @@ export default function QuizzesPage() {
         if (deletingId) return;
         const title = item.sourceTitle || (item.session?.status === 'active' ? 'Quiz in progress' : 'General Practice');
         Alert.alert(
-            'Delete Quiz?',
-            `Permanently delete "${title}"? Its questions, answers, and score history will be removed. This cannot be undone.`,
+            `Delete “${title}”?`,
+            `This will permanently remove this quiz with its ${item.questionCount || 0} questions and score history. This cannot be undone.`,
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
