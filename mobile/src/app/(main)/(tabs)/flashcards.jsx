@@ -11,7 +11,6 @@ import IconClock from '@tabler/icons-react-native/IconClock';
 import IconArrowRight from '@tabler/icons-react-native/IconArrowRight';
 import { listFlashcardDecks, deleteFlashcardDeck } from '@/lib/flashcards';
 import { useToast } from '@/providers/toast-provider';
-import DeleteConfirmationModal from '@/components/delete-confirmation-modal';
 
 function formatRelativeDate(dateString) {
     if (!dateString) return 'New';
@@ -38,7 +37,6 @@ export default function FlashcardsPage() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
-    const [deckToDelete, setDeckToDelete] = useState(null);
     const [error, setError] = useState(null);
     const [selectedFilter, setSelectedFilter] = useState('all'); // 'all' | 'module' | 'topic'
 
@@ -65,17 +63,26 @@ export default function FlashcardsPage() {
 
     function confirmDelete(deck) {
         if (deletingId) return;
-        setDeckToDelete(deck);
+        Alert.alert(
+            'Delete Deck?',
+            'This cannot be undone.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: () => handleDeleteDeck(deck.id),
+                },
+            ]
+        );
     }
 
-    async function handleDeleteDeck() {
-        if (!deckToDelete || deletingId) return;
-        const targetId = deckToDelete.id;
+    async function handleDeleteDeck(targetId) {
+        if (!targetId || deletingId) return;
         setDeletingId(targetId);
         try {
             await deleteFlashcardDeck(targetId);
             setDecks(prev => prev.filter(d => d.id !== targetId));
-            setDeckToDelete(null);
             showToast('Deck deleted');
         } catch (err) {
             Alert.alert('Could not delete', err.message || 'Please try again.');
@@ -250,7 +257,7 @@ export default function FlashcardsPage() {
                             No Decks Yet
                         </Text>
                         <Text className="mt-1 text-center font-geist text-xs text-[#64748B] max-w-xs leading-5">
-                            Create a deck from your modules or topics to begin reviewing.
+                            Create a deck from your notes or topics to start studying.
                         </Text>
                         <Pressable
                             onPress={() => router.push('/flashcards/create')}
@@ -395,17 +402,6 @@ export default function FlashcardsPage() {
                     );
                 })}
             </ScrollView>
-
-            {/* Custom Delete Confirmation Modal */}
-            <DeleteConfirmationModal
-                visible={Boolean(deckToDelete)}
-                title="Delete this Cards?"
-                isDeleting={Boolean(deletingId)}
-                onCancel={() => {
-                    if (!deletingId) setDeckToDelete(null);
-                }}
-                onConfirm={handleDeleteDeck}
-            />
         </SafeAreaView>
     );
 }

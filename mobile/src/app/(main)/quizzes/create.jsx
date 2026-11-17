@@ -120,7 +120,7 @@ export default function CreateQuizPage() {
             const maxAttempts = 30; // 60s max
             let quizId = null;
 
-            setGenStatusText('AI is formulating questions & answer key...');
+            setGenStatusText('Generating questions and answer key...');
 
             while (attempts < maxAttempts) {
                 await new Promise(r => setTimeout(r, 2000));
@@ -147,9 +147,9 @@ export default function CreateQuizPage() {
                     const code = statusRes.generation?.errorCode;
                     throw new Error(
                         code === 'QUOTA_EXCEEDED'
-                            ? 'AI rate limit reached. Please wait a minute and try again.'
+                            ? 'Rate limit reached. Please wait a minute and try again.'
                             : code === 'PROVIDER_TIMEOUT'
-                            ? 'AI generation timed out. Please try again with fewer questions.'
+                            ? 'Generation timed out. Please try again with fewer questions.'
                             : 'Quiz generation failed. Please try again with different choices.'
                     );
                 }
@@ -190,7 +190,7 @@ export default function CreateQuizPage() {
                 >
                     <IconArrowLeft size={22} color="#001428" />
                 </Pressable>
-                <Text className="font-geist-semibold text-lg text-[#001428]">Create New Quiz</Text>
+                <Text className="font-geist-semibold text-lg text-[#001428]">Create Quiz</Text>
             </View>
 
             <ScrollView contentContainerStyle={{ padding: 20, gap: 24, paddingBottom: 40 }}>
@@ -214,7 +214,7 @@ export default function CreateQuizPage() {
                 {/* Question Modality */}
                 <View className="gap-2.5">
                     <Text className="font-geist-medium text-xs uppercase tracking-wider text-[#526071]">
-                        Question Modality
+                        Question Type
                     </Text>
                     <View className="gap-2">
                         {[
@@ -328,7 +328,15 @@ export default function CreateQuizPage() {
                             accessibilityRole="button"
                             accessibilityLabel={cooldownSeconds > 0 ? `Rate limit cooldown active. Please wait ${cooldownSeconds} seconds` : "Generate Quiz"}
                             onPress={handleGenerate}
-                            className={`flex-row items-center justify-center gap-2 rounded-2xl py-4 ${cooldownSeconds > 0 ? 'bg-[#8C9BAE]' : 'bg-[#001428] active:opacity-90'}`}
+                            style={({ pressed }) => [
+                                {
+                                    borderCurve: 'continuous',
+                                    transform: [{ scale: pressed && cooldownSeconds <= 0 ? 0.97 : 1 }],
+                                },
+                            ]}
+                            className={`flex-row items-center justify-center gap-2 rounded-2xl py-4 shadow-sm ${
+                                cooldownSeconds > 0 ? 'bg-[#8C9BAE]' : 'bg-[#001428] active:opacity-90'
+                            }`}
                         >
                             <IconSparkles size={20} color="white" />
                             <Text className="font-geist-semibold text-base text-white">

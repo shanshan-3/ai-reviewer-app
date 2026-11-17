@@ -152,7 +152,7 @@ export default function CreateFlashcardDeckPage() {
                     <TextInput
                         value={customTitle}
                         onChangeText={setCustomTitle}
-                        placeholder="Auto-generated if left blank"
+                        placeholder="Generated from topic or module if blank"
                         placeholderTextColor="#94A3B8"
                         editable={!generating}
                         className="rounded-2xl border border-[#E5E9F0] bg-white px-4 py-3.5 font-geist text-sm text-[#001428]"
@@ -192,7 +192,7 @@ export default function CreateFlashcardDeckPage() {
                             <>
                                 <ActivityIndicator size="small" color="#FFFFFF" />
                                 <Text className="font-geist-semibold text-sm text-white">
-                                    Creating...
+                                    Creating flashcards...
                                 </Text>
                             </>
                         ) : (

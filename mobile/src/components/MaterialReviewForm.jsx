@@ -235,7 +235,7 @@ export default function MaterialReviewForm({ material, sections, onReaderPageCha
             <IconCircleCheck size={22} color="#001428" style={{ marginTop: 2 }} accessible={false} />
             <View className="flex-1 gap-1">
                 <Text accessibilityRole="header" className="font-geist-semibold text-base leading-6 text-[#001428]">Review complete</Text>
-                <Text className="font-geist text-sm leading-6 text-[#526071]">Your selected text is approved. Quiz generation is not available yet.</Text>
+                <Text className="font-geist text-sm leading-6 text-[#526071]">Your selected text is approved and ready for practice quizzes.</Text>
             </View>
         </View>}
         <AuthMessage message={message} isError />

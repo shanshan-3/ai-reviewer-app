@@ -62,7 +62,7 @@ export default function TopicEstimatesCard({
                     <IconTarget size={18} color="#001428" strokeWidth={2} />
                 </View>
                 <Text className="font-geist-bold text-sm text-[#001428]">
-                    No Topic Data Yet
+                    No Topic Data
                 </Text>
                 <Text className="mt-0.5 text-center font-geist text-xs text-[#64748B]">
                     Take quizzes to track topic accuracy.

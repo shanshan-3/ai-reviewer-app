@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import IconPlus from '@tabler/icons-react-native/IconPlus';
@@ -11,7 +11,6 @@ import { deleteQuiz, listUserQuizzes } from '@/lib/quizzes';
 import { getTopicRecommendations } from '@/lib/progress';
 import { useToast } from '@/providers/toast-provider';
 import { THEME } from '@/lib/theme';
-import DeleteConfirmationModal from '@/components/delete-confirmation-modal';
 
 export default function QuizzesPage() {
     const router = useRouter();
@@ -21,7 +20,6 @@ export default function QuizzesPage() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
-    const [quizToDelete, setQuizToDelete] = useState(null);
     const [error, setError] = useState(null);
 
     const load = useCallback(async (isRefresh = false) => {
@@ -54,17 +52,26 @@ export default function QuizzesPage() {
 
     function confirmDelete(item) {
         if (deletingId) return;
-        setQuizToDelete(item);
+        Alert.alert(
+            'Delete Quiz?',
+            'This cannot be undone.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: () => handleDeleteQuiz(item.id),
+                },
+            ]
+        );
     }
 
-    async function handleDeleteQuiz() {
-        if (!quizToDelete || deletingId) return;
-        const targetId = quizToDelete.id;
+    async function handleDeleteQuiz(targetId) {
+        if (!targetId || deletingId) return;
         setDeletingId(targetId);
         try {
             await deleteQuiz(targetId);
             setQuizzes(prev => prev.filter(q => q.id !== targetId));
-            setQuizToDelete(null);
             showToast('Quiz deleted');
         } catch (err) {
             showToast(err.message || 'Could not delete quiz');
@@ -99,10 +106,10 @@ export default function QuizzesPage() {
                 <View className="flex-row items-center justify-between">
                     <View className="min-w-0 flex-1 pr-3">
                         <Text accessibilityRole="header" numberOfLines={1} className="font-geist-bold text-2xl tracking-tight text-[#001428]">
-                            Test Your Mastery
+                            Quizzes
                         </Text>
                         <Text className="mt-0.5 font-geist text-xs text-[#526071]">
-                            Generate targeted AI quizzes from your modules and topics
+                            Practice tests from your modules and curriculum topics
                         </Text>
                     </View>
                     <Pressable
@@ -110,7 +117,7 @@ export default function QuizzesPage() {
                         accessibilityLabel="Create New Quiz"
                         accessibilityHint="Opens quiz creator to generate a new practice test"
                         onPress={() => router.push('/(main)/quizzes/create')}
-                        className="flex-row items-center gap-1.5 rounded-full bg-[#001428] px-4 py-2.5 shadow-sm active:scale-95 active:opacity-90"
+                        className="flex-row items-center gap-1.5 rounded-full bg-[#001428] px-4 py-2.5 shadow-sm active:scale-[0.98] active:opacity-90"
                         style={{ borderCurve: 'continuous' }}
                     >
                         <IconPlus size={18} color="white" />
@@ -179,7 +186,7 @@ export default function QuizzesPage() {
                                 <View className="gap-2">
                                     <View className="flex-row items-center justify-between">
                                         <Text className="font-geist-semibold text-xs uppercase tracking-wider text-[#526071]">
-                                            Continue Practice
+                                            In Progress
                                         </Text>
                                     </View>
                                     <View
@@ -226,12 +233,17 @@ export default function QuizzesPage() {
                                                     hitSlop={10}
                                                     onPress={() => confirmDelete(activeItem)}
                                                     className="h-8 w-8 items-center justify-center rounded-xl active:bg-[#FEF2F2]"
-                                                    style={{ borderCurve: 'continuous' }}
+                                                    style={({ pressed }) => [
+                                                        {
+                                                            borderCurve: 'continuous',
+                                                            transform: [{ scale: pressed && !Boolean(deletingId) ? 0.92 : 1 }],
+                                                        },
+                                                    ]}
                                                 >
                                                     {isDeleting ? (
                                                         <ActivityIndicator size="small" color="#DC2626" />
                                                     ) : (
-                                                        <IconTrash size={16} color="#94A3B8" />
+                                                        <IconTrash size={16} color="#DC2626" strokeWidth={1.8} />
                                                     )}
                                                 </Pressable>
 
@@ -307,7 +319,7 @@ export default function QuizzesPage() {
                         <View className="gap-3">
                             <View className="flex-row items-center justify-between">
                                 <Text className="font-geist-semibold text-xs uppercase tracking-wider text-[#526071]">
-                                    Recent Practice
+                                    Recent Quizzes
                                 </Text>
                                 {completedItems.length > 0 && (
                                     <Text className="font-geist text-xs text-[#526071]">
@@ -328,17 +340,17 @@ export default function QuizzesPage() {
                                         No quizzes yet
                                     </Text>
                                     <Text className="mt-2 max-w-xs text-center font-geist text-xs leading-5 text-[#526071]">
-                                        Test your knowledge with AI-generated quizzes tailored to your BSIT modules or curriculum topics.
+                                        Generate practice quizzes from your modules or curriculum topics.
                                     </Text>
                                     <Pressable
                                         accessibilityRole="button"
-                                        accessibilityLabel="Create First Quiz"
+                                        accessibilityLabel="Create Quiz"
                                         onPress={() => router.push('/(main)/quizzes/create')}
-                                        className="mt-5 flex-row items-center gap-2 rounded-2xl bg-[#001428] px-5 py-3 shadow-sm active:scale-95 active:opacity-90"
+                                        className="mt-5 flex-row items-center gap-2 rounded-2xl bg-[#001428] px-5 py-3 shadow-sm active:scale-[0.98] active:opacity-90"
                                         style={{ borderCurve: 'continuous' }}
                                     >
                                         <IconPlus size={18} color="white" />
-                                        <Text className="font-geist-semibold text-xs text-white">Create First Quiz</Text>
+                                        <Text className="font-geist-semibold text-xs text-white">Create Quiz</Text>
                                     </Pressable>
                                 </View>
                             ) : completedItems.length === 0 ? (
@@ -367,7 +379,12 @@ export default function QuizzesPage() {
                                                 accessibilityHint="Opens detailed score and question review."
                                                 disabled={Boolean(deletingId)}
                                                 onPress={() => router.push(`/(main)/quizzes/${item.session.id}/results`)}
-                                                className="min-w-0 flex-1 pr-3 active:opacity-70"
+                                                style={({ pressed }) => [
+                                                    {
+                                                        transform: [{ scale: pressed && !Boolean(deletingId) ? 0.985 : 1 }],
+                                                    },
+                                                ]}
+                                                className="min-w-0 flex-1 pr-3 active:opacity-75"
                                             >
                                                 <Text numberOfLines={1} className="font-geist-semibold text-base text-[#001428]">
                                                     {item.sourceTitle || 'IT Topic Practice'}
@@ -412,12 +429,17 @@ export default function QuizzesPage() {
                                                     hitSlop={10}
                                                     onPress={() => confirmDelete(item)}
                                                     className="h-9 w-9 items-center justify-center rounded-xl active:bg-[#FEF2F2]"
-                                                    style={{ borderCurve: 'continuous' }}
+                                                    style={({ pressed }) => [
+                                                        {
+                                                            borderCurve: 'continuous',
+                                                            transform: [{ scale: pressed && !Boolean(deletingId) ? 0.92 : 1 }],
+                                                        },
+                                                    ]}
                                                 >
                                                     {isDeleting ? (
                                                         <ActivityIndicator size="small" color="#DC2626" />
                                                     ) : (
-                                                        <IconTrash size={16} color="#94A3B8" />
+                                                        <IconTrash size={16} color="#DC2626" strokeWidth={1.8} />
                                                     )}
                                                 </Pressable>
                                             </View>
@@ -429,17 +451,6 @@ export default function QuizzesPage() {
                     </View>
                 )}
             </ScrollView>
-
-            {/* Custom Delete Confirmation Modal */}
-            <DeleteConfirmationModal
-                visible={Boolean(quizToDelete)}
-                title="Delete this Quiz?"
-                isDeleting={Boolean(deletingId)}
-                onCancel={() => {
-                    if (!deletingId) setQuizToDelete(null);
-                }}
-                onConfirm={handleDeleteQuiz}
-            />
         </SafeAreaView>
     );
 }

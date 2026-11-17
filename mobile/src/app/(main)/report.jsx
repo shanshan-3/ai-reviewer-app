@@ -21,7 +21,6 @@ import IconAward from '@tabler/icons-react-native/IconAward';
 import IconTarget from '@tabler/icons-react-native/IconTarget';
 import IconBooks from '@tabler/icons-react-native/IconBooks';
 import IconCards from '@tabler/icons-react-native/IconCards';
-import IconArrowRight from '@tabler/icons-react-native/IconArrowRight';
 import IconTrendingUp from '@tabler/icons-react-native/IconTrendingUp';
 import { getUserReport, getUserStreak } from '@/lib/progress';
 import { listUserQuizzes } from '@/lib/quizzes';
@@ -134,7 +133,7 @@ export default function PerformanceReportPage() {
         : '';
 
     return (
-        <SafeAreaView className="flex-1 bg-[#F8F8FF]" edges={['top', 'left', 'right']}>
+        <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
             {/* Header */}
             <View className="flex-row items-center justify-between border-b border-[#E4E8EE] bg-white px-4 py-3">
                 <Pressable
@@ -142,14 +141,14 @@ export default function PerformanceReportPage() {
                     accessibilityRole="button"
                     accessibilityLabel="Go back"
                     onPress={() => router.back()}
+                    style={({ pressed }) => [{ borderCurve: 'continuous', transform: [{ scale: pressed ? 0.95 : 1 }] }]}
                     className="h-10 w-10 items-center justify-center rounded-xl bg-[#F1F4F8] active:opacity-75"
-                    style={{ borderCurve: 'continuous' }}
                 >
                     <IconArrowLeft size={20} color="#001428" />
                 </Pressable>
 
                 <View className="items-center">
-                    <Text className="font-geist-bold text-base text-[#001428]">
+                    <Text className="font-geist-bold text-base tracking-tight text-[#001428]">
                         Performance Report
                     </Text>
                 </View>
@@ -171,7 +170,7 @@ export default function PerformanceReportPage() {
                 <View className="flex-1 items-center justify-center p-6">
                     <ActivityIndicator size="large" color="#001428" />
                     <Text className="mt-3 font-geist text-sm text-[#526071]">
-                        Compiling practice metrics...
+                        Loading report...
                     </Text>
                 </View>
             ) : error ? (
@@ -289,8 +288,8 @@ export default function PerformanceReportPage() {
                                 </Text>
                                 <Text className="mt-0.5 font-geist text-[11px] leading-4 text-[#526071]">
                                     {eligibleCount > 0
-                                        ? `${eligibleCount} evaluated topics meeting 5-answer threshold`
-                                        : 'Answer 5 questions per topic to establish mastery indicators'}
+                                        ? `${eligibleCount} topics with evaluated accuracy`
+                                        : 'Answer at least 5 questions per topic to establish accuracy'}
                                 </Text>
 
                                 <View className="mt-2.5 gap-1.5">
@@ -335,7 +334,7 @@ export default function PerformanceReportPage() {
                             <View className="w-1/2 p-3">
                                 <View className="flex-row items-center gap-1.5">
                                     <IconBooks size={14} color="#64748B" />
-                                    <Text className="font-geist text-[11px] text-[#526071]">Quizzes Done</Text>
+                                    <Text className="font-geist text-[11px] text-[#526071]">Quizzes Taken</Text>
                                 </View>
                                 <Text
                                     style={{ fontVariant: ['tabular-nums'] }}
@@ -348,7 +347,7 @@ export default function PerformanceReportPage() {
                             <View className="w-1/2 p-3">
                                 <View className="flex-row items-center gap-1.5">
                                     <IconCards size={14} color="#64748B" />
-                                    <Text className="font-geist text-[11px] text-[#526071]">Deck Reviews</Text>
+                                    <Text className="font-geist text-[11px] text-[#526071]">Flashcard Reviews</Text>
                                 </View>
                                 <Text
                                     style={{ fontVariant: ['tabular-nums'] }}
@@ -402,7 +401,7 @@ export default function PerformanceReportPage() {
                                 <Text className="mt-0.5 font-geist text-xs text-[#526071]">
                                     {quizScoreTrend.length > 0
                                         ? `Performance across your latest ${quizScoreTrend.length} quiz sessions`
-                                        : 'Complete practice quizzes to establish your score curve'}
+                                        : 'Complete quizzes to track your score trend'}
                                 </Text>
                             </View>
 
@@ -476,22 +475,21 @@ export default function PerformanceReportPage() {
                                 <Text className="mt-2 font-geist-semibold text-xs text-[#001428]">
                                     {quizScoreTrend.length === 1
                                         ? `First Quiz Score: ${quizScoreTrend[0]}%`
-                                        : 'Score Curve Pending'}
+                                        : 'Score Trend Pending'}
                                 </Text>
                                 <Text className="mt-1 text-center font-geist text-[11px] text-[#526071]">
                                     {quizScoreTrend.length === 1
-                                        ? 'Complete 1 more quiz to render your comparative trajectory line.'
-                                        : 'Take quizzes from course modules to begin plotting your performance curve.'}
+                                        ? 'Complete 1 more quiz to see your progress curve.'
+                                        : 'Complete quizzes to track how your scores change over time.'}
                                 </Text>
                                 <Pressable
                                     onPress={() => router.push('/(main)/quizzes/create')}
-                                    className="mt-3 flex-row items-center gap-1 rounded-xl bg-[#001428] px-3.5 py-2 active:opacity-85"
+                                    className="mt-3 rounded-xl bg-[#001428] px-4 py-2 active:opacity-85"
                                     style={{ borderCurve: 'continuous' }}
                                 >
                                     <Text className="font-geist-medium text-xs text-white">
                                         Start Quiz
                                     </Text>
-                                    <IconArrowRight size={13} color="#FFFFFF" />
                                 </Pressable>
                             </View>
                         )}
@@ -500,7 +498,7 @@ export default function PerformanceReportPage() {
                     {/* 4. Strengths & Weaknesses Diagnostics */}
                     <View className="gap-3">
                         <Text className="font-geist-bold text-sm text-[#001428]">
-                            Skill Diagnostic Highlights
+                            Diagnostic Highlights
                         </Text>
 
                         {hasSparseData && (
@@ -510,7 +508,7 @@ export default function PerformanceReportPage() {
                             >
                                 <IconInfoCircle size={16} color="#2563EB" style={{ marginTop: 1 }} />
                                 <Text className="flex-1 font-geist text-xs leading-4 text-blue-900">
-                                    Practice history is currently building. Each topic requires at least 5 answered questions to produce an authoritative estimate.
+                                    Topics need at least 5 answered questions before accuracy estimates appear.
                                 </Text>
                             </View>
                         )}
@@ -523,7 +521,7 @@ export default function PerformanceReportPage() {
                             <View className="flex-row items-center gap-2">
                                 <IconCircleCheck size={18} color="#059669" strokeWidth={2.5} />
                                 <Text className="font-geist-bold text-sm text-emerald-950">
-                                    Demonstrated Strengths (≥80%)
+                                    Strengths (≥80%)
                                 </Text>
                             </View>
 
@@ -556,7 +554,7 @@ export default function PerformanceReportPage() {
                                 </View>
                             ) : (
                                 <Text className="mt-2 font-geist text-xs text-[#526071]">
-                                    No topics have reached the 80% mastery threshold yet. Continue answering quizzes to unlock strength badges.
+                                    No topics at 80% accuracy yet. Topics you master will appear here.
                                 </Text>
                             )}
                         </View>
@@ -569,7 +567,7 @@ export default function PerformanceReportPage() {
                             <View className="flex-row items-center gap-2">
                                 <IconTarget size={18} color="#D97706" strokeWidth={2.5} />
                                 <Text className="font-geist-bold text-sm text-amber-950">
-                                    Recommended Focus Areas (&lt;70%)
+                                    Focus Areas (&lt;70%)
                                 </Text>
                             </View>
 
@@ -602,7 +600,7 @@ export default function PerformanceReportPage() {
                                 </View>
                             ) : (
                                 <Text className="mt-2 font-geist text-xs text-[#526071]">
-                                    Great job! None of your evaluated topics are currently falling below the 70% threshold.
+                                    No evaluated topics are currently below 70%.
                                 </Text>
                             )}
                         </View>
@@ -699,7 +697,7 @@ export default function PerformanceReportPage() {
                         ) : (
                             <View className="rounded-2xl border border-dashed border-[#E4E8EE] bg-white p-5 items-center justify-center">
                                 <Text className="font-geist text-xs text-[#526071]">
-                                    No topic attempts recorded yet. Answer quizzes to populate accuracy benchmarks.
+                                    No topic data yet. Complete quizzes to track accuracy by topic.
                                 </Text>
                             </View>
                         )}

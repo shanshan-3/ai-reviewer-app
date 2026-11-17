@@ -21,9 +21,6 @@ import IconPlus from '@tabler/icons-react-native/IconPlus';
 import IconArrowRight from '@tabler/icons-react-native/IconArrowRight';
 import IconFlame from '@tabler/icons-react-native/IconFlame';
 import { THEME } from '@/lib/theme';
-import DeleteConfirmationModal from '@/components/delete-confirmation-modal';
-
-
 
 export default function DashboardPage() {
     const { session } = useSession();
@@ -39,7 +36,6 @@ export default function DashboardPage() {
     const [message, setMessage] = useState('');
     const [nextOffset, setNextOffset] = useState(null);
     const [deletingId, setDeletingId] = useState(null);
-    const [materialToDelete, setMaterialToDelete] = useState(null);
     const requestId = useRef(0);
     const working = useRef(false);
     const failedOffset = useRef(0);
@@ -94,19 +90,28 @@ export default function DashboardPage() {
         setMaterials([]);
         setNextOffset(null);
         setDeletingId(null);
-        setMaterialToDelete(null);
         void load();
         return () => { requestId.current++; working.current = false; };
     }, [load]));
 
     function confirmDeletion(material) {
         if (working.current || material.status === 'processing') return;
-        setMaterialToDelete(material);
+        Alert.alert(
+            'Delete Module?',
+            'This cannot be undone.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: () => handleDeleteMaterial(material),
+                },
+            ]
+        );
     }
 
-    async function handleDeleteMaterial() {
-        if (!materialToDelete || working.current) return;
-        const targetMaterial = materialToDelete;
+    async function handleDeleteMaterial(targetMaterial) {
+        if (!targetMaterial || working.current) return;
         const epoch = requestId.current;
         if (epoch !== requestId.current || working.current) return;
         working.current = true;
@@ -120,7 +125,6 @@ export default function DashboardPage() {
             showToast('Module deleted');
             working.current = false;
             setDeletingId(null);
-            setMaterialToDelete(null);
             await load();
         } catch (error) {
             if (id !== requestId.current) return;
@@ -128,7 +132,6 @@ export default function DashboardPage() {
             setMessage(error.message || 'Could not delete this module. Refresh and try again.');
             working.current = false;
             setDeletingId(null);
-            setMaterialToDelete(null);
         }
     }
 
@@ -157,10 +160,10 @@ export default function DashboardPage() {
                     <View className="flex-row items-center justify-between">
                         <View className="min-w-0 flex-1 pr-3">
                             <Text accessibilityRole="header" numberOfLines={2} className="font-geist-bold text-2xl tracking-tight text-[#001428]">
-                                Ready to review today?
+                                Course Review
                             </Text>
                             <Text className="mt-1 font-geist text-xs text-[#526071]">
-                                Track your course modules and generate AI practice quizzes.
+                                Upload course materials and practice for upcoming exams.
                             </Text>
                         </View>
                         <Image
@@ -196,6 +199,7 @@ export default function DashboardPage() {
                             accessibilityRole="button"
                             accessibilityLabel={`Study streak: ${streak?.currentStreak ?? 0} days. Tap to view performance report.`}
                             onPress={() => router.push('/(main)/report')}
+                            style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.95 : 1 }] }]}
                             className="flex-1 items-center px-1 active:opacity-75"
                         >
                             <View className="flex-row items-center gap-1">
@@ -231,18 +235,19 @@ export default function DashboardPage() {
                         <View className="mb-2 flex-row items-center justify-between">
                             <View className="flex-1 pr-2">
                                 <Text className="font-geist-bold text-xs text-[#001428]">
-                                    7-Day Study Velocity
+                                    Weekly Activity
                                 </Text>
                                 <Text className="mt-0.5 font-geist text-[11px] text-[#526071]">
                                     {streak?.hasStudiedToday
-                                        ? 'Daily goal completed • Streak active'
-                                        : 'Study today to maintain your consistency'}
+                                        ? 'Study session recorded today'
+                                        : 'Complete a quiz today to keep your streak'}
                                 </Text>
                             </View>
                             <Pressable
                                 accessibilityRole="button"
                                 accessibilityLabel={`Study streak: ${streak?.currentStreak ?? 0} days. View performance report.`}
                                 onPress={() => router.push('/(main)/report')}
+                                style={({ pressed }) => [{ borderCurve: 'continuous', transform: [{ scale: pressed ? 0.96 : 1 }] }]}
                                 className="flex-row items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 active:opacity-75"
                             >
                                 <IconFlame
@@ -326,7 +331,7 @@ export default function DashboardPage() {
                         {/* Bottom Footer Action Link */}
                         <View className="mt-2.5 flex-row items-center justify-between border-t border-[#F1F4F8] pt-2">
                             <Text className="font-geist text-[10px] text-[#526071]">
-                                Weekly consistency • Amber indicates study
+                                Amber marks days with completed study sessions
                             </Text>
                         </View>
                     </View>
@@ -409,7 +414,7 @@ export default function DashboardPage() {
                                 <IconSparkles size={18} color="#001428" accessible={false} />
                             </View>
                             <Text numberOfLines={1} className="font-geist-semibold text-sm text-[#001428]">Practice Quiz</Text>
-                            <Text numberOfLines={1} className="mt-0.5 font-geist text-[11px] text-[#526071]">AI practice tests</Text>
+                            <Text numberOfLines={1} className="mt-0.5 font-geist text-[11px] text-[#526071]">Tests by topic or notes</Text>
                         </Pressable>
                     </View>
 
@@ -460,7 +465,7 @@ export default function DashboardPage() {
                             Your modules
                         </Text>
                         <Text className="mt-0.5 font-geist text-xs text-[#526071]">
-                            Approved notes ready for interactive review
+                            Approved notes ready for practice quizzes
                         </Text>
                     </View>
 
@@ -477,13 +482,13 @@ export default function DashboardPage() {
                             No modules yet
                         </Text>
                         <Text className="mt-2 max-w-xs text-center font-geist text-xs leading-5 text-[#526071]">
-                            Upload your course modules or lecture notes in PDF or DOCX format to start generating AI quizzes.
+                            Upload lecture notes in PDF or DOCX format to generate practice quizzes.
                         </Text>
                         <Pressable
                             accessibilityRole="button"
                             accessibilityLabel="Upload your first module"
                             onPress={() => router.push('/(main)/materials/import')}
-                            className="mt-5 flex-row items-center gap-2 rounded-2xl bg-[#001428] px-5 py-3 shadow-sm active:scale-95 active:opacity-90"
+                            className="mt-5 flex-row items-center gap-2 rounded-2xl bg-[#001428] px-5 py-3 shadow-sm active:scale-[0.98] active:opacity-90"
                             style={{ borderCurve: 'continuous' }}
                         >
                             <IconPlus size={18} color="white" />
@@ -500,17 +505,6 @@ export default function DashboardPage() {
                     {!loading && Boolean(message) && <AuthButton submitLabel="Retry" disabled={Boolean(deletingId)} onSubmit={() => load(failedOffset.current)} />}
                     {!loading && !message && nextOffset !== null && <AuthButton submitLabel="Load more modules" disabled={Boolean(deletingId)} onSubmit={() => load(nextOffset)} />}
                 </View>}
-            />
-
-            {/* Custom Delete Confirmation Modal */}
-            <DeleteConfirmationModal
-                visible={Boolean(materialToDelete)}
-                title="Delete this Module?"
-                isDeleting={Boolean(deletingId)}
-                onCancel={() => {
-                    if (!deletingId) setMaterialToDelete(null);
-                }}
-                onConfirm={handleDeleteMaterial}
             />
         </SafeAreaView>
     );

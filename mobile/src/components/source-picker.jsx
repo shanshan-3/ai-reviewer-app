@@ -134,8 +134,8 @@ export default function SourcePicker({
             {/* Subtitle helper */}
             <Text className="font-geist text-xs text-[#526071]">
                 {sourceKind === 'module'
-                    ? 'Questions and citations strictly grounded in your uploaded PDF/DOCX.'
-                    : 'AI-generated practice based on standard BSIT curriculum subjects.'}
+                    ? 'Questions and citations drawn directly from your uploaded document.'
+                    : 'Practice questions based on standard BSIT curriculum subjects.'}
             </Text>
 
             {/* Source Content */}
