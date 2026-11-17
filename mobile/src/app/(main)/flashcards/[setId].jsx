@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/immutability */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -9,6 +9,7 @@ import Animated, {
     interpolate,
     useAnimatedStyle,
     useSharedValue,
+    withSpring,
     withTiming,
 } from 'react-native-reanimated';
 import IconArrowLeft from '@tabler/icons-react-native/IconArrowLeft';
@@ -18,6 +19,8 @@ import IconCheck from '@tabler/icons-react-native/IconCheck';
 import IconChevronLeft from '@tabler/icons-react-native/IconChevronLeft';
 import IconChevronRight from '@tabler/icons-react-native/IconChevronRight';
 import { getFlashcardDeck, recordFlashcardReview } from '@/lib/flashcards';
+
+const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
 
 export default function FlashcardStudyPage() {
     const router = useRouter();
@@ -36,30 +39,55 @@ export default function FlashcardStudyPage() {
     const [recordingReview, setRecordingReview] = useState(false);
     const [reviewRecorded, setReviewRecorded] = useState(false);
 
-    // Reanimated 3D flip animation
+    // Direction tracking for tactile card transitions
+    const direction = useRef('none');
+
+    // Reanimated 3D flip & stage animations
     const spin = useSharedValue(0);
+    const cardTranslateX = useSharedValue(0);
+    const cardScale = useSharedValue(1);
+    const cardOpacity = useSharedValue(1);
+    const progressWidth = useSharedValue(0);
 
     const frontAnimatedStyle = useAnimatedStyle(() => {
         const rotateValue = interpolate(spin.value, [0, 180], [0, 180]);
+        const scaleValue = interpolate(spin.value, [0, 90, 180], [1, 0.96, 1]);
         return {
             transform: [
-                { perspective: 1000 },
+                { perspective: 1200 },
                 { rotateY: `${rotateValue}deg` },
+                { scale: scaleValue },
             ],
             backfaceVisibility: 'hidden',
+            opacity: spin.value > 90 ? 0 : 1,
         };
     });
 
     const backAnimatedStyle = useAnimatedStyle(() => {
         const rotateValue = interpolate(spin.value, [0, 180], [180, 360]);
+        const scaleValue = interpolate(spin.value, [0, 90, 180], [1, 0.96, 1]);
         return {
             transform: [
-                { perspective: 1000 },
+                { perspective: 1200 },
                 { rotateY: `${rotateValue}deg` },
+                { scale: scaleValue },
             ],
             backfaceVisibility: 'hidden',
+            opacity: spin.value < 90 ? 0 : 1,
         };
     });
+
+    const stageAnimatedStyle = useAnimatedStyle(() => ({
+        transform: [
+            { translateX: cardTranslateX.value },
+            { scale: cardScale.value },
+        ],
+        opacity: cardOpacity.value,
+    }));
+
+    const progressAnimatedStyle = useAnimatedStyle(() => ({
+        width: `${progressWidth.value}%`,
+    }));
 
     useEffect(() => {
         async function loadDeck() {
@@ -78,12 +106,56 @@ export default function FlashcardStudyPage() {
         loadDeck();
     }, [setId]);
 
+    // Animate smooth card advancement & entry
+    useEffect(() => {
+        if (direction.current === 'next') {
+            cardTranslateX.value = 24;
+            cardScale.value = 0.98;
+            cardOpacity.value = 0.4;
+        } else if (direction.current === 'prev') {
+            cardTranslateX.value = -24;
+            cardScale.value = 0.98;
+            cardOpacity.value = 0.4;
+        } else if (direction.current === 'shuffle') {
+            cardTranslateX.value = 0;
+            cardScale.value = 0.94;
+            cardOpacity.value = 0.5;
+        }
+
+        cardTranslateX.value = withSpring(0, {
+            duration: 320,
+            dampingRatio: 0.85,
+            reduceMotion: ReduceMotion.System,
+        });
+        cardScale.value = withSpring(1, {
+            duration: 320,
+            dampingRatio: 0.85,
+            reduceMotion: ReduceMotion.System,
+        });
+        cardOpacity.value = withTiming(1, {
+            duration: 220,
+            easing: EASE_OUT,
+            reduceMotion: ReduceMotion.System,
+        });
+    }, [currentIndex, cardTranslateX, cardScale, cardOpacity]);
+
+    // Animate progress bar across steps
+    useEffect(() => {
+        const total = cards.length;
+        const percent = total > 0 ? ((currentIndex + 1) / total) * 100 : 0;
+        progressWidth.value = withTiming(percent, {
+            duration: 260,
+            easing: EASE_OUT,
+            reduceMotion: ReduceMotion.System,
+        });
+    }, [currentIndex, cards.length, progressWidth]);
+
     const handleFlip = useCallback(() => {
         setIsFlipped(prev => {
             const next = !prev;
-            spin.value = withTiming(next ? 180 : 0, {
-                duration: 300,
-                easing: Easing.bezier(0.23, 1, 0.32, 1),
+            spin.value = withSpring(next ? 180 : 0, {
+                duration: 380,
+                dampingRatio: 0.85,
                 reduceMotion: ReduceMotion.System,
             });
             if (next) {
@@ -95,6 +167,7 @@ export default function FlashcardStudyPage() {
 
     function handleNext() {
         if (currentIndex < cards.length - 1) {
+            direction.current = 'next';
             spin.value = 0;
             setIsFlipped(false);
             setCurrentIndex(prev => prev + 1);
@@ -105,6 +178,7 @@ export default function FlashcardStudyPage() {
 
     function handlePrev() {
         if (currentIndex > 0) {
+            direction.current = 'prev';
             spin.value = 0;
             setIsFlipped(false);
             setCurrentIndex(prev => prev - 1);
@@ -130,6 +204,7 @@ export default function FlashcardStudyPage() {
     }
 
     function handleRestart() {
+        direction.current = 'shuffle';
         spin.value = 0;
         setCurrentIndex(0);
         setIsFlipped(false);
@@ -138,6 +213,7 @@ export default function FlashcardStudyPage() {
     }
 
     function handleShuffle() {
+        direction.current = 'shuffle';
         spin.value = 0;
         const shuffled = [...cards].sort(() => Math.random() - 0.5);
         setCards(shuffled);
@@ -174,7 +250,6 @@ export default function FlashcardStudyPage() {
 
     const currentCard = cards[currentIndex];
     const totalCards = cards.length;
-    const progressPercent = totalCards > 0 ? ((currentIndex + 1) / totalCards) * 100 : 0;
     const allBacksViewed = viewedBacks.size >= totalCards;
 
     // Completion View
@@ -339,104 +414,126 @@ export default function FlashcardStudyPage() {
                 </Pressable>
             </View>
 
-            {/* Progress Bar */}
-            <View className="h-1.5 w-full bg-[#F1F3F6]">
-                <View
+            {/* Progress Bar (Animated) */}
+            <View className="h-1.5 w-full bg-[#F1F3F6] overflow-hidden">
+                <Animated.View
                     className="h-full bg-[#001428] rounded-full"
-                    style={{ width: `${progressPercent}%`, borderCurve: 'continuous' }}
+                    style={[{ borderCurve: 'continuous' }, progressAnimatedStyle]}
                 />
             </View>
 
-            {/* 3D Card Stage */}
+            {/* 3D Card Stage with Horizontal Advancement Spring */}
             <View className="flex-1 p-5 justify-center">
-                <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`Flashcard: ${currentCard?.term || ''}. ${isFlipped ? 'Definition' : 'Term'}. Tap to flip.`}
-                    onPress={handleFlip}
-                    className="w-full min-h-[400px] relative justify-center"
-                    style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.99 : 1 }] }]}
+                <Animated.View
+                    style={[{ width: '100%', minHeight: 400, justifyContent: 'center' }, stageAnimatedStyle]}
                 >
-                    {/* Front (Term) */}
-                    <Animated.View
-                        style={[{ borderCurve: 'continuous' }, frontAnimatedStyle]}
-                        className="w-full min-h-[400px] rounded-3xl border border-[#E5E9F0] bg-white p-6 justify-between"
+                    <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Flashcard: ${currentCard?.term || ''}. ${isFlipped ? 'Definition' : 'Term'}. Tap to flip.`}
+                        onPress={handleFlip}
+                        className="w-full min-h-[400px] relative justify-center"
+                        style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.985 : 1 }] }]}
                     >
-                        <View className="flex-row items-center justify-between">
-                            <View
-                                className="rounded-full bg-[#F1F4F8] px-2.5 py-0.5"
-                                style={{ borderCurve: 'continuous' }}
-                            >
-                                <Text className="font-geist-bold text-[10px] uppercase tracking-wider text-[#64748B]">
-                                    Term
+                        {/* Front (Term) */}
+                        <Animated.View
+                            style={[{ borderCurve: 'continuous' }, frontAnimatedStyle]}
+                            className="w-full min-h-[400px] rounded-3xl border border-[#E5E9F0] bg-white p-6 justify-between"
+                        >
+                            <View className="flex-row items-center justify-between">
+                                <View
+                                    className="rounded-full bg-[#F1F4F8] px-2.5 py-0.5"
+                                    style={{ borderCurve: 'continuous' }}
+                                >
+                                    <Text className="font-geist-bold text-[10px] uppercase tracking-wider text-[#64748B]">
+                                        Term
+                                    </Text>
+                                </View>
+                                <Text
+                                    style={{ fontVariant: ['tabular-nums'] }}
+                                    className="font-geist text-[11px] text-[#94A3B8]"
+                                >
+                                    {currentIndex + 1} / {totalCards}
                                 </Text>
                             </View>
-                        </View>
 
-                        {/* Center */}
-                        <View className="py-10 items-center justify-center px-2">
-                            <Text className="text-center font-geist-bold text-2xl text-[#001428] tracking-tight leading-snug">
-                                {currentCard?.term}
-                            </Text>
-                        </View>
-
-                        {/* Bottom */}
-                        <View className="items-center border-t border-[#F1F3F6] pt-2.5">
-                            <Text className="font-geist text-[11px] text-[#94A3B8]">
-                                Tap to flip
-                            </Text>
-                        </View>
-                    </Animated.View>
-
-                    {/* Back (Definition) */}
-                    <Animated.View
-                        style={[{ borderCurve: 'continuous', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, backAnimatedStyle]}
-                        className="w-full min-h-[400px] rounded-3xl border border-[#E5E9F0] bg-white p-6 justify-between"
-                    >
-                        <View className="flex-row items-center justify-between">
-                            <View
-                                className="rounded-full bg-emerald-50 px-2.5 py-0.5 border border-emerald-100"
-                                style={{ borderCurve: 'continuous' }}
-                            >
-                                <Text className="font-geist-bold text-[10px] uppercase tracking-wider text-emerald-800">
-                                    Definition
+                            {/* Center Term */}
+                            <View className="py-10 items-center justify-center px-2">
+                                <Text className="text-center font-geist-bold text-2xl text-[#001428] tracking-tight leading-snug">
+                                    {currentCard?.term}
                                 </Text>
                             </View>
-                        </View>
 
-                        {/* Center */}
-                        <View className="py-6 items-center justify-center">
-                            <View className="gap-3 w-full">
-                                <Text className="text-center font-geist text-base leading-relaxed text-[#001428]">
-                                    {currentCard?.definition}
+                            {/* Bottom Flip Cue */}
+                            <View className="items-center border-t border-[#F1F3F6] pt-3">
+                                <View className="flex-row items-center gap-1.5 rounded-full bg-[#F1F4F8] px-3 py-1">
+                                    <IconRotate size={12} color="#64748B" />
+                                    <Text className="font-geist-medium text-[11px] text-[#64748B]">
+                                        Tap to view definition
+                                    </Text>
+                                </View>
+                            </View>
+                        </Animated.View>
+
+                        {/* Back (Definition) */}
+                        <Animated.View
+                            style={[{ borderCurve: 'continuous', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, backAnimatedStyle]}
+                            className="w-full min-h-[400px] rounded-3xl border border-[#E5E9F0] bg-white p-6 justify-between"
+                        >
+                            <View className="flex-row items-center justify-between">
+                                <View
+                                    className="rounded-full bg-emerald-50 px-2.5 py-0.5 border border-emerald-100"
+                                    style={{ borderCurve: 'continuous' }}
+                                >
+                                    <Text className="font-geist-bold text-[10px] uppercase tracking-wider text-emerald-800">
+                                        Definition
+                                    </Text>
+                                </View>
+                                <Text
+                                    style={{ fontVariant: ['tabular-nums'] }}
+                                    className="font-geist text-[11px] text-[#94A3B8]"
+                                >
+                                    {currentIndex + 1} / {totalCards}
                                 </Text>
+                            </View>
 
-                                {currentCard?.sourceExcerpt && (
-                                    <View
-                                        className="rounded-2xl border border-[#E5E9F0] bg-[#F8F9FC] p-3 gap-1"
-                                        style={{ borderCurve: 'continuous' }}
-                                    >
-                                        <Text className="font-geist-semibold text-[9px] uppercase tracking-wider text-[#64748B]">
-                                            Source
-                                        </Text>
-                                        <Text
-                                            numberOfLines={3}
-                                            className="font-geist text-xs italic text-[#64748B]"
+                            {/* Center Definition */}
+                            <View className="py-6 items-center justify-center">
+                                <View className="gap-3 w-full">
+                                    <Text className="text-center font-geist text-base leading-relaxed text-[#001428]">
+                                        {currentCard?.definition}
+                                    </Text>
+
+                                    {currentCard?.sourceExcerpt && (
+                                        <View
+                                            className="rounded-2xl border border-[#E5E9F0] bg-[#F8F9FC] p-3 gap-1"
+                                            style={{ borderCurve: 'continuous' }}
                                         >
-                                            {`"${currentCard.sourceExcerpt}"`}
-                                        </Text>
-                                    </View>
-                                )}
+                                            <Text className="font-geist-semibold text-[9px] uppercase tracking-wider text-[#64748B]">
+                                                Source
+                                            </Text>
+                                            <Text
+                                                numberOfLines={3}
+                                                className="font-geist text-xs italic text-[#64748B]"
+                                            >
+                                                {`"${currentCard.sourceExcerpt}"`}
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
                             </View>
-                        </View>
 
-                        {/* Bottom */}
-                        <View className="items-center border-t border-[#F1F3F6] pt-2.5">
-                            <Text className="font-geist text-[11px] text-[#94A3B8]">
-                                Tap to flip
-                            </Text>
-                        </View>
-                    </Animated.View>
-                </Pressable>
+                            {/* Bottom Flip Cue */}
+                            <View className="items-center border-t border-[#F1F3F6] pt-3">
+                                <View className="flex-row items-center gap-1.5 rounded-full bg-[#F1F4F8] px-3 py-1">
+                                    <IconRotate size={12} color="#64748B" />
+                                    <Text className="font-geist-medium text-[11px] text-[#64748B]">
+                                        Tap to view term
+                                    </Text>
+                                </View>
+                            </View>
+                        </Animated.View>
+                    </Pressable>
+                </Animated.View>
             </View>
 
             {/* Bottom Toolbar */}

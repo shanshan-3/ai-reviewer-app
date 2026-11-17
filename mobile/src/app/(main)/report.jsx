@@ -232,8 +232,11 @@ export default function PerformanceReportPage() {
                                     color="#D97706"
                                     fill={currentStreak > 0 ? '#FDE68A' : 'none'}
                                 />
-                                <Text className="font-geist-bold text-xs text-amber-900">
-                                    {currentStreak}d Streak
+                                <Text
+                                    style={{ fontVariant: ['tabular-nums'] }}
+                                    className="font-geist-bold text-xs text-amber-900"
+                                >
+                                    {currentStreak}d
                                 </Text>
                             </View>
                         </View>

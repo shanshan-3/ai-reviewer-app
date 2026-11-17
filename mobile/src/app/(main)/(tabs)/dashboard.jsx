@@ -252,7 +252,7 @@ export default function DashboardPage() {
                                     style={{ fontVariant: ['tabular-nums'] }}
                                     className="font-geist-bold text-[11px] text-amber-900"
                                 >
-                                    {streak?.currentStreak ?? 0}d Streak
+                                    {streak?.currentStreak ?? 0}d
                                 </Text>
                             </Pressable>
                         </View>
