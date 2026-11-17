@@ -415,30 +415,34 @@ export default function FlashcardsPage() {
                         }}
                     />
                     <View
-                        className="w-full max-w-sm rounded-3xl bg-white p-6 border border-[#E5E9F0]"
+                        className="w-full max-w-xs items-center rounded-3xl bg-white p-6 border border-[#E5E9F0]"
                         style={{ borderCurve: 'continuous' }}
                     >
-                        {/* Red Icon Badge */}
+                        {/* Centered Red Icon Badge */}
                         <View
-                            className="h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 border border-rose-100/80 mb-4"
+                            className="h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 border border-rose-100/80 mb-3.5"
                             style={{ borderCurve: 'continuous' }}
                         >
-                            <IconTrash size={22} color="#DC2626" strokeWidth={1.8} />
+                            <IconTrash size={24} color="#DC2626" strokeWidth={1.8} />
                         </View>
 
-                        <Text className="font-geist-bold text-lg text-[#001428] leading-tight">
+                        {/* Minimal Centered Title & Description */}
+                        <Text
+                            numberOfLines={2}
+                            className="font-geist-bold text-base text-[#001428] text-center leading-snug"
+                        >
                             {`Delete “${deckToDelete?.title || 'Deck'}”?`}
                         </Text>
-                        <Text className="mt-2 font-geist text-xs text-[#64748B] leading-relaxed">
-                            {`This will permanently remove this deck with its ${deckToDelete?.cardCount || 0} terms and study history. This cannot be undone.`}
+                        <Text className="mt-1.5 font-geist text-xs text-[#64748B] text-center">
+                            This action cannot be undone.
                         </Text>
 
                         {/* Action Buttons */}
-                        <View className="mt-6 flex-row gap-3">
+                        <View className="mt-5 flex-row w-full gap-2.5">
                             <Pressable
                                 disabled={Boolean(deletingId)}
                                 onPress={() => setDeckToDelete(null)}
-                                className="flex-1 items-center justify-center rounded-2xl bg-[#F1F4F8] py-3.5 active:bg-[#E2E8F0]"
+                                className="flex-1 items-center justify-center rounded-2xl bg-[#F1F4F8] py-3 active:bg-[#E2E8F0]"
                                 style={({ pressed }) => [
                                     {
                                         borderCurve: 'continuous',
@@ -454,7 +458,7 @@ export default function FlashcardsPage() {
                             <Pressable
                                 disabled={Boolean(deletingId)}
                                 onPress={handleDeleteDeck}
-                                className="flex-1 flex-row items-center justify-center gap-2 rounded-2xl bg-rose-600 py-3.5 active:bg-rose-700"
+                                className="flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl bg-rose-600 py-3 active:bg-rose-700"
                                 style={({ pressed }) => [
                                     {
                                         borderCurve: 'continuous',
