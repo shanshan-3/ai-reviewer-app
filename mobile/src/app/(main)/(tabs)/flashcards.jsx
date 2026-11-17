@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import IconCards from '@tabler/icons-react-native/IconCards';
@@ -11,6 +11,7 @@ import IconClock from '@tabler/icons-react-native/IconClock';
 import IconArrowRight from '@tabler/icons-react-native/IconArrowRight';
 import { listFlashcardDecks, deleteFlashcardDeck } from '@/lib/flashcards';
 import { useToast } from '@/providers/toast-provider';
+import DeleteConfirmationModal from '@/components/delete-confirmation-modal';
 
 function formatRelativeDate(dateString) {
     if (!dateString) return 'New';
@@ -396,93 +397,15 @@ export default function FlashcardsPage() {
             </ScrollView>
 
             {/* Custom Delete Confirmation Modal */}
-            <Modal
+            <DeleteConfirmationModal
                 visible={Boolean(deckToDelete)}
-                transparent
-                animationType="fade"
-                onRequestClose={() => {
+                title="Delete this Cards?"
+                isDeleting={Boolean(deletingId)}
+                onCancel={() => {
                     if (!deletingId) setDeckToDelete(null);
                 }}
-            >
-                <View
-                    className="flex-1 items-center justify-center p-6"
-                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.45)' }}
-                >
-                    <Pressable
-                        className="absolute inset-0"
-                        onPress={() => {
-                            if (!deletingId) setDeckToDelete(null);
-                        }}
-                    />
-                    <View
-                        className="w-full max-w-xs items-center rounded-3xl bg-white p-6 border border-[#E5E9F0]"
-                        style={{ borderCurve: 'continuous' }}
-                    >
-                        {/* Centered Red Icon Badge */}
-                        <View
-                            className="h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 border border-rose-100/80 mb-3.5"
-                            style={{ borderCurve: 'continuous' }}
-                        >
-                            <IconTrash size={24} color="#DC2626" strokeWidth={1.8} />
-                        </View>
-
-                        {/* Minimal Centered Title & Description */}
-                        <Text
-                            className="font-geist-bold text-base text-[#001428] text-center leading-snug"
-                        >
-                            Delete this Cards?
-                        </Text>
-                        <Text className="mt-1.5 font-geist text-xs text-[#64748B] text-center">
-                            This action cannot be undone.
-                        </Text>
-
-                        {/* Action Buttons */}
-                        <View className="mt-5 flex-row w-full gap-2.5">
-                            <Pressable
-                                disabled={Boolean(deletingId)}
-                                onPress={() => setDeckToDelete(null)}
-                                className="flex-1 items-center justify-center rounded-2xl bg-[#F1F4F8] py-3 active:bg-[#E2E8F0]"
-                                style={({ pressed }) => [
-                                    {
-                                        borderCurve: 'continuous',
-                                        transform: [{ scale: pressed && !deletingId ? 0.98 : 1 }],
-                                    },
-                                ]}
-                            >
-                                <Text className="font-geist-semibold text-xs text-[#001428]">
-                                    Cancel
-                                </Text>
-                            </Pressable>
-
-                            <Pressable
-                                disabled={Boolean(deletingId)}
-                                onPress={handleDeleteDeck}
-                                className="flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl bg-rose-600 py-3 active:bg-rose-700"
-                                style={({ pressed }) => [
-                                    {
-                                        borderCurve: 'continuous',
-                                        transform: [{ scale: pressed && !deletingId ? 0.98 : 1 }],
-                                        opacity: deletingId ? 0.7 : 1,
-                                    },
-                                ]}
-                            >
-                                {deletingId ? (
-                                    <>
-                                        <ActivityIndicator size="small" color="#FFFFFF" />
-                                        <Text className="font-geist-semibold text-xs text-white">
-                                            Deleting...
-                                        </Text>
-                                    </>
-                                ) : (
-                                    <Text className="font-geist-semibold text-xs text-white">
-                                        Delete
-                                    </Text>
-                                )}
-                            </Pressable>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+                onConfirm={handleDeleteDeck}
+            />
         </SafeAreaView>
     );
 }

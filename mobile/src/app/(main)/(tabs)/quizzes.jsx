@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import IconPlus from '@tabler/icons-react-native/IconPlus';
@@ -11,6 +11,7 @@ import { deleteQuiz, listUserQuizzes } from '@/lib/quizzes';
 import { getTopicRecommendations } from '@/lib/progress';
 import { useToast } from '@/providers/toast-provider';
 import { THEME } from '@/lib/theme';
+import DeleteConfirmationModal from '@/components/delete-confirmation-modal';
 
 export default function QuizzesPage() {
     const router = useRouter();
@@ -20,6 +21,7 @@ export default function QuizzesPage() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
+    const [quizToDelete, setQuizToDelete] = useState(null);
     const [error, setError] = useState(null);
 
     const load = useCallback(async (isRefresh = false) => {
@@ -52,30 +54,23 @@ export default function QuizzesPage() {
 
     function confirmDelete(item) {
         if (deletingId) return;
-        const title = item.sourceTitle || (item.session?.status === 'active' ? 'Quiz in progress' : 'General Practice');
-        Alert.alert(
-            `Delete “${title}”?`,
-            `This will permanently remove this quiz with its ${item.questionCount || 0} questions and score history. This cannot be undone.`,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: async () => {
-                        setDeletingId(item.id);
-                        try {
-                            await deleteQuiz(item.id);
-                            setQuizzes(prev => prev.filter(q => q.id !== item.id));
-                            showToast('Quiz deleted');
-                        } catch (err) {
-                            Alert.alert('Could not delete quiz', err.message || 'Please try again.');
-                        } finally {
-                            setDeletingId(null);
-                        }
-                    },
-                },
-            ]
-        );
+        setQuizToDelete(item);
+    }
+
+    async function handleDeleteQuiz() {
+        if (!quizToDelete || deletingId) return;
+        const targetId = quizToDelete.id;
+        setDeletingId(targetId);
+        try {
+            await deleteQuiz(targetId);
+            setQuizzes(prev => prev.filter(q => q.id !== targetId));
+            setQuizToDelete(null);
+            showToast('Quiz deleted');
+        } catch (err) {
+            showToast(err.message || 'Could not delete quiz');
+        } finally {
+            setDeletingId(null);
+        }
     }
 
     const activeItem = quizzes.find(q => q.session?.status === 'active');
@@ -434,6 +429,17 @@ export default function QuizzesPage() {
                     </View>
                 )}
             </ScrollView>
+
+            {/* Custom Delete Confirmation Modal */}
+            <DeleteConfirmationModal
+                visible={Boolean(quizToDelete)}
+                title="Delete this Quiz?"
+                isDeleting={Boolean(deletingId)}
+                onCancel={() => {
+                    if (!deletingId) setQuizToDelete(null);
+                }}
+                onConfirm={handleDeleteQuiz}
+            />
         </SafeAreaView>
     );
 }

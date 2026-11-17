@@ -21,6 +21,7 @@ import IconPlus from '@tabler/icons-react-native/IconPlus';
 import IconArrowRight from '@tabler/icons-react-native/IconArrowRight';
 import IconFlame from '@tabler/icons-react-native/IconFlame';
 import { THEME } from '@/lib/theme';
+import DeleteConfirmationModal from '@/components/delete-confirmation-modal';
 
 
 
@@ -38,7 +39,7 @@ export default function DashboardPage() {
     const [message, setMessage] = useState('');
     const [nextOffset, setNextOffset] = useState(null);
     const [deletingId, setDeletingId] = useState(null);
-    const confirmationOpen = useRef(false);
+    const [materialToDelete, setMaterialToDelete] = useState(null);
     const requestId = useRef(0);
     const working = useRef(false);
     const failedOffset = useRef(0);
@@ -93,43 +94,42 @@ export default function DashboardPage() {
         setMaterials([]);
         setNextOffset(null);
         setDeletingId(null);
+        setMaterialToDelete(null);
         void load();
-        return () => { requestId.current++; working.current = false; confirmationOpen.current = false; };
+        return () => { requestId.current++; working.current = false; };
     }, [load]));
 
     function confirmDeletion(material) {
-        if (working.current || confirmationOpen.current || material.status === 'processing') return;
-        confirmationOpen.current = true;
+        if (working.current || material.status === 'processing') return;
+        setMaterialToDelete(material);
+    }
+
+    async function handleDeleteMaterial() {
+        if (!materialToDelete || working.current) return;
+        const targetMaterial = materialToDelete;
         const epoch = requestId.current;
-        Alert.alert(
-            `Delete “${material.title}”?`,
-            'This will permanently remove this module along with its linked quizzes, flashcards, and study history. This cannot be undone.',
-            [
-                { text: 'Cancel', style: 'cancel', onPress: () => { confirmationOpen.current = false; } },
-                { text: 'Delete', style: 'destructive', onPress: async () => {
-                confirmationOpen.current = false;
-                if (epoch !== requestId.current || working.current) return;
-                working.current = true;
-                const id = ++requestId.current;
-                setDeletingId(material.id);
-                setMessage('');
-                try {
-                    await deleteMaterial(material.id);
-                    if (id !== requestId.current) return;
-                    setMaterials(value => value.filter(item => item.id !== material.id));
-                    showToast('Module deleted');
-                    working.current = false;
-                    setDeletingId(null);
-                    await load();
-                } catch (error) {
-                    if (id !== requestId.current) return;
-                    failedOffset.current = 0;
-                    setMessage(error.message || 'Could not delete this module. Refresh and try again.');
-                    working.current = false;
-                    setDeletingId(null);
-                }
-            } },
-        ], { cancelable: false });
+        if (epoch !== requestId.current || working.current) return;
+        working.current = true;
+        const id = ++requestId.current;
+        setDeletingId(targetMaterial.id);
+        setMessage('');
+        try {
+            await deleteMaterial(targetMaterial.id);
+            if (id !== requestId.current) return;
+            setMaterials(value => value.filter(item => item.id !== targetMaterial.id));
+            showToast('Module deleted');
+            working.current = false;
+            setDeletingId(null);
+            setMaterialToDelete(null);
+            await load();
+        } catch (error) {
+            if (id !== requestId.current) return;
+            failedOffset.current = 0;
+            setMessage(error.message || 'Could not delete this module. Refresh and try again.');
+            working.current = false;
+            setDeletingId(null);
+            setMaterialToDelete(null);
+        }
     }
 
     const timeZone = getDeviceTimeZone();
@@ -500,6 +500,17 @@ export default function DashboardPage() {
                     {!loading && Boolean(message) && <AuthButton submitLabel="Retry" disabled={Boolean(deletingId)} onSubmit={() => load(failedOffset.current)} />}
                     {!loading && !message && nextOffset !== null && <AuthButton submitLabel="Load more modules" disabled={Boolean(deletingId)} onSubmit={() => load(nextOffset)} />}
                 </View>}
+            />
+
+            {/* Custom Delete Confirmation Modal */}
+            <DeleteConfirmationModal
+                visible={Boolean(materialToDelete)}
+                title="Delete this Module?"
+                isDeleting={Boolean(deletingId)}
+                onCancel={() => {
+                    if (!deletingId) setMaterialToDelete(null);
+                }}
+                onConfirm={handleDeleteMaterial}
             />
         </SafeAreaView>
     );
