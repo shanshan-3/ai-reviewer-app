@@ -39,8 +39,10 @@ export default function FlashcardStudyPage() {
     const [recordingReview, setRecordingReview] = useState(false);
     const [reviewRecorded, setReviewRecorded] = useState(false);
 
-    // Direction tracking for tactile card transitions
+    // Direction and transition lock tracking for tactile card transitions
     const direction = useRef('none');
+    const isTransitioning = useRef(false);
+    const transitionTimer = useRef(null);
 
     // Reanimated 3D flip & stage animations
     const spin = useSharedValue(0);
@@ -48,6 +50,15 @@ export default function FlashcardStudyPage() {
     const cardScale = useSharedValue(1);
     const cardOpacity = useSharedValue(1);
     const progressWidth = useSharedValue(0);
+
+    // Clear any pending transition timers on unmount
+    useEffect(() => {
+        return () => {
+            if (transitionTimer.current) {
+                clearTimeout(transitionTimer.current);
+            }
+        };
+    }, []);
 
     const frontAnimatedStyle = useAnimatedStyle(() => {
         const rotateValue = interpolate(spin.value, [0, 180], [0, 180]);
@@ -109,31 +120,31 @@ export default function FlashcardStudyPage() {
     // Animate smooth card advancement & entry
     useEffect(() => {
         if (direction.current === 'next') {
-            cardTranslateX.value = 24;
+            cardTranslateX.value = 28;
             cardScale.value = 0.98;
-            cardOpacity.value = 0.4;
+            cardOpacity.value = 0;
         } else if (direction.current === 'prev') {
-            cardTranslateX.value = -24;
+            cardTranslateX.value = -28;
             cardScale.value = 0.98;
-            cardOpacity.value = 0.4;
+            cardOpacity.value = 0;
         } else if (direction.current === 'shuffle') {
             cardTranslateX.value = 0;
             cardScale.value = 0.94;
-            cardOpacity.value = 0.5;
+            cardOpacity.value = 0;
         }
 
         cardTranslateX.value = withSpring(0, {
-            duration: 320,
+            duration: 300,
             dampingRatio: 0.85,
             reduceMotion: ReduceMotion.System,
         });
         cardScale.value = withSpring(1, {
-            duration: 320,
+            duration: 300,
             dampingRatio: 0.85,
             reduceMotion: ReduceMotion.System,
         });
         cardOpacity.value = withTiming(1, {
-            duration: 220,
+            duration: 190,
             easing: EASE_OUT,
             reduceMotion: ReduceMotion.System,
         });
@@ -167,10 +178,20 @@ export default function FlashcardStudyPage() {
 
     function handleNext() {
         if (currentIndex < cards.length - 1) {
+            if (isTransitioning.current) return;
+            isTransitioning.current = true;
             direction.current = 'next';
-            spin.value = 0;
-            setIsFlipped(false);
-            setCurrentIndex(prev => prev + 1);
+
+            // Smoothly slide out current card while maintaining its current face (no flashing to term)
+            cardTranslateX.value = withTiming(-28, { duration: 110, easing: EASE_OUT });
+            cardOpacity.value = withTiming(0, { duration: 110, easing: EASE_OUT });
+
+            transitionTimer.current = setTimeout(() => {
+                spin.value = 0;
+                setIsFlipped(false);
+                setCurrentIndex(prev => prev + 1);
+                isTransitioning.current = false;
+            }, 110);
         } else {
             finishStudy();
         }
@@ -178,10 +199,20 @@ export default function FlashcardStudyPage() {
 
     function handlePrev() {
         if (currentIndex > 0) {
+            if (isTransitioning.current) return;
+            isTransitioning.current = true;
             direction.current = 'prev';
-            spin.value = 0;
-            setIsFlipped(false);
-            setCurrentIndex(prev => prev - 1);
+
+            // Smoothly slide out current card to the right
+            cardTranslateX.value = withTiming(28, { duration: 110, easing: EASE_OUT });
+            cardOpacity.value = withTiming(0, { duration: 110, easing: EASE_OUT });
+
+            transitionTimer.current = setTimeout(() => {
+                spin.value = 0;
+                setIsFlipped(false);
+                setCurrentIndex(prev => prev - 1);
+                isTransitioning.current = false;
+            }, 110);
         }
     }
 
@@ -204,22 +235,40 @@ export default function FlashcardStudyPage() {
     }
 
     function handleRestart() {
+        if (isTransitioning.current) return;
+        isTransitioning.current = true;
         direction.current = 'shuffle';
-        spin.value = 0;
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setViewedBacks(new Set());
-        setIsCompleted(false);
+
+        cardOpacity.value = withTiming(0, { duration: 100, easing: EASE_OUT });
+        cardScale.value = withTiming(0.95, { duration: 100, easing: EASE_OUT });
+
+        transitionTimer.current = setTimeout(() => {
+            spin.value = 0;
+            setCurrentIndex(0);
+            setIsFlipped(false);
+            setViewedBacks(new Set());
+            setIsCompleted(false);
+            isTransitioning.current = false;
+        }, 100);
     }
 
     function handleShuffle() {
+        if (isTransitioning.current) return;
+        isTransitioning.current = true;
         direction.current = 'shuffle';
-        spin.value = 0;
-        const shuffled = [...cards].sort(() => Math.random() - 0.5);
-        setCards(shuffled);
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setViewedBacks(new Set());
+
+        cardOpacity.value = withTiming(0, { duration: 100, easing: EASE_OUT });
+        cardScale.value = withTiming(0.95, { duration: 100, easing: EASE_OUT });
+
+        transitionTimer.current = setTimeout(() => {
+            spin.value = 0;
+            const shuffled = [...cards].sort(() => Math.random() - 0.5);
+            setCards(shuffled);
+            setCurrentIndex(0);
+            setIsFlipped(false);
+            setViewedBacks(new Set());
+            isTransitioning.current = false;
+        }, 100);
     }
 
     if (loading) {
