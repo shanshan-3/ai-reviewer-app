@@ -191,7 +191,7 @@ export default function QuizzesPage() {
                                         <View className="flex-row items-center justify-between p-3.5">
                                             <Pressable
                                                 accessibilityRole="button"
-                                                accessibilityLabel={`Resume active quiz for ${activeItem.sourceTitle || 'Quiz in progress'}, ${activeProgress}% complete`}
+                                                accessibilityLabel={`Resume active quiz for ${activeItem.sourceTitle || 'IT Topic Practice'}, ${activeProgress}% complete`}
                                                 accessibilityHint="Navigates to the active quiz session"
                                                 disabled={Boolean(deletingId)}
                                                 onPress={() => router.push(`/(main)/quizzes/${activeItem.session.id}`)}
@@ -202,7 +202,7 @@ export default function QuizzesPage() {
                                                 </Text>
                                                 <Text numberOfLines={1} className="mt-1 font-geist-bold text-sm text-[#001428]">
 
-                                                    {activeItem.sourceTitle || 'Quiz in progress'}
+                                                    {activeItem.sourceTitle || 'IT Topic Practice'}
                                                 </Text>
                                                 <View className="mt-1 flex-row flex-wrap items-center gap-1.5">
                                                     <Text numberOfLines={1} className="font-geist text-[11px] text-[#526071]">
@@ -363,14 +363,14 @@ export default function QuizzesPage() {
                                         >
                                             <Pressable
                                                 accessibilityRole="button"
-                                                accessibilityLabel={`View results for ${item.sourceTitle || 'General Practice'}`}
+                                                accessibilityLabel={`View results for ${item.sourceTitle || 'IT Topic Practice'}`}
                                                 accessibilityHint="Opens detailed score and question review."
                                                 disabled={Boolean(deletingId)}
                                                 onPress={() => router.push(`/(main)/quizzes/${item.session.id}/results`)}
                                                 className="min-w-0 flex-1 pr-3 active:opacity-70"
                                             >
                                                 <Text numberOfLines={1} className="font-geist-semibold text-base text-[#001428]">
-                                                    {item.sourceTitle || 'General Practice'}
+                                                    {item.sourceTitle || 'IT Topic Practice'}
                                                 </Text>
                                                 <View className="mt-1 flex-row flex-wrap items-center gap-2">
                                                     <Text className="font-geist text-xs text-[#526071]">
@@ -405,7 +405,7 @@ export default function QuizzesPage() {
 
                                                 <Pressable
                                                     accessibilityRole="button"
-                                                    accessibilityLabel={`Delete quiz: ${item.sourceTitle || 'General Practice'}`}
+                                                    accessibilityLabel={`Delete quiz: ${item.sourceTitle || 'IT Topic Practice'}`}
                                                     accessibilityHint="Opens confirmation dialog to delete this quiz record."
                                                     accessibilityState={{ busy: isDeleting }}
                                                     disabled={Boolean(deletingId)}

@@ -176,6 +176,12 @@ export async function listUserQuizzes(admin, ownerId) {
     return list.map(item => {
         const gen = item.quiz_generations;
         const session = item.study_sessions?.[0] ?? null;
+        const topicName = gen?.topics?.name ?? null;
+        const materialTitle = gen?.materials?.title ?? null;
+        const resolvedTitle = gen?.source_kind === 'module'
+            ? (materialTitle || topicName)
+            : (topicName || materialTitle);
+
         return {
             id: item.id,
             questionCount: item.question_count,
@@ -183,7 +189,7 @@ export async function listUserQuizzes(admin, ownerId) {
             questionType: gen?.question_type,
             startingDifficulty: gen?.starting_difficulty,
             sourceKind: gen?.source_kind,
-            sourceTitle: gen?.source_kind === 'module' ? gen?.materials?.title : gen?.topics?.name,
+            sourceTitle: resolvedTitle || 'IT Topic Practice',
             session: session ? {
                 id: session.id,
                 status: session.status,
