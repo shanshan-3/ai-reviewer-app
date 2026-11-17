@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 /**
  * @param {{
@@ -6,19 +6,32 @@ import { Pressable, Text, View } from "react-native";
  *   onSubmit: () => void,
  *   children?: import('react').ReactNode,
  *   disabled?: boolean,
+ *   loading?: boolean,
  * }} props
  */
-export default function AuthButton({ submitLabel, onSubmit, children, disabled = false }) {
+export default function AuthButton({ submitLabel, onSubmit, children, disabled = false, loading = false }) {
+  const isBusy = disabled || loading;
   return (
     <View className="w-full max-w-sm self-center pt-4">
       <Pressable
         accessibilityRole="button"
         onPress={onSubmit}
-        className="min-h-14 items-center justify-center rounded-lg border-2 border-primary bg-[#001428] px-4 py-3 active:opacity-80 focus:border-muted-foreground"
-        disabled={disabled}
-        accessibilityState={{ disabled, busy: disabled }}
+        disabled={isBusy}
+        accessibilityState={{ disabled: isBusy, busy: isBusy }}
+        style={({ pressed }) => [
+          {
+            borderCurve: 'continuous',
+            transform: [{ scale: pressed && !isBusy ? 0.97 : 1 }],
+          },
+        ]}
+        className={`min-h-14 flex-row items-center justify-center gap-2 rounded-2xl bg-[#001428] px-4 py-3.5 shadow-sm active:opacity-90 ${
+          isBusy ? "opacity-70" : ""
+        }`}
       >
-        <Text className="font-geist-semibold text-base text-primary-foreground">
+        {loading ? (
+          <ActivityIndicator size="small" color="#FFFFFF" />
+        ) : null}
+        <Text className="font-geist-semibold text-base tracking-tight text-white">
           {submitLabel}
         </Text>
       </Pressable>

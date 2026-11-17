@@ -5,7 +5,6 @@ import IconLayoutDashboard from '@tabler/icons-react-native/IconLayoutDashboard'
 import IconHelp from '@tabler/icons-react-native/IconHelp';
 import IconCards from '@tabler/icons-react-native/IconCards';
 import IconUser from '@tabler/icons-react-native/IconUser';
-import { THEME } from '@/lib/theme';
 import { useToastTabBarHeight } from '@/providers/toast-provider';
 
 function TabHeaderTitle({ children }) {
@@ -20,7 +19,7 @@ function TabHeaderTitle({ children }) {
             <Text
                 accessibilityRole="header"
                 numberOfLines={1}
-                className="shrink font-geist-semibold text-xl text-[#001428]"
+                className="shrink font-geist-semibold text-xl tracking-tight text-[#001428]"
             >
                 {children}
             </Text>
@@ -41,12 +40,22 @@ export default function TabsLayout() {
                 headerTitle: TabHeaderTitle,
                 headerTitleAlign: 'left',
                 headerStyle: {
-                    backgroundColor: THEME.card,
-                    borderBottomColor: THEME.border,
+                    backgroundColor: '#FFFFFF',
+                    borderBottomColor: '#E4E8EE',
                     borderBottomWidth: StyleSheet.hairlineWidth,
                 },
                 headerShadowVisible: false,
-                tabBarActiveTintColor: THEME.primary,
+                tabBarActiveTintColor: '#001428',
+                tabBarInactiveTintColor: '#94A3B8',
+                tabBarLabelStyle: {
+                    fontFamily: 'Geist-Medium',
+                    fontSize: 11,
+                },
+                tabBarStyle: {
+                    backgroundColor: '#FFFFFF',
+                    borderTopColor: '#E4E8EE',
+                    borderTopWidth: StyleSheet.hairlineWidth,
+                },
             }}
         >
             <Tabs.Screen

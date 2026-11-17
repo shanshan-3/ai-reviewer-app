@@ -10,7 +10,6 @@ import IconInfoCircle from '@tabler/icons-react-native/IconInfoCircle';
 import AuthMessage from '@/components/AuthMessage';
 import MaterialScreenHeader from '@/components/MaterialScreenHeader';
 import { uploadMaterial, validateSelectedFile } from '@/lib/materials';
-import { THEME } from '@/lib/theme';
 
 export default function ImportMaterialPage() {
     const [asset, setAsset] = useState(null);
@@ -106,11 +105,26 @@ export default function ImportMaterialPage() {
                             <Text className="font-geist text-sm leading-6 text-[#526071]">{asset.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'DOCX'} · {(size / 1024 / 1024).toFixed(2)} MiB</Text>
                         </> : <Text className="font-geist text-sm leading-6 text-[#526071]">A PDF or DOCX with selectable text, up to 5 MiB.</Text>}
                     </View>
-                    <Pressable accessibilityRole="button" accessibilityHint="Opens your device’s document picker for a PDF or DOCX."
-                        accessibilityState={{ disabled: busy, busy: picking }} disabled={busy} onPress={chooseFile}
-                        className={`min-h-14 flex-row items-center justify-center gap-3 rounded-xl bg-[#EDF0F5] px-4 py-4 active:bg-[#E1E7EF] focus:bg-[#E1E7EF] ${busy ? 'opacity-40' : ''}`}>
+                    <Pressable
+                        accessibilityRole="button"
+                        accessibilityHint="Opens your device’s document picker for a PDF or DOCX."
+                        accessibilityState={{ disabled: busy, busy: picking }}
+                        disabled={busy}
+                        onPress={chooseFile}
+                        style={({ pressed }) => [
+                            {
+                                borderCurve: 'continuous',
+                                transform: [{ scale: pressed && !busy ? 0.98 : 1 }],
+                            },
+                        ]}
+                        className={`min-h-14 flex-row items-center justify-center gap-3 rounded-2xl bg-[#EDF0F5] px-4 py-4 active:bg-[#E1E7EF] ${
+                            busy ? 'opacity-40' : ''
+                        }`}
+                    >
                         <IconFolderOpen size={20} color="#001428" accessible={false} />
-                        <Text className="shrink text-center font-geist-semibold text-base text-[#001428]">{picking ? 'Opening files…' : asset ? 'Change file' : 'Choose file'}</Text>
+                        <Text className="shrink text-center font-geist-semibold text-base text-[#001428]">
+                            {picking ? 'Opening files…' : asset ? 'Change file' : 'Choose file'}
+                        </Text>
                     </Pressable>
                 </View>
                 <View className="flex-row items-start gap-3 rounded-2xl bg-[#EDF0F5] p-5" style={{ borderCurve: 'continuous' }}>
@@ -126,10 +140,25 @@ export default function ImportMaterialPage() {
                 <View className="w-full max-w-[680px] self-center gap-3">
                     <AuthMessage message={message} isError />
                     {uploading && takingLong && <Text accessibilityLiveRegion="polite" className="font-geist text-sm leading-6 text-[#526071]">Your module is still processing. Larger or complex documents may take longer. Please keep this screen open.</Text>}
-                    <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy || !asset, busy: uploading }} disabled={busy || !asset} onPress={handleUpload}
-                        className={`min-h-14 flex-row items-center justify-center gap-3 rounded-2xl bg-[#001428] px-5 py-4 active:opacity-80 focus:bg-[#243447] ${busy || !asset ? 'opacity-40' : ''}`}>
-                        {uploading && <ActivityIndicator color={THEME.primaryForeground} accessible={false} />}
-                        <Text className="shrink text-center font-geist-semibold text-base text-primary-foreground">{uploading ? 'Uploading and extracting…' : uploadedId ? 'Opening preview…' : 'Upload module'}</Text>
+                    <Pressable
+                        accessibilityRole="button"
+                        accessibilityState={{ disabled: busy || !asset, busy: uploading }}
+                        disabled={busy || !asset}
+                        onPress={handleUpload}
+                        style={({ pressed }) => [
+                            {
+                                borderCurve: 'continuous',
+                                transform: [{ scale: pressed && !(busy || !asset) ? 0.98 : 1 }],
+                            },
+                        ]}
+                        className={`min-h-14 flex-row items-center justify-center gap-3 rounded-2xl bg-[#001428] px-5 py-4 shadow-sm active:opacity-90 ${
+                            busy || !asset ? 'opacity-40' : ''
+                        }`}
+                    >
+                        {uploading && <ActivityIndicator color="#FFFFFF" accessible={false} />}
+                        <Text className="shrink text-center font-geist-semibold text-base text-white">
+                            {uploading ? 'Uploading and extracting…' : uploadedId ? 'Opening preview…' : 'Upload module'}
+                        </Text>
                     </Pressable>
                 </View>
             </View>

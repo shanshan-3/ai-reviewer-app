@@ -29,7 +29,7 @@ export default function DeleteConfirmationModal({
                     }}
                 />
                 <View
-                    className="w-full max-w-xs items-center rounded-3xl bg-white p-6 border border-[#E5E9F0]"
+                    className="w-full max-w-xs items-center rounded-3xl bg-white p-6 border border-[#E5E9F0] shadow-xl"
                     style={{ borderCurve: 'continuous' }}
                 >
                     {/* Centered Red Icon Badge */}
@@ -42,12 +42,12 @@ export default function DeleteConfirmationModal({
 
                     {/* Minimal Centered Title & Description */}
                     <Text
-                        className="font-geist-bold text-base text-[#001428] text-center leading-snug"
+                        className="font-geist-bold text-base text-[#001428] text-center leading-snug tracking-tight"
                     >
                         {title}
                     </Text>
                     {Boolean(description) && (
-                        <Text className="mt-1.5 font-geist text-xs text-[#64748B] text-center">
+                        <Text className="mt-1.5 font-geist text-xs text-[#64748B] text-center leading-5">
                             {description}
                         </Text>
                     )}
@@ -55,13 +55,15 @@ export default function DeleteConfirmationModal({
                     {/* Action Buttons */}
                     <View className="mt-5 flex-row w-full gap-2.5">
                         <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Cancel deletion"
                             disabled={isDeleting}
                             onPress={onCancel}
-                            className="flex-1 items-center justify-center rounded-2xl bg-[#F1F4F8] py-3 active:bg-[#E2E8F0]"
+                            className="flex-1 items-center justify-center rounded-2xl bg-[#F1F4F8] py-3.5 active:bg-[#E2E8F0]"
                             style={({ pressed }) => [
                                 {
                                     borderCurve: 'continuous',
-                                    transform: [{ scale: pressed && !isDeleting ? 0.98 : 1 }],
+                                    transform: [{ scale: pressed && !isDeleting ? 0.97 : 1 }],
                                 },
                             ]}
                         >
@@ -71,13 +73,15 @@ export default function DeleteConfirmationModal({
                         </Pressable>
 
                         <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Confirm delete"
                             disabled={isDeleting}
                             onPress={onConfirm}
-                            className="flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl bg-rose-600 py-3 active:bg-rose-700"
+                            className="flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl bg-rose-600 py-3.5 active:bg-rose-700 shadow-xs"
                             style={({ pressed }) => [
                                 {
                                     borderCurve: 'continuous',
-                                    transform: [{ scale: pressed && !isDeleting ? 0.98 : 1 }],
+                                    transform: [{ scale: pressed && !isDeleting ? 0.97 : 1 }],
                                     opacity: isDeleting ? 0.7 : 1,
                                 },
                             ]}

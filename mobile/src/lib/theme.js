@@ -1,7 +1,7 @@
 import { DefaultTheme } from 'expo-router/react-navigation';
 
 export const THEME = {
-  background: '#F8F8FF',
+  background: '#F8F9FB',
   foreground: 'hsl(0 0% 3.9%)',
   card: 'hsl(0 0% 100%)',
   cardForeground: 'hsl(0 0% 3.9%)',
