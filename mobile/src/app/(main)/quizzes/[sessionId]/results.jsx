@@ -113,16 +113,20 @@ export default function ResultsPage() {
                     accessibilityRole="button"
                     accessibilityLabel="Return to Dashboard"
                     onPress={() => router.replace('/(main)/(tabs)/dashboard')}
+                    style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.95 : 1 }] }]}
                     className="mr-3 h-10 w-10 items-center justify-center rounded-full active:bg-[#F1F4F8]"
                 >
                     <IconArrowLeft size={22} color="#001428" />
                 </Pressable>
-                <Text className="font-geist-semibold text-lg text-[#001428]">Quiz Results</Text>
+                <Text className="font-geist-semibold text-lg tracking-tight text-[#001428]">Quiz Results</Text>
             </View>
 
             <ScrollView contentContainerStyle={{ padding: 20, gap: 20, paddingBottom: 60 }}>
                 {/* Score Summary Card */}
-                <View className="overflow-hidden rounded-3xl border border-[#E4E8EE] bg-white p-6">
+                <View
+                    className="overflow-hidden rounded-3xl border border-[#E4E8EE] bg-white p-6 shadow-xs"
+                    style={{ borderCurve: 'continuous' }}
+                >
                     <View className="flex-row items-center justify-between">
                         <View>
                             <Text className="font-geist text-xs uppercase tracking-wider text-[#526071]">

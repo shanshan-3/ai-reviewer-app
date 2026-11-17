@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, BackHandler, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, BackHandler, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import IconArrowLeft from '@tabler/icons-react-native/IconArrowLeft';
@@ -18,17 +18,31 @@ export default function AnsweringPage() {
     const [currentQuestion, setCurrentQuestion] = useState(null);
     const [selectedOptionId, setSelectedOptionId] = useState(null);
     const [error, setError] = useState(null);
-    const [leaveModalOpen, setLeaveModalOpen] = useState(false);
+
+    const promptLeave = useCallback(() => {
+        Alert.alert(
+            'Leave Quiz?',
+            'Progress will be saved.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Exit',
+                    style: 'destructive',
+                    onPress: () => router.replace('/(main)/(tabs)/quizzes'),
+                },
+            ]
+        );
+    }, [router]);
 
     // Android hardware back button handler: prompt confirmation to avoid accidental exit
     useEffect(() => {
         const onBackPress = () => {
-            setLeaveModalOpen(true);
+            promptLeave();
             return true; // prevent default exit
         };
         const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
         return () => subscription.remove();
-    }, []);
+    }, [promptLeave]);
 
     useEffect(() => {
         async function fetchSession() {
@@ -108,7 +122,7 @@ export default function AnsweringPage() {
                     <Pressable
                         accessibilityRole="button"
                         accessibilityLabel="Leave quiz"
-                        onPress={() => setLeaveModalOpen(true)}
+                        onPress={promptLeave}
                         className="h-10 w-10 items-center justify-center rounded-full active:scale-95 active:bg-[#F1F4F8]"
                     >
                         <IconArrowLeft size={22} color="#001428" />
@@ -179,40 +193,6 @@ export default function AnsweringPage() {
                     )}
                 </Pressable>
             </View>
-
-            {/* Leave Confirmation Modal */}
-            <Modal visible={leaveModalOpen} transparent animationType="fade" onRequestClose={() => setLeaveModalOpen(false)}>
-                <View className="flex-1 items-center justify-center p-6" style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}>
-                    <View
-                        className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl border border-[#E4E8EE]"
-                        style={{ borderCurve: 'continuous' }}
-                    >
-                        <Text className="font-geist-bold text-lg text-[#001428]">Leave Quiz?</Text>
-                        <Text className="mt-2 font-geist text-sm leading-5 text-[#526071]">
-                            Your answered questions are safely stored. You can resume this session anytime from the Quizzes tab.
-                        </Text>
-                        <View className="mt-6 flex-row gap-3">
-                            <Pressable
-                                onPress={() => setLeaveModalOpen(false)}
-                                style={{ borderCurve: 'continuous' }}
-                                className="flex-1 items-center justify-center rounded-2xl bg-[#F1F4F8] py-3.5 active:scale-95"
-                            >
-                                <Text className="font-geist-medium text-sm text-[#001428]">Continue</Text>
-                            </Pressable>
-                            <Pressable
-                                onPress={() => {
-                                    setLeaveModalOpen(false);
-                                    router.replace('/(main)/(tabs)/quizzes');
-                                }}
-                                style={{ borderCurve: 'continuous' }}
-                                className="flex-1 items-center justify-center rounded-2xl bg-[#DC2626] py-3.5 active:scale-95"
-                            >
-                                <Text className="font-geist-medium text-sm text-white">Exit</Text>
-                            </Pressable>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
         </SafeAreaView>
     );
 }
