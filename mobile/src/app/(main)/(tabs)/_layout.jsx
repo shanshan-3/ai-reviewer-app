@@ -10,17 +10,17 @@ import { useToastTabBarHeight } from '@/providers/toast-provider';
 
 function TabHeaderTitle({ children }) {
     return (
-        <View className="flex-row items-center justify-center gap-2">
+        <View className="flex-row items-center gap-3">
             <Image
                 source={require('../../../../assets/logo/logo-symbol-transparent.png')}
-                style={{ width: 24, height: 24 }}
+                style={{ width: 32, height: 32 }}
                 resizeMode="contain"
                 accessible={false}
             />
             <Text
                 accessibilityRole="header"
                 numberOfLines={1}
-                className="shrink font-geist-semibold text-sm text-[#001428]"
+                className="shrink font-geist-semibold text-xl text-[#001428]"
             >
                 {children}
             </Text>
@@ -39,7 +39,7 @@ export default function TabsLayout() {
             screenOptions={{
                 headerShown: true,
                 headerTitle: TabHeaderTitle,
-                headerTitleAlign: 'center',
+                headerTitleAlign: 'left',
                 headerStyle: {
                     backgroundColor: THEME.card,
                     borderBottomColor: THEME.border,
