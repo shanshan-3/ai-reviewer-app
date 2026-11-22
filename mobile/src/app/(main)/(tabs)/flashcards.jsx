@@ -241,7 +241,7 @@ export default function FlashcardsPage() {
                     </View>
                 )}
 
-                {/* Empty State */}
+                {/* Global Empty State */}
                 {!loading && decks.length === 0 && !error && (
                     <View
                         className="items-center rounded-3xl border border-[#E5E9F0] bg-white p-8 text-center"
@@ -260,6 +260,8 @@ export default function FlashcardsPage() {
                             Create a deck from your notes or topics to start studying.
                         </Text>
                         <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Create flashcard deck"
                             onPress={() => router.push('/flashcards/create')}
                             className="mt-5 flex-row items-center gap-1.5 rounded-full bg-[#001428] px-4 py-2.5"
                             style={({ pressed }) => [
@@ -273,6 +275,69 @@ export default function FlashcardsPage() {
                             <IconPlus size={15} color="#FFFFFF" strokeWidth={2.5} />
                             <Text className="font-geist-semibold text-xs text-white">Create Deck</Text>
                         </Pressable>
+                    </View>
+                )}
+
+                {/* Filter-Specific Empty State */}
+                {!loading && decks.length > 0 && filteredDecks.length === 0 && !error && (
+                    <View
+                        className="items-center rounded-3xl border border-[#E5E9F0] bg-white p-7 text-center"
+                        style={{ borderCurve: 'continuous' }}
+                    >
+                        <View
+                            className="mb-3.5 h-14 w-14 items-center justify-center rounded-2xl bg-[#001428]/5 border border-[#001428]/10"
+                            style={{ borderCurve: 'continuous' }}
+                        >
+                            {selectedFilter === 'module' ? (
+                                <IconFileText size={24} color="#001428" strokeWidth={1.8} />
+                            ) : (
+                                <IconBook size={24} color="#001428" strokeWidth={1.8} />
+                            )}
+                        </View>
+                        <Text className="font-geist-bold text-base text-[#001428]">
+                            {selectedFilter === 'module' ? 'No Module Decks Yet' : 'No Topic Decks Yet'}
+                        </Text>
+                        <Text className="mt-1 text-center font-geist text-xs text-[#526071] max-w-xs leading-5">
+                            {selectedFilter === 'module'
+                                ? 'Generate flashcards directly from your uploaded lecture notes and study materials.'
+                                : 'Study key definitions and terminology from pre-configured BSIT curriculum topics.'}
+                        </Text>
+                        <View className="mt-5 w-full max-w-xs gap-2.5">
+                            <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel={`Create ${selectedFilter === 'module' ? 'module' : 'topic'} deck`}
+                                onPress={() => router.push('/flashcards/create')}
+                                className="flex-row items-center justify-center gap-1.5 rounded-2xl bg-[#001428] py-3 active:opacity-90"
+                                style={({ pressed }) => [
+                                    {
+                                        borderCurve: 'continuous',
+                                        transform: [{ scale: pressed ? 0.98 : 1 }],
+                                    },
+                                ]}
+                            >
+                                <IconPlus size={15} color="#FFFFFF" strokeWidth={2.5} />
+                                <Text className="font-geist-semibold text-xs text-white">
+                                    {selectedFilter === 'module' ? 'Create Module Deck' : 'Create Topic Deck'}
+                                </Text>
+                            </Pressable>
+
+                            <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel="Show all flashcard decks"
+                                onPress={() => setSelectedFilter('all')}
+                                className="flex-row items-center justify-center rounded-2xl border border-[#E4E8EE] bg-[#F8FAFC] py-2.5 active:bg-[#F1F4F8]"
+                                style={({ pressed }) => [
+                                    {
+                                        borderCurve: 'continuous',
+                                        transform: [{ scale: pressed ? 0.98 : 1 }],
+                                    },
+                                ]}
+                            >
+                                <Text className="font-geist-medium text-xs text-[#001428]">
+                                    Show All Decks ({decks.length})
+                                </Text>
+                            </Pressable>
+                        </View>
                     </View>
                 )}
 
