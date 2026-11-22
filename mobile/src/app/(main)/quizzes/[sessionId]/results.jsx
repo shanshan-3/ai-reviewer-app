@@ -191,41 +191,6 @@ export default function ResultsPage() {
                             </Text>
                         </View>
                     </View>
-
-                    {/* Quick Exit & Re-test Actions */}
-                    <View className="mt-5 flex-row gap-2.5 border-t border-[#F1F3F6] pt-4">
-                        <Pressable
-                            accessibilityRole="button"
-                            accessibilityLabel="Practice Another Quiz"
-                            onPress={() => router.replace('/(main)/quizzes/create')}
-                            className="flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl bg-[#001428] py-3 active:opacity-90"
-                            style={({ pressed }) => [
-                                {
-                                    borderCurve: 'continuous',
-                                    transform: [{ scale: pressed ? 0.98 : 1 }],
-                                },
-                            ]}
-                        >
-                            <IconRotate size={15} color="#FFFFFF" strokeWidth={2.2} />
-                            <Text className="font-geist-semibold text-xs text-white">Practice Another</Text>
-                        </Pressable>
-
-                        <Pressable
-                            accessibilityRole="button"
-                            accessibilityLabel="Back to Dashboard"
-                            onPress={() => router.replace('/(main)/(tabs)/dashboard')}
-                            className="flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl border border-[#E4E8EE] bg-[#F8FAFC] py-3 active:bg-[#F1F4F8]"
-                            style={({ pressed }) => [
-                                {
-                                    borderCurve: 'continuous',
-                                    transform: [{ scale: pressed ? 0.98 : 1 }],
-                                },
-                            ]}
-                        >
-                            <IconArrowLeft size={15} color="#001428" strokeWidth={2.2} />
-                            <Text className="font-geist-semibold text-xs text-[#001428]">Dashboard</Text>
-                        </Pressable>
-                    </View>
                 </View>
 
 
