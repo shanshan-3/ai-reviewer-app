@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
-import IconTarget from '@tabler/icons-react-native/IconTarget';
+import IconChartBar from '@tabler/icons-react-native/IconChartBar';
 import IconChevronRight from '@tabler/icons-react-native/IconChevronRight';
 import IconCircleCheck from '@tabler/icons-react-native/IconCircleCheck';
 
@@ -37,7 +37,7 @@ export default function TopicEstimatesCard({
                             className="h-7 w-7 items-center justify-center rounded-lg bg-[#001428]"
                             style={{ borderCurve: 'continuous' }}
                         >
-                            <IconTarget size={15} color="#FFFFFF" strokeWidth={2} />
+                            <IconChartBar size={15} color="#FFFFFF" strokeWidth={2} />
                         </View>
                         <Text className="font-geist-bold text-sm text-[#001428]">
                             Topic Mastery
@@ -59,7 +59,7 @@ export default function TopicEstimatesCard({
                     className="mb-2 h-10 w-10 items-center justify-center rounded-xl bg-[#F1F4F8]"
                     style={{ borderCurve: 'continuous' }}
                 >
-                    <IconTarget size={18} color="#001428" strokeWidth={2} />
+                    <IconChartBar size={18} color="#001428" strokeWidth={2} />
                 </View>
                 <Text className="font-geist-bold text-sm text-[#001428]">
                     No Topic Data
@@ -83,7 +83,7 @@ export default function TopicEstimatesCard({
                         className="h-7 w-7 items-center justify-center rounded-lg bg-[#001428]"
                         style={{ borderCurve: 'continuous' }}
                     >
-                        <IconTarget size={15} color="#FFFFFF" strokeWidth={2} />
+                        <IconChartBar size={15} color="#FFFFFF" strokeWidth={2} />
                     </View>
                     <View>
                         <Text className="font-geist-bold text-sm text-[#001428]">

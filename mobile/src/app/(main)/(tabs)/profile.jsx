@@ -18,7 +18,6 @@ import IconTrophy from '@tabler/icons-react-native/IconTrophy';
 import IconAlertTriangle from '@tabler/icons-react-native/IconAlertTriangle';
 import IconCards from '@tabler/icons-react-native/IconCards';
 import IconInfoCircle from '@tabler/icons-react-native/IconInfoCircle';
-import IconTarget from '@tabler/icons-react-native/IconTarget';
 import IconCamera from '@tabler/icons-react-native/IconCamera';
 
 export default function ProfilePage() {
@@ -386,7 +385,7 @@ export default function ProfilePage() {
                             className="mb-3 h-11 w-11 items-center justify-center rounded-xl bg-[#F1F4F8]"
                             style={{ borderCurve: 'continuous' }}
                         >
-                            <IconTarget size={20} color="#001428" strokeWidth={2} />
+                            <IconChartBar size={20} color="#001428" strokeWidth={2} />
                         </View>
                         <Text className="font-geist-bold text-base tracking-tight text-[#001428] text-center">
                             Your Readiness Portfolio
@@ -500,7 +499,7 @@ export default function ProfilePage() {
                 )}
 
                 {/* Topic Mastery Summary Card */}
-                {!isEmpty && (
+                {!isEmpty && estimates.length > 0 && (
                     <View className="gap-2.5">
                         <Text className="px-1 font-geist-semibold text-[11px] uppercase tracking-wider text-[#526071]">
                             Curriculum Topic Mastery
