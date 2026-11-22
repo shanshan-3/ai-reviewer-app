@@ -18,7 +18,7 @@ import IconCircleCheck from '@tabler/icons-react-native/IconCircleCheck';
 import IconAlertTriangle from '@tabler/icons-react-native/IconAlertTriangle';
 import IconInfoCircle from '@tabler/icons-react-native/IconInfoCircle';
 import IconAward from '@tabler/icons-react-native/IconAward';
-import IconTarget from '@tabler/icons-react-native/IconTarget';
+import IconBulb from '@tabler/icons-react-native/IconBulb';
 import IconBooks from '@tabler/icons-react-native/IconBooks';
 import IconCards from '@tabler/icons-react-native/IconCards';
 import IconTrendingUp from '@tabler/icons-react-native/IconTrendingUp';
@@ -471,7 +471,7 @@ export default function PerformanceReportPage() {
                             </View>
                         ) : (
                             <View className="mt-3 rounded-xl border border-dashed border-[#E4E8EE] bg-[#F8F8FF] p-4 items-center justify-center">
-                                <IconTarget size={28} color="#94A3B8" />
+                                <IconTrendingUp size={28} color="#94A3B8" />
                                 <Text className="mt-2 font-geist-semibold text-xs text-[#001428]">
                                     {quizScoreTrend.length === 1
                                         ? `First Quiz Score: ${quizScoreTrend[0]}%`
@@ -553,9 +553,11 @@ export default function PerformanceReportPage() {
                                     ))}
                                 </View>
                             ) : (
-                                <Text className="mt-2 font-geist text-xs text-[#526071]">
-                                    No topics at 80% accuracy yet. Topics you master will appear here.
-                                </Text>
+                                <View className="mt-3 rounded-xl border border-emerald-200/80 bg-white/70 p-3">
+                                    <Text className="font-geist text-xs text-emerald-900 leading-relaxed">
+                                        No topics evaluated at 80% accuracy yet. Topics you master during practice quizzes will appear here.
+                                    </Text>
+                                </View>
                             )}
                         </View>
 
@@ -565,7 +567,7 @@ export default function PerformanceReportPage() {
                             style={{ borderCurve: 'continuous' }}
                         >
                             <View className="flex-row items-center gap-2">
-                                <IconTarget size={18} color="#D97706" strokeWidth={2.5} />
+                                <IconBulb size={18} color="#D97706" strokeWidth={2} />
                                 <Text className="font-geist-bold text-sm text-amber-950">
                                     Focus Areas (&lt;70%)
                                 </Text>
@@ -599,9 +601,11 @@ export default function PerformanceReportPage() {
                                     ))}
                                 </View>
                             ) : (
-                                <Text className="mt-2 font-geist text-xs text-[#526071]">
-                                    No evaluated topics are currently below 70%.
-                                </Text>
+                                <View className="mt-3 rounded-xl border border-amber-200/80 bg-white/70 p-3">
+                                    <Text className="font-geist text-xs text-amber-950 leading-relaxed">
+                                        No evaluated topics are currently below 70%. Keep up consistent practice to maintain strong accuracy.
+                                    </Text>
+                                </View>
                             )}
                         </View>
                     </View>

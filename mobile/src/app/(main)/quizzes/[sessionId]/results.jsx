@@ -259,8 +259,39 @@ export default function ResultsPage() {
                 {/* Question Breakdown List */}
                 <View className="gap-3">
                     {filteredAnswers.length === 0 ? (
-                        <View className="items-center justify-center rounded-2xl border border-dashed border-[#E4E8EE] bg-white p-8">
-                            <Text className="font-geist text-sm text-[#526071]">No questions in this filter.</Text>
+                        <View
+                            className="items-center justify-center rounded-2xl border border-[#E4E8EE] bg-white p-6 text-center"
+                            style={{ borderCurve: 'continuous' }}
+                        >
+                            {filter === 'incorrect' ? (
+                                <>
+                                    <View className="mb-2 h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200/80">
+                                        <IconCheck size={20} color="#059669" strokeWidth={2.5} />
+                                    </View>
+                                    <Text className="font-geist-bold text-sm text-[#001428]">
+                                        Perfect Score!
+                                    </Text>
+                                    <Text className="mt-0.5 text-center font-geist text-xs text-[#526071]">
+                                        You answered every question correctly in this session.
+                                    </Text>
+                                </>
+                            ) : filter === 'correct' ? (
+                                <>
+                                    <View className="mb-2 h-10 w-10 items-center justify-center rounded-xl bg-rose-50 border border-rose-200/80">
+                                        <IconX size={20} color="#E11D48" strokeWidth={2.5} />
+                                    </View>
+                                    <Text className="font-geist-bold text-sm text-[#001428]">
+                                        No Correct Answers
+                                    </Text>
+                                    <Text className="mt-0.5 text-center font-geist text-xs text-[#526071]">
+                                        Review the explanations below to improve on your next attempt.
+                                    </Text>
+                                </>
+                            ) : (
+                                <Text className="font-geist text-xs text-[#526071]">
+                                    No questions found in this filter.
+                                </Text>
+                            )}
                         </View>
                     ) : (
                         filteredAnswers.map((item, idx) => {
