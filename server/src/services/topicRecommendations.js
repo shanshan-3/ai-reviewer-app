@@ -25,7 +25,7 @@ export function generateTopicRecommendations(submittedAnswers = []) {
         subjectName: item.subjectName,
         accuracy: item.accuracy,
         sampleCount: item.sampleCount,
-        reason: `Your accuracy is ${item.accuracy}% over the latest ${item.sampleCount} questions. Focused practice is recommended to strengthen understanding.`,
+        reason: `Your accuracy is ${item.accuracy}% across ${item.sampleCount} questions. Practice this topic to strengthen your understanding.`,
         suggestedQuestionCount: 10,
         suggestedDifficulty: item.accuracy < 50 ? 'easy' : 'medium',
     }));

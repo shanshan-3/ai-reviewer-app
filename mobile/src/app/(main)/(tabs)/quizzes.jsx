@@ -7,6 +7,7 @@ import IconChevronRight from '@tabler/icons-react-native/IconChevronRight';
 import IconArrowRight from '@tabler/icons-react-native/IconArrowRight';
 import IconTrash from '@tabler/icons-react-native/IconTrash';
 import IconSparkles from '@tabler/icons-react-native/IconSparkles';
+import IconBulb from '@tabler/icons-react-native/IconBulb';
 import { deleteQuiz, listUserQuizzes } from '@/lib/quizzes';
 import { getTopicRecommendations } from '@/lib/progress';
 import { useToast } from '@/providers/toast-provider';
@@ -105,11 +106,11 @@ export default function QuizzesPage() {
                 {/* Header CTA */}
                 <View className="flex-row items-center justify-between">
                     <View className="min-w-0 flex-1 pr-3">
-                        <Text accessibilityRole="header" numberOfLines={1} className="font-geist-bold text-2xl tracking-tight text-[#001428]">
-                            Quizzes
+                        <Text accessibilityRole="header" numberOfLines={1} className="font-geist-bold text-lg tracking-tight text-[#001428]">
+                            Practice Tests
                         </Text>
                         <Text className="mt-0.5 font-geist text-xs text-[#526071]">
-                            Practice tests from your modules and curriculum topics
+                            Tests generated from your modules and topics
                         </Text>
                     </View>
                     <Pressable
@@ -274,44 +275,53 @@ export default function QuizzesPage() {
                             );
                         })()}
 
-                        {/* Weak-Topic Recommendation Card (Restored Layout with Refined Color Palette) */}
+                        {/* Weak-Topic Recommendation Capsule (Compact Inline Action) */}
                         {recommendations.length > 0 && (() => {
                             const topRec = recommendations[0];
                             return (
-                                <View
-                                    className="overflow-hidden rounded-3xl border border-[#001428]/15 bg-white p-5 shadow-sm gap-3"
-                                    style={{ borderCurve: 'continuous' }}
+                                <Pressable
+                                    accessibilityRole="button"
+                                    accessibilityLabel={`Practice recommended topic ${topRec.topicName}, ${topRec.accuracy}% accuracy`}
+                                    accessibilityHint="Opens quiz creator with this topic pre-selected"
+                                    onPress={() => router.push({
+                                        pathname: '/(main)/quizzes/create',
+                                        params: { sourceKind: 'topic', topicId: topRec.topicId },
+                                    })}
+                                    style={({ pressed }) => [
+                                        {
+                                            borderCurve: 'continuous',
+                                            transform: [{ scale: pressed ? 0.985 : 1 }],
+                                        },
+                                    ]}
+                                    className="overflow-hidden rounded-2xl border border-[#001428]/15 bg-white p-3.5 shadow-xs active:opacity-95"
                                 >
                                     <View className="flex-row items-center justify-between">
-                                        <Text className="font-geist-bold text-sm text-[#001428]">
-                                            {topRec.accuracy}% Accuracy <Text className="font-geist text-xs text-[#526071] font-normal">• {topRec.sampleCount} questions</Text>
-                                        </Text>
+                                        <View className="flex-row items-center gap-3 flex-1 pr-3">
+                                            <View
+                                                className="h-10 w-10 items-center justify-center rounded-xl bg-amber-50 border border-amber-200/80"
+                                                style={{ borderCurve: 'continuous' }}
+                                            >
+                                                <IconBulb size={20} color="#D97706" strokeWidth={2} />
+                                            </View>
+                                            <View className="flex-1">
+                                                <Text className="font-geist-semibold text-[11px] uppercase tracking-wider text-amber-800">
+                                                    Recommended Focus
+                                                </Text>
+                                                <Text numberOfLines={1} className="mt-0.5 font-geist-bold text-sm text-[#001428]">
+                                                    {topRec.topicName}
+                                                </Text>
+                                                <Text numberOfLines={1} className="mt-0.5 font-geist text-[11px] text-[#526071]">
+                                                    {topRec.accuracy}% accuracy • {topRec.sampleCount} questions
+                                                </Text>
+                                            </View>
+                                        </View>
+
+                                        <View className="flex-row items-center gap-1.5 rounded-full bg-[#001428] px-3.5 py-2 shadow-xs">
+                                            <Text className="font-geist-semibold text-xs text-white">Practice</Text>
+                                            <IconArrowRight size={13} color="white" />
+                                        </View>
                                     </View>
-
-
-                                    <View>
-                                        <Text numberOfLines={1} className="font-geist-bold text-base text-[#001428]">
-                                            {topRec.topicName}
-                                        </Text>
-                                        <Text numberOfLines={2} className="mt-1 font-geist text-xs leading-5 text-[#526071]">
-                                            {topRec.reason}
-                                        </Text>
-                                    </View>
-
-                                    <Pressable
-                                        accessibilityRole="button"
-                                        accessibilityLabel={`Practice recommended topic ${topRec.topicName}`}
-                                        onPress={() => router.push({
-                                            pathname: '/(main)/quizzes/create',
-                                            params: { sourceKind: 'topic', topicId: topRec.topicId },
-                                        })}
-                                        className="flex-row items-center justify-center gap-2 rounded-2xl bg-[#001428] py-3.5 shadow-sm active:scale-[0.98] active:opacity-90"
-                                        style={{ borderCurve: 'continuous' }}
-                                    >
-                                        <Text className="font-geist-semibold text-xs text-white">Practice This Topic</Text>
-                                        <IconArrowRight size={16} color="white" />
-                                    </Pressable>
-                                </View>
+                                </Pressable>
                             );
                         })()}
 
