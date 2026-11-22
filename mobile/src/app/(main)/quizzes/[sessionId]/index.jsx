@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, BackHandler, Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import IconArrowLeft from '@tabler/icons-react-native/IconArrowLeft';
 import IconCheck from '@tabler/icons-react-native/IconCheck';
@@ -11,6 +11,8 @@ import { getStudySession, submitStudyAnswer } from '@/lib/quizzes';
 export default function AnsweringPage() {
     const { sessionId } = useLocalSearchParams();
     const router = useRouter();
+    const insets = useSafeAreaInsets();
+    const bottomInset = Math.max(16, insets.bottom + 8);
 
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -115,7 +117,7 @@ export default function AnsweringPage() {
     const progressPercent = Math.min(100, Math.round((((session?.answeredCount ?? session?.answered_count ?? 0)) / totalCount) * 100));
 
     return (
-        <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right', 'bottom']}>
+        <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
             {/* Header */}
             <View className="border-b border-[#E4E8EE] bg-white px-4 py-3">
                 <View className="flex-row items-center justify-between">
@@ -145,7 +147,7 @@ export default function AnsweringPage() {
             </View>
 
             {/* Question Body */}
-            <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 110 }}>
+            <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 90 + bottomInset }}>
                 {error && (
                     <View
                         className="mb-4 rounded-2xl border border-[#DC2626] bg-white p-4 shadow-sm"
@@ -167,7 +169,10 @@ export default function AnsweringPage() {
             </ScrollView>
 
             {/* Bottom Action Bar */}
-            <View className="absolute bottom-0 left-0 right-0 border-t border-[#E4E8EE] bg-white px-5 py-4">
+            <View
+                style={{ paddingBottom: bottomInset }}
+                className="absolute bottom-0 left-0 right-0 border-t border-[#E4E8EE] bg-white px-5 pt-3.5"
+            >
                 <Pressable
                     disabled={!selectedOptionId || submitting}
                     accessibilityRole="button"
