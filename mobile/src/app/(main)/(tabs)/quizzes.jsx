@@ -364,7 +364,23 @@ export default function QuizzesPage() {
                                     </Pressable>
                                 </View>
                             ) : completedItems.length === 0 ? (
-                                <Text className="font-geist text-sm text-[#526071]">No completed quizzes yet.</Text>
+                                <View
+                                    className="items-center justify-center rounded-2xl border border-[#E4E8EE] bg-white p-5 text-center shadow-2xs"
+                                    style={{ borderCurve: 'continuous' }}
+                                >
+                                    <View
+                                        className="mb-2 h-10 w-10 items-center justify-center rounded-xl bg-[#F1F4F8]"
+                                        style={{ borderCurve: 'continuous' }}
+                                    >
+                                        <IconSparkles size={18} color="#001428" />
+                                    </View>
+                                    <Text className="font-geist-bold text-sm text-[#001428]">
+                                        No Completed Quizzes Yet
+                                    </Text>
+                                    <Text className="mt-1 text-center font-geist text-xs text-[#526071] max-w-xs leading-5">
+                                        Finish your in-progress quiz above to see your score, accuracy rate, and question review here.
+                                    </Text>
+                                </View>
                             ) : (
                                 completedItems.map(item => {
                                     const percent = Math.round((item.session.correctCount / item.questionCount) * 100);
