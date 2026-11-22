@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import IconChartBar from '@tabler/icons-react-native/IconChartBar';
-import IconChevronRight from '@tabler/icons-react-native/IconChevronRight';
+import IconChevronDown from '@tabler/icons-react-native/IconChevronDown';
+import IconChevronUp from '@tabler/icons-react-native/IconChevronUp';
 import IconCircleCheck from '@tabler/icons-react-native/IconCircleCheck';
 
 /**
@@ -14,16 +15,17 @@ export default function TopicEstimatesCard({
     limit = 5,
     onViewAllPress,
 }) {
+    const [expanded, setExpanded] = useState(false);
+
     const displayList = useMemo(() => {
         if (!estimates) return [];
+        if (expanded) return estimates;
         return limit ? estimates.slice(0, limit) : estimates;
-    }, [estimates, limit]);
+    }, [estimates, limit, expanded]);
 
     const masteredCount = useMemo(() => {
         return estimates.filter(e => e.eligible && e.accuracy >= 80).length;
     }, [estimates]);
-
-    const hasMore = estimates.length > displayList.length;
 
     if (loading) {
         return (
@@ -103,12 +105,12 @@ export default function TopicEstimatesCard({
                     </View>
                 </View>
 
-                {onViewAllPress && (
+                {estimates.length > limit && (
                     <Pressable
                         accessibilityRole="button"
-                        accessibilityLabel="View full topic report"
-                        onPress={onViewAllPress}
-                        className="flex-row items-center gap-0.5 rounded-full bg-[#F1F4F8] px-2.5 py-1"
+                        accessibilityLabel={expanded ? 'Show fewer topics' : 'View all topics'}
+                        onPress={onViewAllPress || (() => setExpanded(prev => !prev))}
+                        className="flex-row items-center gap-1 rounded-full bg-[#F1F4F8] px-2.5 py-1"
                         style={({ pressed }) => [
                             {
                                 borderCurve: 'continuous',
@@ -118,9 +120,13 @@ export default function TopicEstimatesCard({
                         ]}
                     >
                         <Text className="font-geist-semibold text-[11px] text-[#001428]">
-                            {hasMore ? `All (${estimates.length})` : 'See All'}
+                            {expanded ? 'Show Less' : `All (${estimates.length})`}
                         </Text>
-                        <IconChevronRight size={12} color="#001428" strokeWidth={2.5} />
+                        {expanded ? (
+                            <IconChevronUp size={12} color="#001428" strokeWidth={2.5} />
+                        ) : (
+                            <IconChevronDown size={12} color="#001428" strokeWidth={2.5} />
+                        )}
                     </Pressable>
                 )}
             </View>
