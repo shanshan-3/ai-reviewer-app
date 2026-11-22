@@ -1,7 +1,7 @@
 import Groq from 'groq-sdk';
 
 export const AI_LIMITS = Object.freeze({
-    model: 'openai/gpt-oss-120b', promptBytes: 3072, completionTokens: 8192,
+    model: 'openai/gpt-oss-120b', promptBytes: 32768, completionTokens: 8192,
     timeoutMs: 60000, cooldownMs: 15000, sourceSections: 200,
 });
 
@@ -23,7 +23,7 @@ export function createGroqClient() {
 }
 
 export const GEMINI_CONFIG = Object.freeze({
-    model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+    model: process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite',
     timeoutMs: 45000,
     endpoint: 'https://generativelanguage.googleapis.com/v1beta/models',
 });
