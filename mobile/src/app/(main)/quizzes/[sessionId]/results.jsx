@@ -9,6 +9,7 @@ import IconChevronDown from '@tabler/icons-react-native/IconChevronDown';
 import IconChevronUp from '@tabler/icons-react-native/IconChevronUp';
 import IconSparkles from '@tabler/icons-react-native/IconSparkles';
 import IconFlame from '@tabler/icons-react-native/IconFlame';
+import IconRotate from '@tabler/icons-react-native/IconRotate';
 import { getStudySessionResults } from '@/lib/quizzes';
 
 import { THEME } from '@/lib/theme';
@@ -105,20 +106,38 @@ export default function ResultsPage() {
     });
 
     return (
-        <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
+        <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right', 'bottom']}>
             {/* Header */}
-            <View className="flex-row items-center border-b border-[#E4E8EE] bg-white px-4 py-3">
+            <View className="flex-row items-center justify-between border-b border-[#E4E8EE] bg-white px-4 py-3">
+                <View className="flex-row items-center">
+                    <Pressable
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel="Return to Dashboard"
+                        onPress={() => router.replace('/(main)/(tabs)/dashboard')}
+                        style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.95 : 1 }] }]}
+                        className="mr-3 h-10 w-10 items-center justify-center rounded-full active:bg-[#F1F4F8]"
+                    >
+                        <IconArrowLeft size={22} color="#001428" />
+                    </Pressable>
+                    <Text className="font-geist-semibold text-lg tracking-tight text-[#001428]">Quiz Results</Text>
+                </View>
+
                 <Pressable
-                    hitSlop={8}
                     accessibilityRole="button"
-                    accessibilityLabel="Return to Dashboard"
-                    onPress={() => router.replace('/(main)/(tabs)/dashboard')}
-                    style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.95 : 1 }] }]}
-                    className="mr-3 h-10 w-10 items-center justify-center rounded-full active:bg-[#F1F4F8]"
+                    accessibilityLabel="Practice Another Quiz"
+                    onPress={() => router.replace('/(main)/quizzes/create')}
+                    className="flex-row items-center gap-1.5 rounded-full bg-[#001428] px-3.5 py-1.5 active:opacity-90"
+                    style={({ pressed }) => [
+                        {
+                            borderCurve: 'continuous',
+                            transform: [{ scale: pressed ? 0.96 : 1 }],
+                        },
+                    ]}
                 >
-                    <IconArrowLeft size={22} color="#001428" />
+                    <IconRotate size={13} color="#FFFFFF" strokeWidth={2.4} />
+                    <Text className="font-geist-semibold text-xs text-white">New Quiz</Text>
                 </Pressable>
-                <Text className="font-geist-semibold text-lg tracking-tight text-[#001428]">Quiz Results</Text>
             </View>
 
             <ScrollView contentContainerStyle={{ padding: 20, gap: 20, paddingBottom: 60 }}>
@@ -171,6 +190,41 @@ export default function ResultsPage() {
                                 This quiz session qualifies toward your daily study streak.
                             </Text>
                         </View>
+                    </View>
+
+                    {/* Quick Exit & Re-test Actions */}
+                    <View className="mt-5 flex-row gap-2.5 border-t border-[#F1F3F6] pt-4">
+                        <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Practice Another Quiz"
+                            onPress={() => router.replace('/(main)/quizzes/create')}
+                            className="flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl bg-[#001428] py-3 active:opacity-90"
+                            style={({ pressed }) => [
+                                {
+                                    borderCurve: 'continuous',
+                                    transform: [{ scale: pressed ? 0.98 : 1 }],
+                                },
+                            ]}
+                        >
+                            <IconRotate size={15} color="#FFFFFF" strokeWidth={2.2} />
+                            <Text className="font-geist-semibold text-xs text-white">Practice Another</Text>
+                        </Pressable>
+
+                        <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Back to Dashboard"
+                            onPress={() => router.replace('/(main)/(tabs)/dashboard')}
+                            className="flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl border border-[#E4E8EE] bg-[#F8FAFC] py-3 active:bg-[#F1F4F8]"
+                            style={({ pressed }) => [
+                                {
+                                    borderCurve: 'continuous',
+                                    transform: [{ scale: pressed ? 0.98 : 1 }],
+                                },
+                            ]}
+                        >
+                            <IconArrowLeft size={15} color="#001428" strokeWidth={2.2} />
+                            <Text className="font-geist-semibold text-xs text-[#001428]">Dashboard</Text>
+                        </Pressable>
                     </View>
                 </View>
 
