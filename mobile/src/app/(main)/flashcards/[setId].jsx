@@ -13,7 +13,7 @@ import Animated, {
     withTiming,
 } from 'react-native-reanimated';
 import IconRotate from '@tabler/icons-react-native/IconRotate';
-import IconSparkles from '@tabler/icons-react-native/IconSparkles';
+import IconFlame from '@tabler/icons-react-native/IconFlame';
 import IconCheck from '@tabler/icons-react-native/IconCheck';
 import IconChevronLeft from '@tabler/icons-react-native/IconChevronLeft';
 import IconChevronRight from '@tabler/icons-react-native/IconChevronRight';
@@ -274,16 +274,16 @@ export default function FlashcardStudyPage() {
 
     if (loading) {
         return (
-            <SafeAreaView className="flex-1 bg-[#F8F9FB] items-center justify-center gap-3">
+            <SafeAreaView className="flex-1 bg-background items-center justify-center gap-3">
                 <ActivityIndicator size="small" color="#001428" />
-                <Text className="font-geist text-xs text-[#64748B]">Loading...</Text>
+                <Text className="font-geist text-xs text-[#526071]">Loading...</Text>
             </SafeAreaView>
         );
     }
 
     if (error || !deck) {
         return (
-            <SafeAreaView className="flex-1 bg-[#F8F9FB] p-6 items-center justify-center gap-4">
+            <SafeAreaView className="flex-1 bg-background p-6 items-center justify-center gap-4">
                 <Text className="font-geist-bold text-base text-[#001428]">
                     {error || 'Deck not found'}
                 </Text>
@@ -305,7 +305,7 @@ export default function FlashcardStudyPage() {
     // Completion View
     if (isCompleted) {
         return (
-            <SafeAreaView className="flex-1 bg-[#F8F9FB]" edges={['top', 'left', 'right']}>
+            <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right', 'bottom']}>
                 {/* Header */}
                 <View className="flex-row items-center border-b border-[#F1F3F6] bg-white px-5 py-3.5">
                     <Pressable
@@ -336,54 +336,49 @@ export default function FlashcardStudyPage() {
                         <Text className="font-geist-bold text-2xl text-[#001428] tracking-tight">
                             Deck Complete
                         </Text>
-                        <Text className="text-center font-geist text-xs text-[#64748B] max-w-xs">
+                        <Text className="text-center font-geist text-xs text-[#526071] max-w-xs">
                             {`${totalCards} terms reviewed in "${deck.title}".`}
                         </Text>
                     </View>
 
-                    {/* Streak Status Card */}
-                    <View
-                        className="w-full rounded-2xl border border-[#E5E9F0] bg-white p-4 gap-2"
-                        style={{ borderCurve: 'continuous' }}
-                    >
-                        <View className="flex-row items-center justify-between">
-                            <View className="flex-row items-center gap-2">
-                                <IconSparkles size={16} color="#001428" />
-                                <Text className="font-geist-bold text-xs uppercase tracking-wider text-[#001428]">
-                                    Study Streak
-                                </Text>
+                    {/* Streak Milestone Pill */}
+                    {allBacksViewed ? (
+                        <View
+                            className="w-full flex-row items-center gap-2.5 rounded-2xl border border-amber-200 bg-amber-50/70 p-3.5"
+                            style={{ borderCurve: 'continuous' }}
+                        >
+                            <View className="h-8 w-8 items-center justify-center rounded-xl bg-amber-100/90">
+                                <IconFlame size={18} color="#D97706" fill="#FDE68A" strokeWidth={2} />
                             </View>
-                            <View
-                                className={`rounded-full px-2 py-0.5 ${
-                                    allBacksViewed ? 'bg-emerald-50 border border-emerald-100' : 'bg-amber-50 border border-amber-100'
-                                }`}
-                                style={{ borderCurve: 'continuous' }}
-                            >
-                                <Text
-                                    className={`font-geist-semibold text-[10px] ${
-                                        allBacksViewed ? 'text-emerald-800' : 'text-amber-800'
-                                    }`}
-                                >
-                                    {allBacksViewed ? 'Recorded' : 'Incomplete'}
+                            <View className="flex-1">
+                                <Text className="font-geist-semibold text-xs text-amber-900">
+                                    Daily Study Goal Completed
+                                </Text>
+                                <Text className="font-geist text-[11px] text-amber-800/85">
+                                    {recordingReview
+                                        ? 'Saving streak progress…'
+                                        : 'This flashcard study session qualifies toward your daily study streak.'}
                                 </Text>
                             </View>
                         </View>
-
-                        {recordingReview ? (
-                            <View className="flex-row items-center gap-2 py-1">
-                                <ActivityIndicator size="small" color="#001428" />
-                                <Text className="font-geist text-xs text-[#64748B]">Recording streak...</Text>
+                    ) : (
+                        <View
+                            className="w-full flex-row items-center gap-2.5 rounded-2xl border border-[#E5E9F0] bg-white p-3.5"
+                            style={{ borderCurve: 'continuous' }}
+                        >
+                            <View className="h-8 w-8 items-center justify-center rounded-xl bg-[#F1F4F8]">
+                                <IconFlame size={18} color="#526071" strokeWidth={2} />
                             </View>
-                        ) : allBacksViewed ? (
-                            <Text className="font-geist text-xs text-emerald-800">
-                                {"Today's study streak has been recorded."}
-                            </Text>
-                        ) : (
-                            <Text className="font-geist text-xs text-amber-800">
-                                Review all card backs to record your streak ({viewedBacks.size}/{totalCards}).
-                            </Text>
-                        )}
-                    </View>
+                            <View className="flex-1">
+                                <Text className="font-geist-semibold text-xs text-[#001428]">
+                                    Study Streak Incomplete
+                                </Text>
+                                <Text className="font-geist text-[11px] text-[#526071]">
+                                    {`Review all card backs to qualify for today's streak (${viewedBacks.size}/${totalCards} cards viewed).`}
+                                </Text>
+                            </View>
+                        </View>
+                    )}
 
                     {/* Actions */}
                     <View className="w-full gap-3 mt-4">
@@ -426,7 +421,7 @@ export default function FlashcardStudyPage() {
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-[#F8F9FB]" edges={['top', 'left', 'right']}>
+        <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right', 'bottom']}>
             {/* Header */}
             <View className="flex-row items-center justify-between border-b border-[#F1F3F6] bg-white px-5 py-3">
                 <Pressable
@@ -451,7 +446,7 @@ export default function FlashcardStudyPage() {
                     </Text>
                     <Text
                         style={{ fontVariant: ['tabular-nums'] }}
-                        className="font-geist text-[11px] text-[#64748B] mt-0.5"
+                        className="font-geist text-[11px] text-[#526071] mt-0.5"
                     >
                         {currentIndex + 1} of {totalCards}
                     </Text>
@@ -504,7 +499,7 @@ export default function FlashcardStudyPage() {
                                     className="rounded-full bg-[#F1F4F8] px-2.5 py-0.5"
                                     style={{ borderCurve: 'continuous' }}
                                 >
-                                    <Text className="font-geist-bold text-[10px] uppercase tracking-wider text-[#64748B]">
+                                    <Text className="font-geist-bold text-[10px] uppercase tracking-wider text-[#526071]">
                                         Term
                                     </Text>
                                 </View>
@@ -526,8 +521,8 @@ export default function FlashcardStudyPage() {
                             {/* Bottom Flip Cue */}
                             <View className="items-center border-t border-[#F1F3F6] pt-3">
                                 <View className="flex-row items-center gap-1.5 rounded-full bg-[#F1F4F8] px-3.5 py-1.5">
-                                    <IconRotate size={12} color="#64748B" strokeWidth={2} />
-                                    <Text className="font-geist-medium text-[11px] text-[#64748B]">
+                                    <IconRotate size={12} color="#526071" strokeWidth={2} />
+                                    <Text className="font-geist-medium text-[11px] text-[#526071]">
                                         Tap card to flip
                                     </Text>
                                 </View>
@@ -569,14 +564,14 @@ export default function FlashcardStudyPage() {
                                             style={{ borderCurve: 'continuous' }}
                                         >
                                             <View className="flex-row items-center gap-1.5">
-                                                <IconBook size={12} color="#64748B" strokeWidth={2} />
-                                                <Text className="font-geist-semibold text-[9px] uppercase tracking-wider text-[#64748B]">
+                                                <IconBook size={12} color="#526071" strokeWidth={2} />
+                                                <Text className="font-geist-semibold text-[9px] uppercase tracking-wider text-[#526071]">
                                                     Source
                                                 </Text>
                                             </View>
                                             <Text
                                                 numberOfLines={3}
-                                                className="font-geist text-xs italic text-[#64748B] leading-snug"
+                                                className="font-geist text-xs italic text-[#526071] leading-snug"
                                             >
                                                 {`"${currentCard.sourceExcerpt}"`}
                                             </Text>
@@ -588,8 +583,8 @@ export default function FlashcardStudyPage() {
                             {/* Bottom Flip Cue */}
                             <View className="items-center border-t border-[#F1F3F6] pt-3">
                                 <View className="flex-row items-center gap-1.5 rounded-full bg-[#F1F4F8] px-3.5 py-1.5">
-                                    <IconRotate size={12} color="#64748B" strokeWidth={2} />
-                                    <Text className="font-geist-medium text-[11px] text-[#64748B]">
+                                    <IconRotate size={12} color="#526071" strokeWidth={2} />
+                                    <Text className="font-geist-medium text-[11px] text-[#526071]">
                                         Tap card to flip
                                     </Text>
                                 </View>
@@ -642,7 +637,7 @@ export default function FlashcardStudyPage() {
                     />
                     <Text
                         className={`font-geist-semibold text-xs ${
-                            viewedBacks.has(currentIndex) ? 'text-emerald-800' : 'text-[#64748B]'
+                            viewedBacks.has(currentIndex) ? 'text-emerald-800' : 'text-[#526071]'
                         }`}
                     >
                         {viewedBacks.has(currentIndex) ? 'Reviewed' : 'Reviewing'}
