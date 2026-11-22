@@ -19,8 +19,8 @@ export default function CreateQuizPage() {
 
     // Options state
     const [questionType, setQuestionType] = useState('conceptual');
-    const [questionCount, setQuestionCount] = useState(10);
-    const [startingDifficulty, setStartingDifficulty] = useState('medium');
+    const [questionCount, setQuestionCount] = useState(params.questionCount ? Number(params.questionCount) : 5);
+    const [startingDifficulty, setStartingDifficulty] = useState(params.startingDifficulty || 'easy');
 
     // Data state
     const [materials, setMaterials] = useState([]);
