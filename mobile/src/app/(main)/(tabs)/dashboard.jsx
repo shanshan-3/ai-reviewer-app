@@ -7,7 +7,7 @@ import AuthMessage from '@/components/AuthMessage';
 import MaterialCard from '@/components/material-card';
 import { deleteMaterial, listMaterials } from '@/lib/materials';
 import { listUserQuizzes } from '@/lib/quizzes';
-import { getTopicRecommendations, getUserStreak } from '@/lib/progress';
+import { getUserStreak } from '@/lib/progress';
 import { getCurrentWeekDays, getDeviceTimeZone } from '@/lib/study-date';
 import { useSession } from '@/providers/session-provider';
 
@@ -17,7 +17,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import IconUpload from '@tabler/icons-react-native/IconUpload';
 import IconSparkles from '@tabler/icons-react-native/IconSparkles';
 import IconFileText from '@tabler/icons-react-native/IconFileText';
-import IconPlus from '@tabler/icons-react-native/IconPlus';
 import IconArrowRight from '@tabler/icons-react-native/IconArrowRight';
 import IconFlame from '@tabler/icons-react-native/IconFlame';
 import { THEME } from '@/lib/theme';
@@ -29,7 +28,6 @@ export default function DashboardPage() {
     const [materials, setMaterials] = useState([]);
     const [activeQuiz, setActiveQuiz] = useState(null);
     const [quizCount, setQuizCount] = useState(0);
-    const [recommendations, setRecommendations] = useState([]);
     const [streak, setStreak] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -65,12 +63,6 @@ export default function DashboardPage() {
                 })
                 .catch(() => {});
 
-            // Load weak-topic recommendations
-            getTopicRecommendations()
-                .then(res => {
-                    setRecommendations(res.recommendations ?? []);
-                })
-                .catch(() => {});
 
             // Load study streak
             getUserStreak()
@@ -418,47 +410,6 @@ export default function DashboardPage() {
                         </Pressable>
                     </View>
 
-                    {/* Weak-Topic Recommendation Card (Restored Layout with Refined Color Palette) */}
-                    {recommendations.length > 0 && (() => {
-                        const topRec = recommendations[0];
-                        return (
-                            <View
-                                className="overflow-hidden rounded-3xl border border-[#001428]/15 bg-white p-5 shadow-sm gap-3"
-                                style={{ borderCurve: 'continuous' }}
-                            >
-                                <View className="flex-row items-center justify-between">
-                                    <Text className="font-geist-bold text-sm text-[#001428]">
-                                        {topRec.accuracy}% Accuracy <Text className="font-geist text-xs text-[#526071] font-normal">• {topRec.sampleCount} questions</Text>
-                                    </Text>
-                                </View>
-
-
-                                <View>
-                                    <Text numberOfLines={1} className="font-geist-bold text-base text-[#001428]">
-                                        {topRec.topicName}
-                                    </Text>
-                                    <Text numberOfLines={2} className="mt-1 font-geist text-xs leading-5 text-[#526071]">
-                                        {topRec.reason}
-                                    </Text>
-                                </View>
-
-                                <Pressable
-                                    accessibilityRole="button"
-                                    accessibilityLabel={`Practice recommended topic ${topRec.topicName}`}
-                                    onPress={() => router.push({
-                                        pathname: '/(main)/quizzes/create',
-                                        params: { sourceKind: 'topic', topicId: topRec.topicId },
-                                    })}
-                                    className="flex-row items-center justify-center gap-2 rounded-2xl bg-[#001428] py-3.5 shadow-sm active:scale-[0.98] active:opacity-90"
-                                    style={{ borderCurve: 'continuous' }}
-                                >
-                                    <Text className="font-geist-semibold text-xs text-white">Practice This Topic</Text>
-                                    <IconArrowRight size={16} color="white" />
-                                </Pressable>
-                            </View>
-                        );
-                    })()}
-
                     {/* Modules Section Header */}
                     <View className="pt-2">
                         <Text accessibilityRole="header" className="font-geist-bold text-2xl tracking-tight text-[#001428]">
@@ -472,28 +423,42 @@ export default function DashboardPage() {
                 </View>}
                 ListEmptyComponent={!loading && !message ? (
                     <View
-                        className="items-center justify-center rounded-3xl border border-[#E4E8EE] bg-white p-8 text-center shadow-sm"
+                        className="items-center justify-center rounded-3xl border border-[#E4E8EE] bg-white p-7 text-center shadow-sm"
                         style={{ borderCurve: 'continuous' }}
                     >
-                        <View className="mb-4 h-16 w-16 items-center justify-center rounded-2xl bg-[#F1F4F8]">
-                            <IconFileText size={32} color="#001428" />
+                        <View className="mb-3.5 h-14 w-14 items-center justify-center rounded-2xl bg-[#F1F4F8]">
+                            <IconFileText size={28} color="#001428" />
                         </View>
-                        <Text className="font-geist-bold text-xl text-[#001428]">
+                        <Text className="font-geist-bold text-lg text-[#001428]">
                             No modules yet
                         </Text>
-                        <Text className="mt-2 max-w-xs text-center font-geist text-xs leading-5 text-[#526071]">
-                            Upload lecture notes in PDF or DOCX format to generate practice quizzes.
+                        <Text className="mt-1.5 max-w-xs text-center font-geist text-xs leading-5 text-[#526071]">
+                            Upload lecture notes (PDF or DOCX) to study your course materials, or jump right in with pre-loaded curriculum topics.
                         </Text>
-                        <Pressable
-                            accessibilityRole="button"
-                            accessibilityLabel="Upload your first module"
-                            onPress={() => router.push('/(main)/materials/import')}
-                            className="mt-5 flex-row items-center gap-2 rounded-2xl bg-[#001428] px-5 py-3 shadow-sm active:scale-[0.98] active:opacity-90"
-                            style={{ borderCurve: 'continuous' }}
-                        >
-                            <IconPlus size={18} color="white" />
-                            <Text className="font-geist-semibold text-xs text-white">Upload First Module</Text>
-                        </Pressable>
+                        <View className="mt-5 w-full max-w-xs gap-2.5">
+                            <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel="Upload your first module"
+                                accessibilityHint="Navigate to upload lecture notes in PDF or DOCX format"
+                                onPress={() => router.push('/(main)/materials/import')}
+                                className="flex-row items-center justify-center gap-2 rounded-2xl bg-[#001428] py-3.5 shadow-sm active:scale-[0.98] active:opacity-90"
+                                style={{ borderCurve: 'continuous' }}
+                            >
+                                <IconUpload size={16} color="white" />
+                                <Text className="font-geist-semibold text-xs text-white">Upload First Module</Text>
+                            </Pressable>
+                            <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel="Practice curriculum topics"
+                                accessibilityHint="Start a practice quiz immediately using pre-loaded curriculum topics"
+                                onPress={() => router.push('/(main)/quizzes/create')}
+                                className="flex-row items-center justify-center gap-2 rounded-2xl border border-[#E4E8EE] bg-white py-3 active:scale-[0.98] active:bg-[#F8FAFC]"
+                                style={{ borderCurve: 'continuous' }}
+                            >
+                                <IconSparkles size={16} color="#001428" />
+                                <Text className="font-geist-semibold text-xs text-[#001428]">Practice Curriculum Topics</Text>
+                            </Pressable>
+                        </View>
                     </View>
                 ) : null}
                 ListFooterComponent={<View className="gap-2">
