@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { router } from 'expo-router';
 import IconFileText from '@tabler/icons-react-native/IconFileText';
 import IconBook from '@tabler/icons-react-native/IconBook';
 import IconCheck from '@tabler/icons-react-native/IconCheck';
 import IconChevronDown from '@tabler/icons-react-native/IconChevronDown';
 import IconSearch from '@tabler/icons-react-native/IconSearch';
 import IconX from '@tabler/icons-react-native/IconX';
+import IconUpload from '@tabler/icons-react-native/IconUpload';
+import IconSparkles from '@tabler/icons-react-native/IconSparkles';
 import { filterCurriculum } from '@/lib/curriculum';
 import { createMaterialLabel, getMaterialLabels } from '@/lib/materials';
 
@@ -146,10 +149,60 @@ export default function SourcePicker({
                             <ActivityIndicator color="#001428" />
                         </View>
                     ) : readyMaterials.length === 0 ? (
-                        <View className="rounded-2xl border border-dashed border-[#E4E8EE] bg-white p-4">
-                            <Text className="font-geist text-sm leading-5 text-[#526071]">
-                                No approved modules available. Import a module first, or choose IT Topic above.
-                            </Text>
+                        <View
+                            className="rounded-2xl border border-[#E4E8EE] bg-white p-4 shadow-2xs"
+                            style={{ borderCurve: 'continuous' }}
+                        >
+                            <View className="flex-row items-start gap-3">
+                                <View
+                                    className="h-10 w-10 items-center justify-center rounded-xl bg-[#F1F4F8]"
+                                    style={{ borderCurve: 'continuous' }}
+                                >
+                                    <IconFileText size={20} color="#001428" />
+                                </View>
+                                <View className="flex-1 pr-1">
+                                    <Text className="font-geist-bold text-sm text-[#001428]">
+                                        No Approved Modules Yet
+                                    </Text>
+                                    <Text className="mt-1 font-geist text-xs leading-5 text-[#526071]">
+                                        Upload lecture notes in PDF or DOCX format, or switch to curriculum topics right now.
+                                    </Text>
+                                </View>
+                            </View>
+
+                            <View className="mt-3.5 flex-row gap-2.5">
+                                <Pressable
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Upload module notes"
+                                    onPress={() => router.push('/(main)/materials/import')}
+                                    className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl bg-[#001428] py-2.5 active:opacity-90"
+                                    style={({ pressed }) => [
+                                        {
+                                            borderCurve: 'continuous',
+                                            transform: [{ scale: pressed ? 0.98 : 1 }],
+                                        },
+                                    ]}
+                                >
+                                    <IconUpload size={14} color="#FFFFFF" strokeWidth={2.2} />
+                                    <Text className="font-geist-semibold text-xs text-white">Upload Module</Text>
+                                </Pressable>
+
+                                <Pressable
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Switch to IT Topics"
+                                    onPress={() => onSelectKind('topic')}
+                                    className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl border border-[#E4E8EE] bg-[#F8FAFC] py-2.5 active:bg-[#F1F4F8]"
+                                    style={({ pressed }) => [
+                                        {
+                                            borderCurve: 'continuous',
+                                            transform: [{ scale: pressed ? 0.98 : 1 }],
+                                        },
+                                    ]}
+                                >
+                                    <IconSparkles size={14} color="#001428" strokeWidth={2} />
+                                    <Text className="font-geist-semibold text-xs text-[#001428]">Use IT Topics</Text>
+                                </Pressable>
+                            </View>
                         </View>
                     ) : (
                         <Pressable
