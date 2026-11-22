@@ -333,7 +333,7 @@ export default function PerformanceReportPage() {
                         >
                             <View className="w-1/2 p-3">
                                 <View className="flex-row items-center gap-1.5">
-                                    <IconBooks size={14} color="#64748B" />
+                                    <IconBooks size={14} color="#526071" />
                                     <Text className="font-geist text-[11px] text-[#526071]">Quizzes Taken</Text>
                                 </View>
                                 <Text
@@ -346,7 +346,7 @@ export default function PerformanceReportPage() {
 
                             <View className="w-1/2 p-3">
                                 <View className="flex-row items-center gap-1.5">
-                                    <IconCards size={14} color="#64748B" />
+                                    <IconCards size={14} color="#526071" />
                                     <Text className="font-geist text-[11px] text-[#526071]">Flashcard Reviews</Text>
                                 </View>
                                 <Text
@@ -372,7 +372,7 @@ export default function PerformanceReportPage() {
 
                             <View className="w-1/2 p-3">
                                 <View className="flex-row items-center gap-1.5">
-                                    <IconAward size={14} color="#64748B" />
+                                    <IconAward size={14} color="#526071" />
                                     <Text className="font-geist text-[11px] text-[#526071]">Best Streak</Text>
                                 </View>
                                 <Text

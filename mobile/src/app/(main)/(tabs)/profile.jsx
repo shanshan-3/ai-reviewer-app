@@ -196,7 +196,7 @@ export default function ProfilePage() {
     const appVersion = Constants.expoConfig?.version || '1.0.0';
 
     return (
-        <SafeAreaView className="flex-1 bg-[#F8F9FB]" edges={['left', 'right']}>
+        <SafeAreaView className="flex-1 bg-background" edges={['left', 'right']}>
             <ScrollView
                 contentContainerStyle={{ padding: 18, gap: 16, paddingBottom: 110 }}
                 showsVerticalScrollIndicator={false}
@@ -255,7 +255,7 @@ export default function ProfilePage() {
                             <Text numberOfLines={1} className="font-geist-bold text-lg tracking-tight text-[#001428]">
                                 {displayName}
                             </Text>
-                            <Text numberOfLines={1} className="font-geist text-xs text-[#64748B]">
+                            <Text numberOfLines={1} className="font-geist text-xs text-[#526071]">
                                 {email}
                             </Text>
                         </View>
@@ -265,7 +265,7 @@ export default function ProfilePage() {
                     {!isEmpty && (
                         <View className="mt-4 pt-4 border-t border-[#F1F4F8]">
                             <View className="flex-row items-center justify-between mb-2">
-                                <Text className="font-geist-semibold text-xs uppercase tracking-wider text-[#64748B]">
+                                <Text className="font-geist-semibold text-xs uppercase tracking-wider text-[#526071]">
                                     Exam Readiness Score
                                 </Text>
                                 <View
@@ -285,7 +285,7 @@ export default function ProfilePage() {
                                 >
                                     {accuracy}%
                                 </Text>
-                                <Text className="font-geist text-xs text-[#64748B]">
+                                <Text className="font-geist text-xs text-[#526071]">
                                     cumulative accuracy
                                 </Text>
                             </View>
@@ -297,7 +297,7 @@ export default function ProfilePage() {
                                     style={{ width: `${Math.min(100, Math.max(4, accuracy))}%` }}
                                 />
                             </View>
-                            <Text className="mt-2 font-geist text-[11px] text-[#64748B] leading-4">
+                            <Text className="mt-2 font-geist text-[11px] text-[#526071] leading-4">
                                 {readinessInfo.desc}
                             </Text>
                         </View>
@@ -313,7 +313,7 @@ export default function ProfilePage() {
                                 >
                                     {totalAnswers}
                                 </Text>
-                                <Text className="font-geist text-[10px] text-[#64748B] uppercase tracking-wider">
+                                <Text className="font-geist text-[10px] text-[#526071] uppercase tracking-wider">
                                     Solved
                                 </Text>
                             </View>
@@ -325,7 +325,7 @@ export default function ProfilePage() {
                                 >
                                     {quizzesDone}
                                 </Text>
-                                <Text className="font-geist text-[10px] text-[#64748B] uppercase tracking-wider">
+                                <Text className="font-geist text-[10px] text-[#526071] uppercase tracking-wider">
                                     Quizzes
                                 </Text>
                             </View>
@@ -340,7 +340,7 @@ export default function ProfilePage() {
                                         {flashcardReviews}
                                     </Text>
                                 </View>
-                                <Text className="font-geist text-[10px] text-[#64748B] uppercase tracking-wider">
+                                <Text className="font-geist text-[10px] text-[#526071] uppercase tracking-wider">
                                     Cards
                                 </Text>
                             </View>
@@ -360,7 +360,7 @@ export default function ProfilePage() {
                                         {currentStreak}d
                                     </Text>
                                 </View>
-                                <Text className="font-geist text-[10px] text-[#64748B] uppercase tracking-wider">
+                                <Text className="font-geist text-[10px] text-[#526071] uppercase tracking-wider">
                                     Streak
                                 </Text>
                                 {longestStreak > 0 && (
@@ -391,7 +391,7 @@ export default function ProfilePage() {
                         <Text className="font-geist-bold text-base tracking-tight text-[#001428] text-center">
                             Your Readiness Portfolio
                         </Text>
-                        <Text className="mt-1 font-geist text-xs text-[#64748B] text-center leading-5 px-3">
+                        <Text className="mt-1 font-geist text-xs text-[#526071] text-center leading-5 px-3">
                             Take practice quizzes to establish your readiness baseline and track topic accuracy.
                         </Text>
                         <Pressable
@@ -416,7 +416,7 @@ export default function ProfilePage() {
                 {/* Diagnostic Highlights */}
                 {(topStrength || topWeakness) && (
                     <View className="gap-2.5">
-                        <Text className="px-1 font-geist-semibold text-[11px] uppercase tracking-wider text-[#64748B]">
+                        <Text className="px-1 font-geist-semibold text-[11px] uppercase tracking-wider text-[#526071]">
                             Diagnostic Highlights
                         </Text>
 
@@ -472,7 +472,7 @@ export default function ProfilePage() {
                                 <Text numberOfLines={1} className="mt-1.5 font-geist-bold text-sm text-[#001428]">
                                     {topWeakness.topicName}
                                 </Text>
-                                <Text numberOfLines={2} className="mt-0.5 font-geist text-xs text-[#64748B] leading-4">
+                                <Text numberOfLines={2} className="mt-0.5 font-geist text-xs text-[#526071] leading-4">
                                     Recommended for practice to raise your accuracy in this topic.
                                 </Text>
                                 <Pressable
@@ -502,7 +502,7 @@ export default function ProfilePage() {
                 {/* Topic Mastery Summary Card */}
                 {!isEmpty && (
                     <View className="gap-2.5">
-                        <Text className="px-1 font-geist-semibold text-[11px] uppercase tracking-wider text-[#64748B]">
+                        <Text className="px-1 font-geist-semibold text-[11px] uppercase tracking-wider text-[#526071]">
                             Curriculum Topic Mastery
                         </Text>
 
@@ -517,7 +517,7 @@ export default function ProfilePage() {
 
                 {/* Account & Settings Inset Group */}
                 <View className="gap-2.5">
-                    <Text className="px-1 font-geist-semibold text-[11px] uppercase tracking-wider text-[#64748B]">
+                    <Text className="px-1 font-geist-semibold text-[11px] uppercase tracking-wider text-[#526071]">
                         Account
                     </Text>
 
@@ -543,7 +543,7 @@ export default function ProfilePage() {
                                     <Text className="font-geist-bold text-xs text-[#001428]">
                                         Full Diagnostic Report
                                     </Text>
-                                    <Text className="font-geist text-[11px] text-[#64748B]">
+                                    <Text className="font-geist text-[11px] text-[#526071]">
                                         Trajectory curves, weaknesses & question history
                                     </Text>
                                 </View>
@@ -558,7 +558,7 @@ export default function ProfilePage() {
                                     className="h-8 w-8 items-center justify-center rounded-xl bg-[#F1F4F8]"
                                     style={{ borderCurve: 'continuous' }}
                                 >
-                                    <IconInfoCircle size={16} color="#64748B" strokeWidth={2} />
+                                    <IconInfoCircle size={16} color="#526071" strokeWidth={2} />
                                 </View>
                                 <Text className="font-geist-bold text-xs text-[#001428]">
                                     App Version

@@ -102,7 +102,7 @@ export default function FlashcardsPage() {
     }, [decks, selectedFilter, moduleDecks, topicDecks]);
 
     return (
-        <SafeAreaView className="flex-1 bg-[#F8F9FB]" edges={['left', 'right']}>
+        <SafeAreaView className="flex-1 bg-background" edges={['left', 'right']}>
             <ScrollView
                 contentContainerStyle={{ padding: 18, paddingBottom: 110, gap: 16 }}
                 showsVerticalScrollIndicator={false}
@@ -122,7 +122,7 @@ export default function FlashcardsPage() {
                                 Study Decks
                             </Text>
                             {!loading && (
-                                <Text className="mt-0.5 font-geist text-xs text-[#64748B]">
+                                <Text className="mt-0.5 font-geist text-xs text-[#526071]">
                                     {decks.length} {decks.length === 1 ? 'deck' : 'decks'} • {totalTerms} {totalTerms === 1 ? 'term' : 'terms'}
                                 </Text>
                             )}
@@ -165,7 +165,7 @@ export default function FlashcardsPage() {
                                     className={`text-xs ${
                                         selectedFilter === 'all'
                                             ? 'font-geist-semibold text-[#001428]'
-                                            : 'font-geist text-[#64748B]'
+                                            : 'font-geist text-[#526071]'
                                     }`}
                                 >
                                     All ({decks.length})
@@ -185,7 +185,7 @@ export default function FlashcardsPage() {
                                     className={`text-xs ${
                                         selectedFilter === 'module'
                                             ? 'font-geist-semibold text-[#001428]'
-                                            : 'font-geist text-[#64748B]'
+                                            : 'font-geist text-[#526071]'
                                     }`}
                                 >
                                     Modules ({moduleDecks.length})
@@ -205,7 +205,7 @@ export default function FlashcardsPage() {
                                     className={`text-xs ${
                                         selectedFilter === 'topic'
                                             ? 'font-geist-semibold text-[#001428]'
-                                            : 'font-geist text-[#64748B]'
+                                            : 'font-geist text-[#526071]'
                                     }`}
                                 >
                                     Topics ({topicDecks.length})
@@ -237,7 +237,7 @@ export default function FlashcardsPage() {
                 {loading && !refreshing && (
                     <View className="items-center justify-center py-20 gap-3">
                         <ActivityIndicator size="small" color="#001428" />
-                        <Text className="font-geist text-xs text-[#64748B]">Loading...</Text>
+                        <Text className="font-geist text-xs text-[#526071]">Loading...</Text>
                     </View>
                 )}
 
@@ -256,7 +256,7 @@ export default function FlashcardsPage() {
                         <Text className="font-geist-bold text-base text-[#001428]">
                             No Decks Yet
                         </Text>
-                        <Text className="mt-1 text-center font-geist text-xs text-[#64748B] max-w-xs leading-5">
+                        <Text className="mt-1 text-center font-geist text-xs text-[#526071] max-w-xs leading-5">
                             Create a deck from your notes or topics to start studying.
                         </Text>
                         <Pressable
@@ -327,14 +327,14 @@ export default function FlashcardsPage() {
                                                 className="rounded-full bg-[#F1F4F8] px-2 py-0.5"
                                                 style={{ borderCurve: 'continuous' }}
                                             >
-                                                <Text className="font-geist-semibold text-[9px] uppercase tracking-wider text-[#64748B]">
+                                                <Text className="font-geist-semibold text-[9px] uppercase tracking-wider text-[#526071]">
                                                     {isModule ? 'Module' : 'Topic'}
                                                 </Text>
                                             </View>
                                             {subtitle && (
                                                 <Text
                                                     numberOfLines={1}
-                                                    className="font-geist text-[11px] text-[#64748B] flex-1"
+                                                    className="font-geist text-[11px] text-[#526071] flex-1"
                                                 >
                                                     {subtitle}
                                                 </Text>
@@ -384,7 +384,7 @@ export default function FlashcardsPage() {
 
                                     <View className="flex-row items-center gap-1">
                                         <IconClock size={11} color="#94A3B8" />
-                                        <Text className="font-geist text-[10px] text-[#64748B]">
+                                        <Text className="font-geist text-[10px] text-[#526071]">
                                             {formatRelativeDate(deck.lastReviewedAt)}
                                         </Text>
                                     </View>

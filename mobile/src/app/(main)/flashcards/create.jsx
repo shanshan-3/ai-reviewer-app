@@ -74,7 +74,7 @@ export default function CreateFlashcardDeckPage() {
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-[#F8F9FB]" edges={['top', 'left', 'right']}>
+        <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
             {/* Top Bar */}
             <View className="flex-row items-center gap-3 border-b border-[#F1F3F6] bg-white px-5 py-3.5">
                 <Pressable
@@ -112,7 +112,7 @@ export default function CreateFlashcardDeckPage() {
 
                 {/* Card Count Options */}
                 <View className="gap-2">
-                    <Text className="font-geist-bold text-xs uppercase tracking-wider text-[#64748B]">
+                    <Text className="font-geist-bold text-xs uppercase tracking-wider text-[#526071]">
                         Cards
                     </Text>
                     <View className="flex-row gap-2.5">
@@ -146,7 +146,7 @@ export default function CreateFlashcardDeckPage() {
 
                 {/* Deck Title */}
                 <View className="gap-2">
-                    <Text className="font-geist-bold text-xs uppercase tracking-wider text-[#64748B]">
+                    <Text className="font-geist-bold text-xs uppercase tracking-wider text-[#526071]">
                         Deck Title
                     </Text>
                     <TextInput

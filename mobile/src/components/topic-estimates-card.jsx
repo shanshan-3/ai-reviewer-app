@@ -64,7 +64,7 @@ export default function TopicEstimatesCard({
                 <Text className="font-geist-bold text-sm text-[#001428]">
                     No Topic Data
                 </Text>
-                <Text className="mt-0.5 text-center font-geist text-xs text-[#64748B]">
+                <Text className="mt-0.5 text-center font-geist text-xs text-[#526071]">
                     Take quizzes to track topic accuracy.
                 </Text>
             </View>
@@ -96,7 +96,7 @@ export default function TopicEstimatesCard({
                     >
                         <Text
                             style={{ fontVariant: ['tabular-nums'] }}
-                            className="font-geist-semibold text-[10px] text-[#64748B]"
+                            className="font-geist-semibold text-[10px] text-[#526071]"
                         >
                             {masteredCount}/{estimates.length}
                         </Text>
@@ -169,7 +169,7 @@ export default function TopicEstimatesCard({
                                     >
                                         {item.topicName}
                                     </Text>
-                                    <Text numberOfLines={1} className="font-geist text-[10px] text-[#64748B]">
+                                    <Text numberOfLines={1} className="font-geist text-[10px] text-[#526071]">
                                         {item.subjectName}
                                     </Text>
                                 </View>
@@ -202,7 +202,7 @@ export default function TopicEstimatesCard({
                                 <View className="flex-row items-center justify-between">
                                     <Text
                                         style={{ fontVariant: ['tabular-nums'] }}
-                                        className="font-geist text-[10px] text-[#64748B]"
+                                        className="font-geist text-[10px] text-[#526071]"
                                     >
                                         {isEligible
                                             ? `${item.correctCount}/${item.sampleCount}`
