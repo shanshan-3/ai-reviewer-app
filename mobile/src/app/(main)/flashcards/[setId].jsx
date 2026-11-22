@@ -18,7 +18,6 @@ import IconCheck from '@tabler/icons-react-native/IconCheck';
 import IconChevronLeft from '@tabler/icons-react-native/IconChevronLeft';
 import IconChevronRight from '@tabler/icons-react-native/IconChevronRight';
 import IconX from '@tabler/icons-react-native/IconX';
-import IconBook from '@tabler/icons-react-native/IconBook';
 import { getFlashcardDeck, recordFlashcardReview } from '@/lib/flashcards';
 
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
@@ -204,7 +203,6 @@ export default function FlashcardStudyPage() {
             isTransitioning.current = true;
             direction.current = 'prev';
 
-            // Smoothly slide out current card to the right
             cardTranslateX.value = withTiming(28, { duration: 110, easing: EASE_OUT });
             cardOpacity.value = withTiming(0, { duration: 110, easing: EASE_OUT });
 
@@ -477,22 +475,58 @@ export default function FlashcardStudyPage() {
                 />
             </View>
 
-            {/* 3D Card Stage with Horizontal Advancement Spring */}
+            {/* 3D Card Stage with Stacked Depth */}
             <View className="flex-1 px-5 py-4 justify-center">
-                <Animated.View
-                    style={[{ width: '100%', minHeight: 440, justifyContent: 'center' }, stageAnimatedStyle]}
-                >
-                    <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`Flashcard: ${currentCard?.term || ''}. ${isFlipped ? 'Definition' : 'Term'}. Tap to flip.`}
-                        onPress={handleFlip}
-                        className="w-full min-h-[440px] relative justify-center"
-                        style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.985 : 1 }] }]}
+                <View className="w-full min-h-[440px] justify-center relative">
+                    {/* Stacked Cards Underneath (Patong-Patong depth lines) */}
+                    {currentIndex < totalCards - 2 && (
+                        <View
+                            pointerEvents="none"
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                borderCurve: 'continuous',
+                                transform: [{ translateY: 14 }, { rotate: '2.5deg' }, { scale: 0.94 }],
+                                opacity: 0.5,
+                            }}
+                            className="w-full min-h-[440px] rounded-3xl border border-[#E2E8F0] bg-white shadow-2xs"
+                        />
+                    )}
+                    {currentIndex < totalCards - 1 && (
+                        <View
+                            pointerEvents="none"
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                borderCurve: 'continuous',
+                                transform: [{ translateY: 7 }, { rotate: '-1.8deg' }, { scale: 0.97 }],
+                                opacity: 0.8,
+                            }}
+                            className="w-full min-h-[440px] rounded-3xl border border-[#E5E9F0] bg-white shadow-2xs"
+                        />
+                    )}
+
+                    {/* Main Interactive Flip Card */}
+                    <Animated.View
+                        style={[{ width: '100%', minHeight: 440, justifyContent: 'center' }, stageAnimatedStyle]}
                     >
+                        <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={`Flashcard: ${currentCard?.term || ''}. ${isFlipped ? 'Definition' : 'Term'}. Tap to flip.`}
+                            onPress={handleFlip}
+                            className="w-full min-h-[440px] relative justify-center"
+                            style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.985 : 1 }] }]}
+                        >
                         {/* Front (Term) */}
                         <Animated.View
                             style={[{ borderCurve: 'continuous' }, frontAnimatedStyle]}
-                            className="w-full min-h-[440px] rounded-3xl border border-[#E5E9F0] bg-white p-7 justify-between"
+                            className="w-full min-h-[440px] rounded-3xl border border-[#E5E9F0] bg-white p-7 justify-between shadow-2xs"
                         >
                             <View className="flex-row items-center justify-between">
                                 <View
@@ -532,7 +566,7 @@ export default function FlashcardStudyPage() {
                         {/* Back (Definition) */}
                         <Animated.View
                             style={[{ borderCurve: 'continuous', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, backAnimatedStyle]}
-                            className="w-full min-h-[440px] rounded-3xl border border-[#E5E9F0] bg-white p-7 justify-between"
+                            className="w-full min-h-[440px] rounded-3xl border border-[#E5E9F0] bg-white p-7 justify-between shadow-2xs"
                         >
                             <View className="flex-row items-center justify-between">
                                 <View
@@ -552,32 +586,10 @@ export default function FlashcardStudyPage() {
                             </View>
 
                             {/* Center Definition */}
-                            <View className="py-6 items-center justify-center">
-                                <View className="gap-3.5 w-full">
-                                    <Text className="text-center font-geist text-base leading-relaxed text-[#001428]">
-                                        {currentCard?.definition}
-                                    </Text>
-
-                                    {currentCard?.sourceExcerpt && (
-                                        <View
-                                            className="rounded-2xl border border-[#E5E9F0] bg-[#F8F9FC] p-3.5 gap-1.5"
-                                            style={{ borderCurve: 'continuous' }}
-                                        >
-                                            <View className="flex-row items-center gap-1.5">
-                                                <IconBook size={12} color="#526071" strokeWidth={2} />
-                                                <Text className="font-geist-semibold text-[9px] uppercase tracking-wider text-[#526071]">
-                                                    Source
-                                                </Text>
-                                            </View>
-                                            <Text
-                                                numberOfLines={3}
-                                                className="font-geist text-xs italic text-[#526071] leading-snug"
-                                            >
-                                                {`"${currentCard.sourceExcerpt}"`}
-                                            </Text>
-                                        </View>
-                                    )}
-                                </View>
+                            <View className="py-12 items-center justify-center px-4">
+                                <Text className="text-center font-geist text-base leading-relaxed text-[#001428]">
+                                    {currentCard?.definition}
+                                </Text>
                             </View>
 
                             {/* Bottom Flip Cue */}
@@ -593,6 +605,7 @@ export default function FlashcardStudyPage() {
                     </Pressable>
                 </Animated.View>
             </View>
+        </View>
 
             {/* Bottom Toolbar */}
             <View className="flex-row items-center justify-between border-t border-[#F1F3F6] bg-white px-5 py-3.5">
