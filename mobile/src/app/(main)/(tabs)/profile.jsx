@@ -19,7 +19,7 @@ import IconCards from '@tabler/icons-react-native/IconCards';
 import IconInfoCircle from '@tabler/icons-react-native/IconInfoCircle';
 import IconCamera from '@tabler/icons-react-native/IconCamera';
 import IconTrendingUp from '@tabler/icons-react-native/IconTrendingUp';
-import IconBulb from '@tabler/icons-react-native/IconBulb';
+import IconCircleCheck from '@tabler/icons-react-native/IconCircleCheck';
 
 export default function ProfilePage() {
     const { session } = useSession();
@@ -33,6 +33,8 @@ export default function ProfilePage() {
     const [avatarUri, setAvatarUri] = useState(null);
     const [message, setMessage] = useState('');
     const [cardWidth, setCardWidth] = useState(340);
+    const [selectedPointIndex, setSelectedPointIndex] = useState(null);
+    const [selectedSegment, setSelectedSegment] = useState(null);
 
     const loadData = useCallback(async (isRefresh = false) => {
         if (isRefresh) setRefreshing(true);
@@ -75,6 +77,7 @@ export default function ProfilePage() {
     const estimates = useMemo(() => report?.estimates ?? [], [report?.estimates]);
     const strengths = report?.strengths ?? [];
     const weaknesses = report?.weaknesses ?? [];
+    const activeSegment = selectedSegment ?? (weaknesses.length > 0 ? 'focus' : 'all');
     const isEmpty = report?.isEmpty ?? (loading ? false : true);
 
     const accuracy = summary.overallAccuracy ?? 0;
@@ -106,35 +109,35 @@ export default function ProfilePage() {
         if (totalAnswers === 0) {
             return {
                 title: 'Pending',
-                desc: 'Take quizzes to calculate your readiness.',
-                color: 'text-[#526071]',
-                bg: 'bg-[#F1F4F8] border-[#E2E8F0]',
+                desc: 'Complete at least 1 quiz to calculate exam readiness.',
+                dot: 'bg-slate-400',
+                text: 'text-[#526071]',
                 barColor: 'bg-[#CBD5E1]',
             };
         }
         if (accuracy >= 80) {
             return {
                 title: 'Exam Ready',
-                desc: 'High accuracy across tested topics.',
-                color: 'text-emerald-800',
-                bg: 'bg-emerald-50 border-emerald-200/80',
+                desc: 'Averaging ≥80%. Exceeds the 75% PSU benchmark.',
+                dot: 'bg-emerald-500',
+                text: 'text-emerald-700',
                 barColor: 'bg-emerald-600',
             };
         }
         if (accuracy >= 65) {
             return {
-                title: 'Progressing Well',
-                desc: 'Solid foundation. Practice weaker topics to reach 80%.',
-                color: 'text-blue-800',
-                bg: 'bg-blue-50 border-blue-200/80',
-                barColor: 'bg-blue-600',
+                title: 'Progressing',
+                desc: 'Averaging 65–79%. Target weak topics to reach 80%.',
+                dot: 'bg-blue-500',
+                text: 'text-blue-700',
+                barColor: 'bg-[#001428]',
             };
         }
         return {
-            title: 'Needs Preparation',
-            desc: 'Review notes and practice weak topics.',
-            color: 'text-amber-800',
-            bg: 'bg-amber-50 border-amber-200/80',
+            title: 'Needs Practice',
+            desc: 'Below the 75% PSU benchmark. Focus on weak topics.',
+            dot: 'bg-amber-500',
+            text: 'text-amber-700',
             barColor: 'bg-amber-500',
         };
     }, [accuracy, totalAnswers]);
@@ -147,13 +150,39 @@ export default function ProfilePage() {
     const innerW = chartWidth - padX * 2;
     const innerH = chartHeight - padY * 2;
 
+    const activeIndex = selectedPointIndex !== null && selectedPointIndex < quizScoreTrend.length
+        ? selectedPointIndex
+        : quizScoreTrend.length - 1;
+
     const trendPoints = useMemo(() => {
         return quizScoreTrend.map((score, i) => {
             const x = padX + (quizScoreTrend.length > 1 ? (i / (quizScoreTrend.length - 1)) * innerW : innerW / 2);
-            const y = padY + innerH - (Math.min(100, Math.max(0, score)) / 100) * innerH;
-            return { x, y, score };
+            const clamped = Math.min(100, Math.max(0, score));
+            const y = padY + innerH - (clamped / 100) * innerH;
+            const isPassing = score >= 75;
+            const prevScore = i > 0 ? quizScoreTrend[i - 1] : null;
+            const delta = prevScore !== null ? score - prevScore : null;
+
+            return {
+                x,
+                y,
+                score,
+                index: i,
+                isPassing,
+                delta,
+                isLatest: i === quizScoreTrend.length - 1,
+            };
         });
     }, [quizScoreTrend, innerW, innerH, padX, padY]);
+
+    const activePoint = trendPoints[activeIndex] || (trendPoints.length > 0 ? trendPoints[trendPoints.length - 1] : null);
+    const badgeWidth = activePoint?.delta !== null ? 84 : 52;
+    const badgeLeft = activePoint
+        ? Math.max(6, Math.min(chartWidth - badgeWidth - 6, activePoint.x - badgeWidth / 2))
+        : 0;
+    const badgeTop = activePoint
+        ? (activePoint.y > 34 ? activePoint.y - 28 : activePoint.y + 10)
+        : 0;
 
     const trendPath = useMemo(() => {
         return trendPoints.length > 1
@@ -313,30 +342,24 @@ export default function ProfilePage() {
                     {/* Overall Exam Readiness Meter */}
                     {!isEmpty && (
                         <View className="mt-4 pt-4 border-t border-[#F1F4F8]">
-                            <View className="flex-row items-center justify-between mb-2">
-                                <Text className="font-geist-semibold text-xs uppercase tracking-wider text-[#526071]">
-                                    Exam Readiness
-                                </Text>
-                                <View
-                                    className={`rounded-full border px-2.5 py-0.5 ${readinessInfo.bg}`}
-                                    style={{ borderCurve: 'continuous' }}
-                                >
-                                    <Text className={`font-geist-bold text-[10px] ${readinessInfo.color}`}>
+                            <View className="flex-row items-baseline justify-between mb-2">
+                                <View className="flex-row items-baseline gap-2">
+                                    <Text
+                                        style={{ fontVariant: ['tabular-nums'] }}
+                                        className="font-geist-bold text-3xl tracking-tight text-[#001428]"
+                                    >
+                                        {accuracy}%
+                                    </Text>
+                                    <Text className="font-geist text-xs text-[#526071]">
+                                        overall accuracy
+                                    </Text>
+                                </View>
+                                <View className="flex-row items-center gap-1.5">
+                                    <View className={`h-1.5 w-1.5 rounded-full ${readinessInfo.dot}`} />
+                                    <Text className={`font-geist-medium text-xs ${readinessInfo.text}`}>
                                         {readinessInfo.title}
                                     </Text>
                                 </View>
-                            </View>
-
-                            <View className="flex-row items-baseline gap-2 mb-2">
-                                <Text
-                                    style={{ fontVariant: ['tabular-nums'] }}
-                                    className="font-geist-bold text-3xl tracking-tight text-[#001428]"
-                                >
-                                    {accuracy}%
-                                </Text>
-                                <Text className="font-geist text-xs text-[#526071]">
-                                    accuracy
-                                </Text>
                             </View>
 
                             {/* Readiness Bar */}
@@ -346,9 +369,13 @@ export default function ProfilePage() {
                                     style={{ width: `${Math.min(100, Math.max(4, accuracy))}%` }}
                                 />
                             </View>
-                            <Text className="mt-2 font-geist text-[11px] text-[#526071] leading-4">
-                                {readinessInfo.desc}
-                            </Text>
+
+                            {/* Benchmark Marker */}
+                            <View className="flex-row items-center justify-end mt-1.5 px-0.5">
+                                <Text className="font-geist text-[11px] text-[#94A3B8]">
+                                    Target 75%
+                                </Text>
+                            </View>
                         </View>
                     )}
 
@@ -470,80 +497,150 @@ export default function ProfilePage() {
                         style={{ borderCurve: 'continuous' }}
                     >
                         <View className="flex-row items-center justify-between mb-2">
-                            <View className="flex-1 pr-2">
-                                <View className="flex-row items-center gap-1.5">
-                                    <IconTrendingUp size={16} color="#001428" strokeWidth={2} />
-                                    <Text className="font-geist-bold text-sm text-[#001428]">
-                                        Score Trend
-                                    </Text>
-                                </View>
-                                <Text className="mt-0.5 font-geist text-xs text-[#526071]">
-                                    {quizScoreTrend.length > 0
-                                        ? `Last ${quizScoreTrend.length} quizzes`
-                                        : 'Complete quizzes to view score trends.'}
+                            <View className="flex-row items-center gap-1.5">
+                                <IconTrendingUp size={16} color="#001428" strokeWidth={2} />
+                                <Text className="font-geist-bold text-sm text-[#001428]">
+                                    Score Trend
                                 </Text>
                             </View>
 
-                            {quizScoreTrend.length > 0 && (
-                                <View className="rounded-full bg-blue-50 px-2.5 py-0.5 border border-blue-200">
-                                    <Text className="font-geist-bold text-xs text-blue-900">
-                                        {quizScoreTrend[quizScoreTrend.length - 1]}% Latest
-                                    </Text>
-                                </View>
+                            {activePoint && (
+                                <Text className="font-geist-medium text-xs text-[#526071]">
+                                    {activePoint.isLatest ? 'Latest' : `Quiz #${activePoint.index + 1}`}
+                                </Text>
                             )}
                         </View>
 
                         {/* Spline Graph Display */}
                         {quizScoreTrend.length >= 2 ? (
                             <View className="mt-3 items-center">
-                                <Svg width={chartWidth} height={chartHeight}>
-                                    <Defs>
-                                        <LinearGradient id="profileScoreAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                                            <Stop offset="0" stopColor="#001428" stopOpacity="0.22" />
-                                            <Stop offset="1" stopColor="#001428" stopOpacity="0.0" />
-                                        </LinearGradient>
-                                    </Defs>
+                                <View className="relative" style={{ width: chartWidth, height: chartHeight }}>
+                                    <Svg width={chartWidth} height={chartHeight}>
+                                        <Defs>
+                                            <LinearGradient id="profileScoreAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <Stop offset="0" stopColor="#001428" stopOpacity="0.22" />
+                                                <Stop offset="1" stopColor="#001428" stopOpacity="0.0" />
+                                            </LinearGradient>
+                                        </Defs>
 
-                                    {/* 75% Passing Threshold Line */}
-                                    <Path
-                                        d={`M ${padX} ${padY + innerH * 0.25} L ${chartWidth - padX} ${padY + innerH * 0.25}`}
-                                        stroke="#94A3B8"
-                                        strokeDasharray="4 4"
-                                        strokeWidth="1"
-                                    />
-
-                                    {/* Gradient Area Fill */}
-                                    <Path d={areaPath} fill="url(#profileScoreAreaGrad)" />
-
-                                    {/* Score Spline Curve */}
-                                    <Path
-                                        d={trendPath}
-                                        fill="none"
-                                        stroke="#001428"
-                                        strokeWidth="2.5"
-                                        strokeLinecap="round"
-                                    />
-
-                                    {/* Interactive Score Dots */}
-                                    {trendPoints.map((pt, idx) => (
-                                        <Circle
-                                            key={`pt-${idx}`}
-                                            cx={pt.x}
-                                            cy={pt.y}
-                                            r={4}
-                                            fill="#FFFFFF"
-                                            stroke="#001428"
-                                            strokeWidth="2"
+                                        {/* 75% Passing Threshold Line */}
+                                        <Path
+                                            d={`M ${padX} ${padY + innerH * 0.25} L ${chartWidth - padX} ${padY + innerH * 0.25}`}
+                                            stroke="#CBD5E1"
+                                            strokeDasharray="4 4"
+                                            strokeWidth="1"
                                         />
-                                    ))}
-                                </Svg>
+
+                                        {/* Active Point Vertical Guideline */}
+                                        {activePoint && (
+                                            <Path
+                                                d={`M ${activePoint.x} ${padY} L ${activePoint.x} ${chartHeight - padY}`}
+                                                stroke="#E2E8F0"
+                                                strokeDasharray="2 2"
+                                                strokeWidth="1"
+                                            />
+                                        )}
+
+                                        {/* Gradient Area Fill */}
+                                        <Path d={areaPath} fill="url(#profileScoreAreaGrad)" />
+
+                                        {/* Score Spline Curve */}
+                                        <Path
+                                            d={trendPath}
+                                            fill="none"
+                                            stroke="#001428"
+                                            strokeWidth="2.5"
+                                            strokeLinecap="round"
+                                        />
+
+                                        {/* Active Point Halo Ring */}
+                                        {activePoint && (
+                                            <Circle
+                                                cx={activePoint.x}
+                                                cy={activePoint.y}
+                                                r={9}
+                                                fill="rgba(0, 20, 40, 0.08)"
+                                            />
+                                        )}
+
+                                        {/* Score Dots */}
+                                        {trendPoints.map((pt, idx) => {
+                                            const isSelected = activeIndex === idx;
+                                            return (
+                                                <Circle
+                                                    key={`pt-${idx}`}
+                                                    cx={pt.x}
+                                                    cy={pt.y}
+                                                    r={isSelected ? 4.5 : 3.5}
+                                                    fill={isSelected ? '#001428' : '#FFFFFF'}
+                                                    stroke="#001428"
+                                                    strokeWidth={2}
+                                                />
+                                            );
+                                        })}
+                                    </Svg>
+
+                                    {/* Crypto-Style Floating Score & Delta Badge */}
+                                    {activePoint && (
+                                        <View
+                                            pointerEvents="none"
+                                            style={{
+                                                position: 'absolute',
+                                                left: badgeLeft,
+                                                top: badgeTop,
+                                                borderCurve: 'continuous',
+                                            }}
+                                            className="h-6 items-center justify-center rounded-lg bg-[#001428] px-2 shadow-xs"
+                                        >
+                                            <View className="flex-row items-center gap-1.5">
+                                                <Text
+                                                    style={{ fontVariant: ['tabular-nums'] }}
+                                                    className="font-geist-bold text-xs text-white"
+                                                >
+                                                    {activePoint.score}%
+                                                </Text>
+                                                {activePoint.delta !== null && (
+                                                    <Text
+                                                        style={{ fontVariant: ['tabular-nums'] }}
+                                                        className={`font-geist-semibold text-[10px] ${
+                                                            activePoint.delta > 0
+                                                                ? 'text-emerald-400'
+                                                                : activePoint.delta < 0
+                                                                ? 'text-rose-400'
+                                                                : 'text-slate-300'
+                                                        }`}
+                                                    >
+                                                        {activePoint.delta > 0 ? `+${activePoint.delta}%` : `${activePoint.delta}%`}
+                                                    </Text>
+                                                )}
+                                            </View>
+                                        </View>
+                                    )}
+
+                                    {/* Touch Overlay: full-height touch targets across X-axis */}
+                                    <View className="absolute inset-0 flex-row">
+                                        {trendPoints.map((pt, idx) => (
+                                            <Pressable
+                                                key={`touch-${idx}`}
+                                                accessibilityRole="button"
+                                                accessibilityLabel={`Quiz ${idx + 1}: ${pt.score} percent`}
+                                                accessibilityState={{ selected: activeIndex === idx }}
+                                                onPress={() => setSelectedPointIndex(idx)}
+                                                className="flex-1 h-full"
+                                            />
+                                        ))}
+                                    </View>
+                                </View>
 
                                 {/* Benchmark Subtitle */}
                                 <View className="w-full flex-row items-center justify-between mt-2 px-1">
                                     <Text className="font-geist text-[10px] text-[#94A3B8]">
                                         75% passing target
                                     </Text>
-                                    <Text className="font-geist-medium text-[10px] text-[#526071]">
+                                    <Text
+                                        style={{ fontVariant: ['tabular-nums'] }}
+                                        className="font-geist-medium text-[10px] text-[#526071]"
+                                    >
                                         {trendPoints.length} completed
                                     </Text>
                                 </View>
@@ -577,161 +674,204 @@ export default function ProfilePage() {
                     </View>
                 )}
 
-                {/* 3. Diagnostic Highlights (Strengths & Focus Areas) */}
-                {!isEmpty && (strengths.length > 0 || weaknesses.length > 0) && (
-                    <View className="gap-3">
-                        <Text className="px-1 font-geist-semibold text-[11px] uppercase tracking-wider text-[#526071]">
-                            Highlights
-                        </Text>
-
-                        {/* Strengths Card */}
-                        {strengths.length > 0 && (
-                            <View
-                                className="rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-4"
-                                style={{ borderCurve: 'continuous' }}
-                            >
-                                <View className="flex-row items-center justify-between">
-                                    <View className="flex-row items-center gap-1.5">
-                                        <IconTrophy size={15} color="#059669" strokeWidth={2} />
-                                        <Text className="font-geist-semibold text-xs uppercase tracking-wider text-emerald-800">
-                                            Strengths (≥80%)
-                                        </Text>
-                                    </View>
-                                    <Text
-                                        style={{ fontVariant: ['tabular-nums'] }}
-                                        className="font-geist-bold text-xs text-emerald-800"
-                                    >
-                                        {strengths.length} {strengths.length === 1 ? 'topic' : 'topics'}
-                                    </Text>
-                                </View>
-                                <View className="mt-2.5 gap-2">
-                                    {strengths.slice(0, 3).map(topic => (
-                                        <View
-                                            key={topic.topicId}
-                                            className="flex-row items-center justify-between rounded-xl border border-emerald-200/80 bg-white/80 p-2.5"
-                                            style={{ borderCurve: 'continuous' }}
-                                        >
-                                            <View className="flex-1 pr-2">
-                                                <Text className="font-geist-semibold text-xs text-[#001428]" numberOfLines={1}>
-                                                    {topic.topicName}
-                                                </Text>
-                                                <Text className="font-geist text-[10px] text-[#526071]">
-                                                    {topic.subjectName} • {topic.sampleCount} questions
-                                                </Text>
-                                            </View>
-                                            <View className="rounded-full bg-emerald-100 px-2 py-0.5">
-                                                <Text
-                                                    style={{ fontVariant: ['tabular-nums'] }}
-                                                    className="font-geist-bold text-xs text-emerald-900"
-                                                >
-                                                    {topic.accuracy}%
-                                                </Text>
-                                            </View>
-                                        </View>
-                                    ))}
-                                </View>
-                            </View>
-                        )}
-
-                        {/* Priority Focus Areas Card */}
-                        {weaknesses.length > 0 && (
-                            <View
-                                className="rounded-2xl border border-amber-200 bg-white p-4 shadow-2xs"
-                                style={{ borderCurve: 'continuous' }}
-                            >
-                                <View className="flex-row items-center justify-between">
-                                    <View className="flex-row items-center gap-1.5">
-                                        <IconBulb size={16} color="#D97706" strokeWidth={2} />
-                                        <Text className="font-geist-semibold text-xs uppercase tracking-wider text-amber-900">
-                                            Focus Areas (&lt;70%)
-                                        </Text>
-                                    </View>
-                                    <Text
-                                        style={{ fontVariant: ['tabular-nums'] }}
-                                        className="font-geist-bold text-xs text-amber-900"
-                                    >
-                                        {weaknesses.length} {weaknesses.length === 1 ? 'topic' : 'topics'}
-                                    </Text>
-                                </View>
-                                <View className="mt-2.5 gap-2">
-                                    {weaknesses.slice(0, 3).map(topic => (
-                                        <View
-                                            key={topic.topicId}
-                                            className="flex-row items-center justify-between rounded-xl border border-amber-200 bg-amber-50/40 p-2.5"
-                                            style={{ borderCurve: 'continuous' }}
-                                        >
-                                            <View className="flex-1 pr-2">
-                                                <Text className="font-geist-semibold text-xs text-[#001428]" numberOfLines={1}>
-                                                    {topic.topicName}
-                                                </Text>
-                                                <Text className="font-geist text-[10px] text-[#526071]">
-                                                    {topic.subjectName} • {topic.sampleCount} questions
-                                                </Text>
-                                            </View>
-                                            <View className="flex-row items-center gap-2">
-                                                <View className="rounded-full bg-amber-100 px-2 py-0.5">
-                                                    <Text
-                                                        style={{ fontVariant: ['tabular-nums'] }}
-                                                        className="font-geist-bold text-xs text-amber-900"
-                                                    >
-                                                        {topic.accuracy}%
-                                                    </Text>
-                                                </View>
-                                                <Pressable
-                                                    accessibilityRole="button"
-                                                    accessibilityLabel={`Practice weak topic: ${topic.topicName}`}
-                                                    onPress={() => router.push({
-                                                        pathname: '/(main)/quizzes/create',
-                                                        params: { sourceKind: 'topic', topicId: topic.topicId },
-                                                    })}
-                                                    className="rounded-lg bg-[#001428] px-2.5 py-1"
-                                                >
-                                                    <Text className="font-geist-semibold text-[10px] text-white">Practice</Text>
-                                                </Pressable>
-                                            </View>
-                                        </View>
-                                    ))}
-                                </View>
-                            </View>
-                        )}
-                    </View>
-                )}
-
-                {/* 4. Curriculum Topic Mastery (Full expandable table) */}
-                {!isEmpty && estimates.length > 0 && (
-                    <View className="gap-2.5">
-                        <Text className="px-1 font-geist-semibold text-[11px] uppercase tracking-wider text-[#526071]">
-                            Topic Accuracy
-                        </Text>
-
-                        <TopicEstimatesCard
-                            estimates={estimates}
-                            loading={loading}
-                            limit={5}
-                        />
-                    </View>
-                )}
-
-                {/* 5. Academic Self-Review Notice */}
-                {!isEmpty && (
+                {/* 3. Curriculum Topic Mastery (Segmented: Focus Areas & All Topics) */}
+                {!isEmpty && (estimates.length > 0 || weaknesses.length > 0 || strengths.length > 0) && (
                     <View
-                        className="rounded-2xl border border-slate-200 bg-[#F1F4F8]/70 p-4"
+                        className="overflow-hidden rounded-2xl border border-[#E5E9F0] bg-white p-4 shadow-2xs gap-3.5"
                         style={{ borderCurve: 'continuous' }}
                     >
-                        <View className="flex-row items-center gap-1.5">
-                            <IconInfoCircle size={15} color="#475569" />
-                            <Text className="font-geist-semibold text-xs text-slate-800">
-                                Academic Notice
+                        {/* Card Header */}
+                        <View className="flex-row items-center justify-between pb-1">
+                            <View className="flex-row items-center gap-1.5">
+                                <IconChartBar size={16} color="#001428" strokeWidth={2} />
+                                <Text className="font-geist-bold text-sm text-[#001428]">
+                                    Topic Mastery
+                                </Text>
+                            </View>
+                            <Text className="font-geist-medium text-xs text-[#526071]">
+                                Target 75%
                             </Text>
                         </View>
-                        <Text className="mt-1.5 font-geist text-[11px] leading-4 text-[#526071]">
-                            {report?.disclaimer ||
-                                'Practice scores reflect your self-study activity and do not guarantee official PSU examination results or grades.'}
-                        </Text>
-                    </View>
+
+                            {/* Apple-style Segmented Control */}
+                            <View
+                                className="flex-row rounded-xl bg-[#F1F4F8] p-1"
+                                style={{ borderCurve: 'continuous' }}
+                            >
+                                <Pressable
+                                    accessibilityRole="tab"
+                                    accessibilityLabel={`Focus Areas, ${weaknesses.length} topics needing practice`}
+                                    accessibilityState={{ selected: activeSegment === 'focus' }}
+                                    onPress={() => setSelectedSegment('focus')}
+                                    className={`flex-1 items-center justify-center rounded-lg py-1.5 ${
+                                        activeSegment === 'focus'
+                                            ? 'bg-white shadow-2xs'
+                                            : 'bg-transparent'
+                                    }`}
+                                    style={{ borderCurve: 'continuous' }}
+                                >
+                                    <Text
+                                        className={`text-xs ${
+                                            activeSegment === 'focus'
+                                                ? 'font-geist-bold text-[#001428]'
+                                                : 'font-geist-medium text-[#526071]'
+                                        }`}
+                                    >
+                                        Focus Areas ({weaknesses.length})
+                                    </Text>
+                                </Pressable>
+                                <Pressable
+                                    accessibilityRole="tab"
+                                    accessibilityLabel={`All Topics, ${estimates.length} total curriculum topics`}
+                                    accessibilityState={{ selected: activeSegment === 'all' }}
+                                    onPress={() => setSelectedSegment('all')}
+                                    className={`flex-1 items-center justify-center rounded-lg py-1.5 ${
+                                        activeSegment === 'all'
+                                            ? 'bg-white shadow-2xs'
+                                            : 'bg-transparent'
+                                    }`}
+                                    style={{ borderCurve: 'continuous' }}
+                                >
+                                    <Text
+                                        className={`text-xs ${
+                                            activeSegment === 'all'
+                                                ? 'font-geist-bold text-[#001428]'
+                                                : 'font-geist-medium text-[#526071]'
+                                        }`}
+                                    >
+                                        All Topics ({estimates.length})
+                                    </Text>
+                                </Pressable>
+                            </View>
+
+                            {/* Segment 1: Focus Areas */}
+                            {activeSegment === 'focus' && (
+                                <View className="gap-3 pt-1">
+                                    {/* Mastered Strengths Pill Summary */}
+                                    {strengths.length > 0 && (
+                                        <View
+                                            className="flex-row items-center justify-between rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]/80 px-3 py-2"
+                                            style={{ borderCurve: 'continuous' }}
+                                        >
+                                            <View className="flex-row items-center gap-1.5">
+                                                <IconTrophy size={14} color="#059669" strokeWidth={2} />
+                                                <Text className="font-geist-medium text-xs text-[#001428]">
+                                                    {strengths.length} {strengths.length === 1 ? 'topic' : 'topics'} mastered (≥80%)
+                                                </Text>
+                                            </View>
+                                            <Text className="font-geist text-[10px] text-emerald-700">
+                                                On track
+                                            </Text>
+                                        </View>
+                                    )}
+
+                                    {/* Weakness Gap-to-Pass Bars */}
+                                    {weaknesses.length > 0 ? (
+                                        <View className="gap-2.5">
+                                            {weaknesses.slice(0, 3).map(topic => {
+                                                const gap = Math.max(0, 75 - topic.accuracy);
+                                                return (
+                                                    <View
+                                                        key={topic.topicId}
+                                                        className="rounded-xl border border-[#F1F4F8] bg-[#F8FAFC]/60 p-3 gap-2"
+                                                        style={{ borderCurve: 'continuous' }}
+                                                    >
+                                                        {/* Topic Name & Accuracy / Deficit */}
+                                                        <View className="flex-row items-center justify-between">
+                                                            <View className="flex-1 pr-2">
+                                                                <Text numberOfLines={1} className="font-geist-semibold text-xs text-[#001428]">
+                                                                    {topic.topicName}
+                                                                </Text>
+                                                                <Text className="font-geist text-[10px] text-[#526071]">
+                                                                    {topic.subjectName}
+                                                                </Text>
+                                                            </View>
+                                                            <View className="items-end">
+                                                                <Text
+                                                                    style={{ fontVariant: ['tabular-nums'] }}
+                                                                    className="font-geist-bold text-xs text-[#001428]"
+                                                                >
+                                                                    {topic.accuracy}%
+                                                                </Text>
+                                                                <Text
+                                                                    style={{ fontVariant: ['tabular-nums'] }}
+                                                                    className="font-geist-medium text-[10px] text-amber-700"
+                                                                >
+                                                                    -{gap}% to pass
+                                                                </Text>
+                                                            </View>
+                                                        </View>
+
+                                                        {/* Progress Bar with 75% Target Marker */}
+                                                        <View className="relative h-1.5 w-full overflow-hidden rounded-full bg-[#E5E9F0]" style={{ borderCurve: 'continuous' }}>
+                                                            {/* 75% Benchmark Guideline Line */}
+                                                            <View
+                                                                style={{ left: '75%' }}
+                                                                className="absolute top-0 bottom-0 w-0.5 bg-[#475569] z-10"
+                                                            />
+                                                            {/* Accuracy Fill */}
+                                                            <View
+                                                                style={{ width: `${Math.min(100, Math.max(4, topic.accuracy))}%`, borderCurve: 'continuous' }}
+                                                                className="h-full rounded-full bg-amber-500"
+                                                            />
+                                                        </View>
+
+                                                        {/* Action Row */}
+                                                        <View className="flex-row items-center justify-end pt-0.5">
+                                                            <Pressable
+                                                                accessibilityRole="button"
+                                                                accessibilityLabel={`Practice weak topic: ${topic.topicName}`}
+                                                                onPress={() => router.push({
+                                                                    pathname: '/(main)/quizzes/create',
+                                                                    params: { sourceKind: 'topic', topicId: topic.topicId },
+                                                                })}
+                                                                style={({ pressed }) => [
+                                                                    {
+                                                                        borderCurve: 'continuous',
+                                                                        transform: [{ scale: pressed ? 0.94 : 1 }],
+                                                                    },
+                                                                ]}
+                                                                className="rounded-lg bg-[#001428] px-3 py-1 active:opacity-85"
+                                                            >
+                                                                <Text className="font-geist-semibold text-[10px] text-white">Practice</Text>
+                                                            </Pressable>
+                                                        </View>
+                                                    </View>
+                                                );
+                                            })}
+                                        </View>
+                                    ) : (
+                                        <View className="items-center py-5 text-center">
+                                            <View
+                                                className="mb-2 h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200/60"
+                                                style={{ borderCurve: 'continuous' }}
+                                            >
+                                                <IconCircleCheck size={18} color="#059669" strokeWidth={2} />
+                                            </View>
+                                            <Text className="font-geist-bold text-xs text-[#001428]">
+                                                No Urgent Focus Areas
+                                            </Text>
+                                            <Text className="mt-0.5 text-center font-geist text-[11px] text-[#526071]">
+                                                All tested topics currently meet or exceed 70% accuracy.
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
+                            )}
+
+                            {/* Segment 2: All Topics */}
+                            {activeSegment === 'all' && (
+                                <TopicEstimatesCard
+                                    estimates={estimates}
+                                    loading={loading}
+                                    limit={5}
+                                    bare={true}
+                                />
+                            )}
+                        </View>
                 )}
 
-                {/* 6. Account & Settings Inset Group */}
+                {/* 5. Account & Settings Inset Group */}
                 <View className="gap-2.5">
                     <Text className="px-1 font-geist-semibold text-[11px] uppercase tracking-wider text-[#526071]">
                         Account
