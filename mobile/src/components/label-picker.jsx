@@ -26,7 +26,7 @@ export default function LabelPicker({ labels, subjectId, selectSubject, busy, re
     }
 
     return <>
-        <View className="overflow-hidden rounded-2xl bg-card" style={{ borderCurve: 'continuous' }}>
+        <View className="overflow-hidden rounded-2xl border border-[#E5E9F0] bg-white shadow-2xs" style={{ borderCurve: 'continuous' }}>
             {ready ? <View className="gap-1 px-5 py-4">
                 <Text className="font-geist text-xs leading-5 text-[#526071]">Subject</Text>
                 <Text selectable className="font-geist-medium text-base leading-6 text-[#001428]">{current?.name || 'Subject unavailable'}</Text>
@@ -34,12 +34,17 @@ export default function LabelPicker({ labels, subjectId, selectSubject, busy, re
                 : <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy, expanded: open }} disabled={busy}
                     accessibilityLabel={`Subject: ${current?.name || 'Choose a subject'}`} accessibilityHint="Opens the searchable subject list"
                     onPress={() => { onOpen(); setSearch(''); setOpen(true); }}
-                    className={`min-h-14 flex-row items-center gap-3 px-5 py-4 active:bg-secondary focus:bg-secondary ${busy ? 'opacity-40' : ''}`}>
+                    style={({ pressed }) => [
+                        {
+                            transform: [{ scale: pressed && !busy ? 0.99 : 1 }],
+                        },
+                    ]}
+                    className={`min-h-14 flex-row items-center gap-3 px-5 py-4 active:bg-[#F8FAFC] ${busy ? 'opacity-40' : ''}`}>
                     <View className="flex-1 gap-1">
                         <Text className="font-geist text-xs leading-5 text-[#526071]">Subject</Text>
                         <Text className="font-geist-medium text-base leading-6 text-[#001428]">{current?.name || 'Choose a subject'}</Text>
                     </View>
-                    <IconChevronRight size={20} color={THEME.mutedForeground} accessible={false} />
+                    <IconChevronRight size={20} color="#94A3B8" accessible={false} />
                 </Pressable>}
         </View>
         <Modal visible={open} transparent animationType={reduceMotion ? 'none' : 'fade'} presentationStyle="overFullScreen" onRequestClose={close}>
@@ -51,7 +56,7 @@ export default function LabelPicker({ labels, subjectId, selectSubject, busy, re
                         <SafeAreaView edges={['bottom', 'left', 'right']} accessibilityViewIsModal
                             style={{ maxHeight: height * 0.8, flexShrink: 1, borderCurve: 'continuous' }} className="overflow-hidden rounded-t-3xl bg-card">
                             <View className="flex-row items-center gap-3 px-5 py-2">
-                                <Text accessibilityRole="header" className="flex-1 font-geist-semibold text-lg text-[#001428]">Choose a subject</Text>
+                                <Text accessibilityRole="header" className="flex-1 font-geist-semibold text-lg text-[#001428]">Select Subject</Text>
                                 <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy }} disabled={busy} onPress={close}
                                     className={`min-h-12 justify-center rounded-lg px-3 active:bg-secondary focus:bg-secondary ${busy ? 'opacity-40' : ''}`}>
                                     <Text className="font-geist-medium text-base text-[#001428]">Cancel</Text>
@@ -59,7 +64,7 @@ export default function LabelPicker({ labels, subjectId, selectSubject, busy, re
                             </View>
                             <View className="gap-3 px-5 py-4">
                                 <FormField label="Search subjects" labelId="subject-search" value={search} onChangeText={setSearch}
-                                    placeholder="Search the BSIT subject list" maxLength={120} autoCapitalize="none" autoCorrect={false} editable={!busy} />
+                                    placeholder="Search subjects..." maxLength={120} autoCapitalize="none" autoCorrect={false} editable={!busy} />
                                 <AuthMessage message={message} isError />
                                 {busy && <View accessibilityLiveRegion="polite" className="flex-row items-center gap-3">
                                     <ActivityIndicator color={THEME.primary} />
@@ -77,7 +82,7 @@ export default function LabelPicker({ labels, subjectId, selectSubject, busy, re
                                     <Text className="flex-1 font-geist-medium text-base leading-6 text-foreground">{item}</Text>
                                     {current?.name.toLowerCase() === item.toLowerCase() && <IconCheck size={20} color={THEME.foreground} accessible={false} />}
                                 </Pressable>}
-                                ListEmptyComponent={<Text accessibilityLiveRegion="polite" className="px-3 py-5 font-geist text-sm leading-6 text-muted-foreground">No matching subjects. Try another name.</Text>} />
+                                ListEmptyComponent={<Text accessibilityLiveRegion="polite" className="px-3 py-5 font-geist text-sm leading-6 text-muted-foreground">No matching subjects found.</Text>} />
                         </SafeAreaView>
                     </KeyboardAvoidingView>
                 </View>
