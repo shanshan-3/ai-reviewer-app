@@ -387,21 +387,19 @@ export default function QuizzesPage() {
                                     const isDeleting = deletingId === item.id;
                                     const isHigh = percent >= 80;
                                     const isMid = percent >= 50;
-                                    const badgeBg = isHigh ? 'bg-emerald-50 border-emerald-200/80 text-emerald-800'
-                                        : isMid ? 'bg-amber-50 border-amber-200/80 text-amber-800'
-                                        : 'bg-slate-100 border-slate-200 text-slate-700';
+                                    const percentColor = isHigh ? 'text-emerald-700' : isMid ? 'text-amber-700' : 'text-[#526071]';
 
                                     return (
                                         <View
                                             key={item.id}
-                                            className={`flex-row items-center justify-between rounded-2xl border border-[#E4E8EE] bg-white p-4 shadow-sm ${
+                                            className={`flex-row items-center justify-between rounded-2xl border border-[#E4E8EE] bg-white p-3.5 shadow-2xs ${
                                                 isDeleting ? 'opacity-50' : ''
                                             }`}
                                             style={{ borderCurve: 'continuous' }}
                                         >
                                             <Pressable
                                                 accessibilityRole="button"
-                                                accessibilityLabel={`View results for ${item.sourceTitle || 'IT Topic Practice'}`}
+                                                accessibilityLabel={`View results for ${item.sourceTitle || 'IT Topic Practice'}, score ${item.session.correctCount} of ${item.questionCount}, ${percent}%`}
                                                 accessibilityHint="Opens detailed score and question review."
                                                 disabled={Boolean(deletingId)}
                                                 onPress={() => router.push(`/(main)/quizzes/${item.session.id}/results`)}
@@ -410,65 +408,65 @@ export default function QuizzesPage() {
                                                         transform: [{ scale: pressed && !Boolean(deletingId) ? 0.985 : 1 }],
                                                     },
                                                 ]}
-                                                className="min-w-0 flex-1 pr-3 active:opacity-75"
+                                                className="min-w-0 flex-1 flex-row items-center justify-between pr-2 active:opacity-75"
                                             >
-                                                <Text numberOfLines={1} className="font-geist-semibold text-base text-[#001428]">
-                                                    {item.sourceTitle || 'IT Topic Practice'}
-                                                </Text>
-                                                <View className="mt-1 flex-row flex-wrap items-center gap-2">
-                                                    <Text className="font-geist text-xs text-[#526071]">
-                                                        {formatModality(item.questionType)} • {item.questionCount} Questions
+                                                <View className="min-w-0 flex-1 pr-3">
+                                                    <Text numberOfLines={1} className="font-geist-semibold text-base text-[#001428]">
+                                                        {item.sourceTitle || 'IT Topic Practice'}
                                                     </Text>
-                                                    <View className="rounded-full bg-[#F1F4F8] px-2 py-0.5">
-                                                        <Text className="font-geist-medium text-[10px] capitalize text-[#526071]">
-                                                            {item.startingDifficulty}
+                                                    <View className="mt-1 flex-row flex-wrap items-center gap-2">
+                                                        <Text className="font-geist text-xs text-[#526071]">
+                                                            {formatModality(item.questionType)} • {item.questionCount} Questions
                                                         </Text>
+                                                        <View className="rounded-full bg-[#F1F4F8] px-2 py-0.5">
+                                                            <Text className="font-geist-medium text-[10px] capitalize text-[#526071]">
+                                                                {item.startingDifficulty}
+                                                            </Text>
+                                                        </View>
                                                     </View>
                                                 </View>
-                                            </Pressable>
 
-                                            <View className="flex-row items-center gap-2.5">
-                                                <Pressable
-                                                    accessibilityRole="button"
-                                                    accessibilityLabel={`View score: ${item.session.correctCount} of ${item.questionCount}`}
-                                                    disabled={Boolean(deletingId)}
-                                                    onPress={() => router.push(`/(main)/quizzes/${item.session.id}/results`)}
-                                                    className="flex-row items-center gap-2 active:opacity-70"
-                                                >
-                                                    <View className={`items-end rounded-xl border px-2.5 py-1 ${badgeBg}`}>
-                                                        <Text className="font-geist-bold text-xs">
-                                                            {item.session.correctCount}/{item.questionCount}
-                                                        </Text>
-                                                        <Text className="font-geist text-[10px]">
+                                                <View className="flex-row items-center gap-1.5">
+                                                    <View className="items-end">
+                                                        <Text
+                                                            style={{ fontVariant: ['tabular-nums'] }}
+                                                            className={`font-geist-bold text-base leading-tight ${percentColor}`}
+                                                        >
                                                             {percent}%
+                                                        </Text>
+                                                        <Text
+                                                            style={{ fontVariant: ['tabular-nums'] }}
+                                                            className="mt-0.5 font-geist text-[11px] text-[#526071]"
+                                                        >
+                                                            {item.session.correctCount}/{item.questionCount}
                                                         </Text>
                                                     </View>
                                                     <IconChevronRight size={18} color="#94A3B8" />
-                                                </Pressable>
+                                                </View>
+                                            </Pressable>
 
-                                                <Pressable
-                                                    accessibilityRole="button"
-                                                    accessibilityLabel={`Delete quiz: ${item.sourceTitle || 'IT Topic Practice'}`}
-                                                    accessibilityHint="Opens confirmation dialog to delete this quiz record."
-                                                    accessibilityState={{ busy: isDeleting }}
-                                                    disabled={Boolean(deletingId)}
-                                                    hitSlop={10}
-                                                    onPress={() => confirmDelete(item)}
-                                                    className="h-9 w-9 items-center justify-center rounded-xl active:bg-[#FEF2F2]"
-                                                    style={({ pressed }) => [
-                                                        {
-                                                            borderCurve: 'continuous',
-                                                            transform: [{ scale: pressed && !Boolean(deletingId) ? 0.92 : 1 }],
-                                                        },
-                                                    ]}
-                                                >
-                                                    {isDeleting ? (
-                                                        <ActivityIndicator size="small" color="#DC2626" />
-                                                    ) : (
-                                                        <IconTrash size={16} color="#DC2626" strokeWidth={1.8} />
-                                                    )}
-                                                </Pressable>
-                                            </View>
+                                            <Pressable
+                                                accessibilityRole="button"
+                                                accessibilityLabel={`Delete quiz: ${item.sourceTitle || 'IT Topic Practice'}`}
+                                                accessibilityHint="Opens confirmation dialog to delete this quiz record."
+                                                accessibilityState={{ busy: isDeleting }}
+                                                disabled={Boolean(deletingId)}
+                                                hitSlop={10}
+                                                onPress={() => confirmDelete(item)}
+                                                className="h-9 w-9 items-center justify-center rounded-xl active:bg-[#FEF2F2]"
+                                                style={({ pressed }) => [
+                                                    {
+                                                        borderCurve: 'continuous',
+                                                        transform: [{ scale: pressed && !Boolean(deletingId) ? 0.92 : 1 }],
+                                                    },
+                                                ]}
+                                            >
+                                                {isDeleting ? (
+                                                    <ActivityIndicator size="small" color="#DC2626" />
+                                                ) : (
+                                                    <IconTrash size={16} color="#DC2626" strokeWidth={1.8} />
+                                                )}
+                                            </Pressable>
                                         </View>
                                     );
                                 })
