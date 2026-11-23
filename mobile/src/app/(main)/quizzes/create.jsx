@@ -43,7 +43,7 @@ export default function CreateQuizPage() {
                     return 0;
                 }
                 const next = prev - 1;
-                setError(`Rate limit cooldown active. Please wait ${next}s before generating.`);
+                setError(`Wait ${next}s before generating another quiz.`);
                 return next;
             });
         }, 1000);
@@ -89,16 +89,16 @@ export default function CreateQuizPage() {
         if (generating || cooldownSeconds > 0) return;
         setError(null);
         if (sourceKind === 'module' && !materialId) {
-            setError('Please select an approved module.');
+            setError('Select a module to continue.');
             return;
         }
         if (sourceKind === 'topic' && !topicId) {
-            setError('Please select an IT topic.');
+            setError('Select an IT topic to continue.');
             return;
         }
 
         setGenerating(true);
-        setGenStatusText('Submitting generation request...');
+        setGenStatusText('Preparing quiz request…');
 
         try {
             const source = sourceKind === 'module'
@@ -113,14 +113,14 @@ export default function CreateQuizPage() {
             });
 
             const generationId = genRes.generation?.id;
-            if (!generationId) throw new Error('Could not start quiz generation.');
+            if (!generationId) throw new Error('Unable to start quiz generation.');
 
             // Poll generation status
             let attempts = 0;
             const maxAttempts = 30; // 60s max
             let quizId = null;
 
-            setGenStatusText('Generating questions and answer key...');
+            setGenStatusText('Generating questions and answers…');
 
             while (attempts < maxAttempts) {
                 await new Promise(r => setTimeout(r, 2000));
@@ -136,32 +136,32 @@ export default function CreateQuizPage() {
                 if (currentStatus === 'insufficient_source') {
                     const code = statusRes.generation?.errorCode;
                     if (code === 'UNSUPPORTED_TOPIC') {
-                        throw new Error('This subject does not support coding syntax questions. Choose Multiple Choice or True/False, or select a programming subject like Web Development.');
+                        throw new Error('This subject has no coding syntax questions. Choose Multiple Choice, True or False, or a programming subject.');
                     }
                     if (code === 'CODE_SOURCE_REQUIRED') {
-                        throw new Error('This module does not contain programming code. Choose Multiple Choice or True/False, or upload a module with code.');
+                        throw new Error('This module has no code snippets. Choose Multiple Choice, True or False, or upload notes with code.');
                     }
-                    throw new Error('This source has limited content for the requested question count. Try selecting 5 questions, or choose an IT Topic for broader practice.');
+                    throw new Error('This source has limited content. Try 5 questions or select an IT topic for broader practice.');
                 }
                 if (currentStatus === 'failed') {
                     const code = statusRes.generation?.errorCode;
                     throw new Error(
                         code === 'QUOTA_EXCEEDED'
-                            ? 'Rate limit reached. Please wait a minute and try again.'
+                            ? 'Limit reached. Wait a minute and try again.'
                             : code === 'PROVIDER_TIMEOUT'
-                            ? 'Generation timed out. Please try again with fewer questions.'
-                            : 'Quiz generation failed. Please try again with different choices.'
+                            ? 'Generation timed out. Try again with fewer questions.'
+                            : 'Generation failed. Try different quiz settings.'
                     );
                 }
             }
 
-            if (!quizId) throw new Error('Generation took too long. Check the Quizzes tab shortly.');
+            if (!quizId) throw new Error('Generation is taking longer than expected. Check the Quizzes tab shortly.');
 
-            setGenStatusText('Starting study session...');
+            setGenStatusText('Opening quiz…');
             const sessionRes = await startQuizSession(quizId);
             const sessionId = sessionRes.session?.id;
 
-            if (!sessionId) throw new Error('Could not initialize study session.');
+            if (!sessionId) throw new Error('Unable to open quiz session.');
 
             // Navigate to active quiz
             router.replace(`/(main)/quizzes/${sessionId}`);
@@ -169,7 +169,7 @@ export default function CreateQuizPage() {
             const retry = err.retryAfter ? Math.ceil(Number(err.retryAfter)) : 0;
             if (retry > 0) {
                 setCooldownSeconds(retry);
-                setError(`Rate limit cooldown active. Please wait ${retry}s before generating.`);
+                setError(`Wait ${retry}s before generating another quiz.`);
             } else {
                 setError(err.message || 'Generation failed.');
             }
@@ -218,9 +218,9 @@ export default function CreateQuizPage() {
                     </Text>
                     <View className="gap-2">
                         {[
-                            { id: 'conceptual', title: 'Multiple Choice', desc: '4 options on concepts, definitions, and theory' },
-                            { id: 'true_false', title: 'True or False', desc: 'Factual technical assertions with 2 options' },
-                            { id: 'coding_syntax', title: 'Coding Syntax', desc: 'Code snippets testing output, syntax, and logic' },
+                            { id: 'conceptual', title: 'Multiple Choice', desc: 'Pick the right answer from 4 choices.' },
+                            { id: 'true_false', title: 'True or False', desc: 'Decide if each statement is true or false.' },
+                            { id: 'coding_syntax', title: 'Coding Syntax', desc: 'Find the code output or spot the bug.' },
                         ].map(m => {
                             const selected = questionType === m.id;
                             return (
@@ -326,7 +326,7 @@ export default function CreateQuizPage() {
                         <Pressable
                             disabled={cooldownSeconds > 0}
                             accessibilityRole="button"
-                            accessibilityLabel={cooldownSeconds > 0 ? `Rate limit cooldown active. Please wait ${cooldownSeconds} seconds` : "Generate Quiz"}
+                            accessibilityLabel={cooldownSeconds > 0 ? `Wait ${cooldownSeconds} seconds before generating` : 'Generate Quiz'}
                             onPress={handleGenerate}
                             style={({ pressed }) => [
                                 {

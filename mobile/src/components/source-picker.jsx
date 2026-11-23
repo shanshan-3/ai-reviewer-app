@@ -137,8 +137,8 @@ export default function SourcePicker({
             {/* Subtitle helper */}
             <Text className="font-geist text-xs text-[#526071]">
                 {sourceKind === 'module'
-                    ? 'Questions and citations drawn directly from your uploaded document.'
-                    : 'Practice questions based on standard BSIT curriculum subjects.'}
+                    ? 'Questions and citations pulled directly from your document.'
+                    : 'Practice questions based on standard curriculum subjects.'}
             </Text>
 
             {/* Source Content */}
@@ -162,10 +162,10 @@ export default function SourcePicker({
                                 </View>
                                 <View className="flex-1 pr-1">
                                     <Text className="font-geist-bold text-sm text-[#001428]">
-                                        No Approved Modules Yet
+                                        No Uploaded Modules
                                     </Text>
                                     <Text className="mt-1 font-geist text-xs leading-5 text-[#526071]">
-                                        Upload lecture notes in PDF or DOCX format, or switch to curriculum topics right now.
+                                        Upload lecture notes in PDF or DOCX, or study standard curriculum topics.
                                     </Text>
                                 </View>
                             </View>
@@ -200,7 +200,7 @@ export default function SourcePicker({
                                     ]}
                                 >
                                     <IconSparkles size={14} color="#001428" strokeWidth={2} />
-                                    <Text className="font-geist-semibold text-xs text-[#001428]">Use IT Topics</Text>
+                                    <Text className="font-geist-semibold text-xs text-[#001428]">Browse Topics</Text>
                                 </Pressable>
                             </View>
                         </View>
@@ -214,7 +214,7 @@ export default function SourcePicker({
                             <View className="flex-1 pr-2">
                                 <Text className="font-geist text-xs text-[#526071]">Selected Module</Text>
                                 <Text numberOfLines={1} className="font-geist-medium text-sm text-[#001428]">
-                                    {selectedMaterial?.title || 'Select an approved module'}
+                                    {selectedMaterial?.title || 'Select a module'}
                                 </Text>
                             </View>
                             <IconChevronDown size={20} color="#526071" />
@@ -235,7 +235,7 @@ export default function SourcePicker({
                             className="min-h-14 flex-row items-center justify-between rounded-2xl border border-[#E4E8EE] bg-white px-4 py-3"
                         >
                             <View className="flex-1 pr-2">
-                                <Text className="font-geist text-xs text-[#526071]">Selected IT Subject & Topic</Text>
+                                <Text className="font-geist text-xs text-[#526071]">Selected Topic</Text>
                                 <Text numberOfLines={1} className="font-geist-medium text-sm text-[#001428]">
                                     {displayTopicName}
                                 </Text>
@@ -251,7 +251,7 @@ export default function SourcePicker({
                 <View className="flex-1 justify-end" style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}>
                     <Pressable className="flex-1" onPress={() => setMaterialModalOpen(false)} />
                     <View className="max-h-[70%] rounded-t-3xl bg-white p-5 border border-[#E4E8EE]">
-                        <Text className="mb-4 font-geist-semibold text-lg text-[#001428]">Select Approved Module</Text>
+                        <Text className="mb-4 font-geist-semibold text-lg text-[#001428]">Select Module</Text>
                         <ScrollView contentContainerStyle={{ gap: 8 }}>
                             {readyMaterials.map(m => (
                                 <Pressable
@@ -283,8 +283,8 @@ export default function SourcePicker({
                     <View className="max-h-[85%] rounded-t-3xl bg-white p-5 border border-[#E4E8EE]">
                         <View className="flex-row items-center justify-between pb-3">
                             <View>
-                                <Text className="font-geist-semibold text-lg text-[#001428]">Select IT Topic</Text>
-                                <Text className="font-geist text-xs text-[#526071]">Choose from your saved topics or any BSIT subject</Text>
+                                <Text className="font-geist-semibold text-lg text-[#001428]">Select Topic</Text>
+                                <Text className="font-geist text-xs text-[#526071]">Choose from saved topics or curriculum subjects</Text>
                             </View>
                             <Pressable onPress={() => setTopicModalOpen(false)} className="p-1">
                                 <IconX size={20} color="#526071" />
@@ -297,7 +297,7 @@ export default function SourcePicker({
                             <TextInput
                                 value={searchTerm}
                                 onChangeText={setSearchTerm}
-                                placeholder="Search BSIT subjects or topics..."
+                                placeholder="Search subjects or topics…"
                                 placeholderTextColor="#8A99AD"
                                 className="ml-2 flex-1 font-geist text-sm text-[#001428]"
                             />
@@ -308,7 +308,7 @@ export default function SourcePicker({
                             {(labels.topics ?? []).length > 0 && !searchTerm && (
                                 <View className="gap-2">
                                     <Text className="font-geist-semibold text-xs uppercase tracking-wider text-[#526071]">
-                                        Your Saved Topics
+                                        Saved Topics
                                     </Text>
                                     {labels.topics.map(t => {
                                         const sub = labels.subjects?.find(s => s.id === t.subject_id);
@@ -337,7 +337,7 @@ export default function SourcePicker({
                             {/* BSIT Curriculum Subjects Section */}
                             <View className="gap-3">
                                 <Text className="font-geist-semibold text-xs uppercase tracking-wider text-[#526071]">
-                                    BSIT Curriculum Subjects
+                                    Curriculum Subjects
                                 </Text>
                                 {filteredSections.map(sec => (
                                     <View key={sec.title} className="gap-2">
