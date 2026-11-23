@@ -12,6 +12,8 @@ server/.ownership-local/
 server/.material-local/
 .agents
 .agent
+.claude
+**/.claude/
 
 # Fullstack Audit local architecture maps (AI navigation only)
 docs/frontend-atlas/
