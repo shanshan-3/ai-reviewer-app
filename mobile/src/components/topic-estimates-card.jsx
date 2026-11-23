@@ -13,6 +13,7 @@ export default function TopicEstimatesCard({
     estimates = [],
     loading = false,
     limit = 5,
+    bare = false,
     onViewAllPress,
 }) {
     const [expanded, setExpanded] = useState(false);
@@ -28,6 +29,13 @@ export default function TopicEstimatesCard({
     }, [estimates]);
 
     if (loading) {
+        if (bare) {
+            return (
+                <View className="py-4 items-center justify-center">
+                    <ActivityIndicator size="small" color="#001428" />
+                </View>
+            );
+        }
         return (
             <View
                 className="overflow-hidden rounded-3xl border border-[#E5E9F0] bg-white p-4 shadow-2xs"
@@ -52,6 +60,18 @@ export default function TopicEstimatesCard({
     }
 
     if (!estimates || estimates.length === 0) {
+        if (bare) {
+            return (
+                <View className="items-center py-5 text-center">
+                    <Text className="font-geist-bold text-xs text-[#001428]">
+                        No Topic Data
+                    </Text>
+                    <Text className="mt-0.5 text-center font-geist text-[11px] text-[#526071]">
+                        Take quizzes to track topic accuracy.
+                    </Text>
+                </View>
+            );
+        }
         return (
             <View
                 className="items-center rounded-3xl border border-[#E5E9F0] bg-white p-5 shadow-2xs text-center"
@@ -73,13 +93,13 @@ export default function TopicEstimatesCard({
         );
     }
 
-    return (
-        <View
-            className="overflow-hidden rounded-3xl border border-[#E5E9F0] bg-white p-4 shadow-2xs"
-            style={{ borderCurve: 'continuous' }}
-        >
-            {/* Minimal Header */}
-            <View className="flex-row items-center justify-between">
+    const headerNode = (
+        <View className="flex-row items-center justify-between">
+            {bare ? (
+                <Text className="font-geist-medium text-xs text-[#526071]">
+                    {masteredCount} of {estimates.length} mastered (≥80%)
+                </Text>
+            ) : (
                 <View className="flex-row items-center gap-2.5">
                     <View
                         className="h-7 w-7 items-center justify-center rounded-lg bg-[#001428]"
@@ -104,128 +124,148 @@ export default function TopicEstimatesCard({
                         </Text>
                     </View>
                 </View>
+            )}
 
-                {estimates.length > limit && (
-                    <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={expanded ? 'Show fewer topics' : 'View all topics'}
-                        onPress={onViewAllPress || (() => setExpanded(prev => !prev))}
-                        className="flex-row items-center gap-1 rounded-full bg-[#F1F4F8] px-2.5 py-1"
-                        style={({ pressed }) => [
-                            {
-                                borderCurve: 'continuous',
-                                transform: [{ scale: pressed ? 0.96 : 1 }],
-                                backgroundColor: pressed ? '#E2E8F0' : '#F1F4F8',
-                            },
-                        ]}
-                    >
-                        <Text className="font-geist-semibold text-[11px] text-[#001428]">
-                            {expanded ? 'Show Less' : `All (${estimates.length})`}
-                        </Text>
-                        {expanded ? (
-                            <IconChevronUp size={12} color="#001428" strokeWidth={2.5} />
-                        ) : (
-                            <IconChevronDown size={12} color="#001428" strokeWidth={2.5} />
-                        )}
-                    </Pressable>
-                )}
-            </View>
+            {estimates.length > limit && (
+                <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={expanded ? 'Show fewer topics' : 'View all topics'}
+                    onPress={onViewAllPress || (() => setExpanded(prev => !prev))}
+                    className="flex-row items-center gap-1 rounded-full bg-[#F1F4F8] px-2.5 py-1"
+                    style={({ pressed }) => [
+                        {
+                            borderCurve: 'continuous',
+                            transform: [{ scale: pressed ? 0.96 : 1 }],
+                            backgroundColor: pressed ? '#E2E8F0' : '#F1F4F8',
+                        },
+                    ]}
+                >
+                    <Text className="font-geist-semibold text-[11px] text-[#001428]">
+                        {expanded ? 'Show Less' : `All (${estimates.length})`}
+                    </Text>
+                    {expanded ? (
+                        <IconChevronUp size={12} color="#001428" strokeWidth={2.5} />
+                    ) : (
+                        <IconChevronDown size={12} color="#001428" strokeWidth={2.5} />
+                    )}
+                </Pressable>
+            )}
+        </View>
+    );
 
-            {/* Compact Estimates Rows */}
-            <View className="mt-3 gap-3 divide-y divide-[#F1F3F6]">
-                {displayList.map(item => {
-                    const isEligible = item.eligible;
-                    const accuracy = item.accuracy;
-                    const statusLabel = !isEligible
-                        ? 'Learning'
-                        : accuracy >= 80
-                        ? 'Mastered'
-                        : accuracy >= 60
-                        ? 'Proficient'
-                        : 'Needs Practice';
+    const rowsNode = (
+        <View className="mt-3 gap-3 divide-y divide-[#F1F3F6]">
+            {displayList.map(item => {
+                const isEligible = item.eligible;
+                const accuracy = item.accuracy;
+                const statusLabel = !isEligible
+                    ? 'Learning'
+                    : accuracy >= 80
+                    ? 'Mastered'
+                    : accuracy >= 60
+                    ? 'Proficient'
+                    : 'Needs Practice';
 
-                    const badgeStyle = !isEligible
-                        ? 'bg-slate-100 text-slate-600 border-slate-200/80'
-                        : accuracy >= 80
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
-                        : accuracy >= 60
-                        ? 'bg-blue-50 text-blue-800 border-blue-200/80'
-                        : 'bg-amber-50 text-amber-900 border-amber-200/80';
+                const badgeStyle = !isEligible
+                    ? 'bg-slate-100 text-slate-600 border-slate-200/80'
+                    : accuracy >= 80
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
+                    : accuracy >= 60
+                    ? 'bg-blue-50 text-blue-800 border-blue-200/80'
+                    : 'bg-amber-50 text-amber-900 border-amber-200/80';
 
-                    const progressColor = !isEligible
-                        ? 'bg-slate-300'
-                        : accuracy >= 80
-                        ? 'bg-emerald-500'
-                        : accuracy >= 60
-                        ? 'bg-blue-500'
-                        : 'bg-amber-500';
+                const progressColor = !isEligible
+                    ? 'bg-slate-300'
+                    : accuracy >= 80
+                    ? 'bg-emerald-500'
+                    : accuracy >= 60
+                    ? 'bg-blue-500'
+                    : 'bg-amber-500';
 
-                    const progressWidth = isEligible
-                        ? Math.min(100, Math.max(0, accuracy))
-                        : Math.min(100, Math.round((item.sampleCount / 5) * 100));
+                const progressWidth = isEligible
+                    ? Math.min(100, Math.max(0, accuracy))
+                    : Math.min(100, Math.round((item.sampleCount / 5) * 100));
 
-                    return (
-                        <View key={item.topicId} className="pt-3 first:pt-0">
-                            {/* Topic Name & Badge */}
-                            <View className="flex-row items-center justify-between gap-2">
-                                <View className="flex-1 pr-2">
-                                    <Text
-                                        numberOfLines={1}
-                                        className="font-geist-semibold text-xs text-[#001428]"
-                                    >
-                                        {item.topicName}
-                                    </Text>
-                                    <Text numberOfLines={1} className="font-geist text-[10px] text-[#526071]">
-                                        {item.subjectName}
-                                    </Text>
-                                </View>
-
-                                <View
-                                    className={`flex-row items-center gap-1 rounded-full border px-2 py-0.5 ${badgeStyle}`}
-                                    style={{ borderCurve: 'continuous' }}
+                return (
+                    <View key={item.topicId} className="pt-3 first:pt-0">
+                        {/* Topic Name & Badge */}
+                        <View className="flex-row items-center justify-between gap-2">
+                            <View className="flex-1 pr-2">
+                                <Text
+                                    numberOfLines={1}
+                                    className="font-geist-semibold text-xs text-[#001428]"
                                 >
-                                    {isEligible && accuracy >= 80 && (
-                                        <IconCircleCheck size={10} color="#059669" strokeWidth={2.5} />
-                                    )}
-                                    <Text className="font-geist-semibold text-[10px]">
-                                        {statusLabel}
-                                    </Text>
-                                </View>
+                                    {item.topicName}
+                                </Text>
+                                <Text numberOfLines={1} className="font-geist text-[10px] text-[#526071]">
+                                    {item.subjectName}
+                                </Text>
                             </View>
 
-                            {/* Minimal Meter Bar */}
-                            <View className="mt-2 gap-1">
-                                <View
-                                    className="h-1.5 w-full overflow-hidden rounded-full bg-[#F1F3F6]"
-                                    style={{ borderCurve: 'continuous' }}
-                                >
-                                    <View
-                                        className={`h-full rounded-full ${progressColor}`}
-                                        style={{ width: `${progressWidth}%`, borderCurve: 'continuous' }}
-                                    />
-                                </View>
-
-                                <View className="flex-row items-center justify-between">
-                                    <Text
-                                        style={{ fontVariant: ['tabular-nums'] }}
-                                        className="font-geist text-[10px] text-[#526071]"
-                                    >
-                                        {isEligible
-                                            ? `${item.correctCount}/${item.sampleCount}`
-                                            : `${item.sampleCount}/5 samples`}
-                                    </Text>
-                                    <Text
-                                        style={{ fontVariant: ['tabular-nums'] }}
-                                        className="font-geist-bold text-xs text-[#001428]"
-                                    >
-                                        {isEligible ? `${accuracy}%` : `${progressWidth}%`}
-                                    </Text>
-                                </View>
+                            <View
+                                className={`flex-row items-center gap-1 rounded-full border px-2 py-0.5 ${badgeStyle}`}
+                                style={{ borderCurve: 'continuous' }}
+                            >
+                                {isEligible && accuracy >= 80 && (
+                                    <IconCircleCheck size={10} color="#059669" strokeWidth={2.5} />
+                                )}
+                                <Text className="font-geist-semibold text-[10px]">
+                                    {statusLabel}
+                                </Text>
                             </View>
                         </View>
-                    );
-                })}
+
+                        {/* Minimal Meter Bar */}
+                        <View className="mt-2 gap-1">
+                            <View
+                                className="h-1.5 w-full overflow-hidden rounded-full bg-[#F1F3F6]"
+                                style={{ borderCurve: 'continuous' }}
+                            >
+                                <View
+                                    className={`h-full rounded-full ${progressColor}`}
+                                    style={{ width: `${progressWidth}%`, borderCurve: 'continuous' }}
+                                />
+                            </View>
+
+                            <View className="flex-row items-center justify-between">
+                                <Text
+                                    style={{ fontVariant: ['tabular-nums'] }}
+                                    className="font-geist text-[10px] text-[#526071]"
+                                >
+                                    {isEligible
+                                        ? `${item.correctCount}/${item.sampleCount}`
+                                        : `${item.sampleCount}/5 samples`}
+                                </Text>
+                                <Text
+                                    style={{ fontVariant: ['tabular-nums'] }}
+                                    className="font-geist-bold text-xs text-[#001428]"
+                                >
+                                    {isEligible ? `${accuracy}%` : `${progressWidth}%`}
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+                );
+            })}
+        </View>
+    );
+
+    if (bare) {
+        return (
+            <View className="gap-2 pt-1">
+                {headerNode}
+                {rowsNode}
             </View>
+        );
+    }
+
+    return (
+        <View
+            className="overflow-hidden rounded-3xl border border-[#E5E9F0] bg-white p-4 shadow-2xs"
+            style={{ borderCurve: 'continuous' }}
+        >
+            {headerNode}
+            {rowsNode}
         </View>
     );
 }
