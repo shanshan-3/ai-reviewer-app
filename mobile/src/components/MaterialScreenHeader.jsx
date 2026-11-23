@@ -1,21 +1,21 @@
 import { Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import IconArrowLeft from '@tabler/icons-react-native/IconArrowLeft';
-import { THEME } from '@/lib/theme';
 
 export default function MaterialScreenHeader({ title }) {
     return (
-        <View className="min-h-14 flex-row items-center gap-3 border-b border-border bg-card px-4 py-2">
+        <View className="min-h-14 flex-row items-center gap-3 border-b border-[#E5E9F0] bg-white px-4 py-2">
             <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Go back"
                 hitSlop={8}
                 onPress={() => router.back()}
-                className="h-12 w-12 items-center justify-center rounded-lg active:bg-secondary focus:bg-secondary"
+                className="h-10 w-10 items-center justify-center rounded-xl active:bg-[#F1F4F8]"
+                style={{ borderCurve: 'continuous' }}
             >
-                <IconArrowLeft size={22} color={THEME.foreground} accessible={false} />
+                <IconArrowLeft size={20} color="#001428" accessible={false} />
             </Pressable>
-            <Text accessibilityRole="header" numberOfLines={1} className="flex-1 font-geist-semibold text-lg text-foreground">
+            <Text accessibilityRole="header" numberOfLines={1} className="flex-1 font-geist-semibold text-base text-[#001428]">
                 {title}
             </Text>
         </View>
