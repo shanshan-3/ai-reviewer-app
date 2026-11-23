@@ -8,7 +8,11 @@
     "userInterfaceStyle": "light",
     "scheme": "ai-reviewer",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.RebyuIT",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
