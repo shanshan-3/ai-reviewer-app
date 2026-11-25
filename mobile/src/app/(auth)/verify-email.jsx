@@ -116,10 +116,14 @@ export default function VerifyEmailPage() {
                             label="Email address"
                             labelId="email-label"
                             onFocus={() => setEmailFocused(true)}
-                            onBlur={() => setEmailFocused(false)}
-                            error = {errors.email}
+                            onBlur={() => {
+                                setEmailFocused(false);
+                                setEmail((prev) => prev.trim().toLowerCase());
+                            }}
+                            error={errors.email}
                             autoCapitalize="none"
                             autoComplete="email"
+                            textContentType="emailAddress"
                             autoCorrect={false}
                             keyboardType="email-address"
                             returnKeyType="done"
@@ -134,9 +138,10 @@ export default function VerifyEmailPage() {
                         <View className="mt-auto w-full max-w-sm self-center">
                             <AuthMessage message={message} isError />
                             <AuthButton
-                                submitLabel={loading ? "Sending..." : "Send code"}
+                                submitLabel={loading ? "Sending..." : "Send reset code"}
                                 onSubmit={handleSubmit}
-                                disabled={loading}
+                                disabled={loading || !email.trim()}
+                                loading={loading}
                             />
                         </View>
                     </View>

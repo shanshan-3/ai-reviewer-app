@@ -147,9 +147,13 @@ export default function LoginPage() {
                             invalid={invalidCredentials}
                             accessibilityHint={invalidCredentials ? "Check your email and password." : undefined}
                             onFocus={() => setInputFocused(true)}
-                            onBlur={() => setInputFocused(false)}
+                            onBlur={() => {
+                                setInputFocused(false);
+                                setEmail((prev) => prev.trim().toLowerCase());
+                            }}
                             autoCapitalize="none"
                             autoComplete="email"
+                            textContentType="emailAddress"
                             autoCorrect={false}
                             keyboardType="email-address"
                             returnKeyType="next"
@@ -180,6 +184,7 @@ export default function LoginPage() {
                             onTogglePassword={() => setShowPassword(!showPassword)}
                             autoCapitalize="none"
                             autoComplete="current-password"
+                            textContentType="password"
                             autoCorrect={false}
                             returnKeyType="done"
                             onSubmitEditing={handleSubmit}
@@ -229,9 +234,10 @@ export default function LoginPage() {
                     <View className="mt-auto w-full max-w-sm self-center">
                         <AuthMessage message={message} isError={messageIsError} />
                         <AuthButton
-                            submitLabel={loading ? "Signing in..." : "Sign in"}
+                            submitLabel={loading ? "Signing in..." : "Sign in to account"}
                             onSubmit={handleSubmit}
-                            disabled={loading}
+                            disabled={loading || !email.trim() || !password}
+                            loading={loading}
                         >
                             <Pressable
                                 accessibilityRole="link"

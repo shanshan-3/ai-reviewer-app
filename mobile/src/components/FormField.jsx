@@ -38,6 +38,7 @@ const FormField = forwardRef(function FormField(
 ) {
   const PasswordVisibilityIcon = showPassword ? IconEyeOff : IconEye;
   const hasError = Boolean(error) || invalid;
+  const errorId = `${labelId}-error`;
 
   return (
     <View className={`gap-1.5 ${containerClassName}`}>
@@ -53,6 +54,9 @@ const FormField = forwardRef(function FormField(
           onFocus={onFocus}
           accessibilityLabel={error ? `${label}. ${error}` : label}
           accessibilityLabelledBy={labelId}
+          aria-invalid={hasError}
+          aria-describedby={hasError ? errorId : undefined}
+          accessibilityState={{ invalid: hasError }}
           placeholderTextColor="#94A3B8"
           selectionColor="rgba(0, 20, 40, 0.2)"
           cursorColor="#001428"
@@ -102,6 +106,7 @@ const FormField = forwardRef(function FormField(
       </View>
       {error ? (
         <Text
+          nativeID={errorId}
           accessibilityLiveRegion="polite"
           className="font-geist text-xs text-[#DC2626]"
         >

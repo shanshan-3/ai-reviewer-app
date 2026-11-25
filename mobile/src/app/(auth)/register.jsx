@@ -142,6 +142,7 @@ export default function RegisterPage() {
                             accessibilityRole="button"
                             accessibilityLabel="Go back"
                             onPress={() => router.back()}
+                            className="min-h-12 min-w-12 self-start items-center justify-center rounded-lg active:opacity-70 focus:bg-secondary"
                         >
                             <IconArrowLeft
                                 style={{ minHeight: 24 * fontScale, minWidth: 24 * fontScale }}
@@ -169,9 +170,13 @@ export default function RegisterPage() {
                             icon={IconUser}
                             error={errors.fullName}
                             onFocus={handleInputFocus}
-                            onBlur={() => setInputFocused(false)}
+                            onBlur={() => {
+                                setInputFocused(false);
+                                setFullName((prev) => prev.trim());
+                            }}
                             autoCapitalize="words"
                             autoComplete="name"
+                            textContentType="name"
                             autoCorrect={false}
                             returnKeyType="next"
                             submitBehavior="submit"
@@ -192,9 +197,13 @@ export default function RegisterPage() {
                             icon={IconMail}
                             error={errors.email}
                             onFocus={handleInputFocus}
-                            onBlur={() => setInputFocused(false)}
+                            onBlur={() => {
+                                setInputFocused(false);
+                                setEmail((prev) => prev.trim().toLowerCase());
+                            }}
                             autoCapitalize="none"
                             autoComplete="email"
+                            textContentType="emailAddress"
                             autoCorrect={false}
                             keyboardType="email-address"
                             returnKeyType="next"
@@ -227,6 +236,7 @@ export default function RegisterPage() {
                                 onBlur={() => setInputFocused(false)}
                                 autoCapitalize="none"
                                 autoComplete="new-password"
+                                textContentType="newPassword"
                                 autoCorrect={false}
                                 returnKeyType="done"
                                 onSubmitEditing={handleSubmit}
@@ -245,7 +255,8 @@ export default function RegisterPage() {
                         <AuthButton
                             submitLabel= {loading ? "Creating account..." : "Create account"}
                             onSubmit={handleSubmit}
-                            disabled={loading}
+                            disabled={loading || !fullName.trim() || !email.trim() || !password}
+                            loading={loading}
                         >
                             <Pressable
                                 accessibilityRole="button"

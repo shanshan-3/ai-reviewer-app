@@ -214,9 +214,10 @@ export default function SetPasswordPage() {
                         <View className="mt-auto w-full max-w-sm self-center">
                             <AuthMessage message={message} isError />
                             <AuthButton
-                                submitLabel={loading ? "Please wait..." : saved ? "Return to sign in" : "Set password"}
+                                submitLabel={loading ? "Please wait..." : saved ? "Return to sign in" : "Set new password"}
                                 onSubmit={handleSubmit}
-                                disabled={loading || !ready}
+                                disabled={loading || !ready || (!saved && (!password || !confirmPassword))}
+                                loading={loading}
                             />
                         </View>
                     </View>

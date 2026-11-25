@@ -25,6 +25,8 @@ export function validateRegister(fullName, email, password) {
 
   if (!fullName.trim()) {
     errors.fullName = 'Enter your full name.';
+  } else if (!/^[\p{L}\p{M}'\-\s]{2,}$/u.test(fullName.trim())) {
+    errors.fullName = 'Enter a valid name.';
   }
 
   return errors;

@@ -17,11 +17,11 @@ export default function AuthButton({ submitLabel, onSubmit, children, disabled =
         accessibilityRole="button"
         onPress={onSubmit}
         disabled={isBusy}
-        accessibilityState={{ disabled: isBusy, busy: isBusy }}
+        accessibilityState={{ disabled: isBusy, busy: loading }}
         style={({ pressed }) => [
           {
             borderCurve: 'continuous',
-            transform: [{ scale: pressed && !isBusy ? 0.97 : 1 }],
+            transform: [{ scale: pressed && !isBusy ? 0.98 : 1 }],
           },
         ]}
         className={`min-h-14 flex-row items-center justify-center gap-2 rounded-2xl bg-[#001428] px-4 py-3.5 shadow-sm active:opacity-90 ${
