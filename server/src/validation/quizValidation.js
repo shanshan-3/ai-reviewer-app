@@ -36,6 +36,72 @@ export function sameGenerationInput(row, request) {
         .every(key => row[key] === request[key]) && (request.source_kind === 'module' || row.topic_id === request.topic_id);
 }
 
+const normalizeChar = ch => ch === '‘' || ch === '’' ? '\'' : ch === '“' || ch === '”' ? '"' : ch === '–' || ch === '—' ? '-' : ch.toLowerCase();
+
+function normalizeForMatch(value) {
+    let norm = '';
+    const starts = [];
+    const ends = [];
+    let pendingSpace = false;
+    let spaceStart = -1;
+    let spaceEnd = -1;
+    for (let i = 0; i < value.length; i++) {
+        const ch = value[i];
+        if (/\s/.test(ch)) {
+            if (norm.length > 0 && !pendingSpace) {
+                pendingSpace = true;
+                spaceStart = i;
+            }
+            spaceEnd = i + 1;
+            continue;
+        }
+        if (pendingSpace) {
+            norm += ' ';
+            starts.push(spaceStart);
+            ends.push(spaceEnd);
+            pendingSpace = false;
+        }
+        norm += normalizeChar(ch);
+        starts.push(i);
+        ends.push(i + 1);
+    }
+    return { norm, starts, ends };
+}
+
+function findVerbatimSpan(text, rawExcerpt) {
+    if (typeof text !== 'string' || !text) return null;
+    const exact = text.indexOf(rawExcerpt);
+    if (exact >= 0 && rawExcerpt.length <= 1500) {
+        return { start: exact, end: exact + rawExcerpt.length };
+    }
+    const { norm: haystack, starts, ends } = normalizeForMatch(text);
+    const cleaned = rawExcerpt.replace(/^(?:\.\.\.|…)+|(?:\.\.\.|…)+$/g, '').replace(/^["'“‘]+|["'”’]+$/g, '').trim();
+    const candidates = [cleaned, ...cleaned.split(/(?:\.\.\.|…|\n|;\s|\.\s+)/).map(s => s.trim()).filter(s => s.length >= 20)]
+        .filter((s, idx, arr) => s.length > 0 && arr.indexOf(s) === idx);
+    for (const candidate of candidates) {
+        const { norm: needle } = normalizeForMatch(candidate);
+        if (!needle) continue;
+        const pos = haystack.indexOf(needle);
+        if (pos >= 0) {
+            const start = starts[pos];
+            const end = ends[pos + needle.length - 1];
+            if (end - start > 0 && end - start <= 1500) return { start, end };
+        }
+    }
+    return null;
+}
+
+function matchCitation(sections, citation) {
+    if (!keys(citation, ['sectionId', 'excerpt']) || !nonempty(citation.excerpt, 1500)) return null;
+    const preferred = sections.find(item => item.id === citation.sectionId);
+    const ordered = preferred ? [preferred, ...sections.filter(item => item.id !== preferred.id)] : sections;
+    for (const section of ordered) {
+        const span = findVerbatimSpan(section.text, citation.excerpt);
+        if (span) return { section, ...span };
+    }
+    return null;
+}
+
 export function validateGeneratedQuestions(output, settings, sections) {
     const invalid = () => { throw quizError(422, 'INVALID_GENERATION', 'The generated quiz did not pass validation. Try again.'); };
     if (!keys(output, ['outcome', 'questions']) || !['ready', 'insufficient_source', 'unsupported_topic'].includes(output.outcome)
@@ -51,7 +117,8 @@ export function validateGeneratedQuestions(output, settings, sections) {
     if (!output.questions.length) invalid();
     const optionIds = settings.question_type === 'true_false' ? ['a', 'b'] : ['a', 'b', 'c', 'd'];
     const seen = new Set();
-    const questions = output.questions.map(question => {
+    const questions = [];
+    for (const question of output.questions) {
         if (!keys(question, ['prompt', 'difficulty', 'code', 'options', 'correctOptionId', 'explanation', 'sources'])
             || !nonempty(question.prompt, 1600) || !nonempty(question.explanation, 2000)
             || !['easy', 'medium', 'hard'].includes(question.difficulty)
@@ -60,7 +127,7 @@ export function validateGeneratedQuestions(output, settings, sections) {
         if (settings.question_type !== 'coding_syntax' ? question.code !== null
             : !keys(question.code, ['language', 'text']) || !nonempty(question.code.language, 40) || !nonempty(question.code.text, 3000)) invalid();
         const fingerprint = question.prompt.trim().replace(/\s+/g, ' ').toLowerCase() + '\n' + (question.code?.text.trim() ?? '');
-        if (seen.has(fingerprint)) invalid();
+        if (seen.has(fingerprint)) continue;
         seen.add(fingerprint);
         const options = new Map();
         for (const option of question.options) {
@@ -71,27 +138,31 @@ export function validateGeneratedQuestions(output, settings, sections) {
         if (new Set([...options.values()].map(value => value.toLowerCase())).size !== optionIds.length) invalid();
         if (settings.question_type === 'true_false' && (options.get('a') !== 'True' || options.get('b') !== 'False')) invalid();
         if (settings.source_kind === 'topic' && question.sources.length) invalid();
-        if (settings.source_kind === 'module' && (!question.sources.length || question.sources.length > 20)) invalid();
+        if (settings.source_kind === 'module' && question.sources.length > 20) invalid();
         const cited = new Map();
         for (const citation of question.sources) {
-            if (!keys(citation, ['sectionId', 'excerpt']) || !nonempty(citation.excerpt, 1500)) invalid();
-            const section = sections.find(item => item.id === citation.sectionId);
-            const start = section?.text.indexOf(citation.excerpt) ?? -1;
-            if (start < 0) invalid();
-            const previous = cited.get(section.id);
-            cited.set(section.id, { section, start: Math.min(previous?.start ?? start, start),
-                end: Math.max(previous?.end ?? 0, start + citation.excerpt.length) });
+            const matched = matchCitation(sections, citation);
+            if (!matched) continue;
+            const previous = cited.get(matched.section.id);
+            const start = Math.min(previous?.start ?? matched.start, matched.start);
+            const end = Math.max(previous?.end ?? 0, matched.end);
+            if (end - start <= 1500) cited.set(matched.section.id, { section: matched.section, start, end });
         }
-        const sources = [...cited.values()].map(({ section, start, end }) => {
-            const excerpt = section.text.slice(start, end);
-            if (excerpt.length > 1500) invalid();
-            return { section_id: section.id, reference: section.reference, excerpt };
-        });
-        return { prompt: question.prompt.trim(), difficulty: question.difficulty,
+        if (settings.source_kind === 'module' && !cited.size) continue;
+        const sources = [...cited.values()].map(({ section, start, end }) => ({
+            section_id: section.id, reference: section.reference, excerpt: section.text.slice(start, end),
+        }));
+        questions.push({ prompt: question.prompt.trim(), difficulty: question.difficulty,
             code: question.code?.text ?? null, code_language: question.code?.language ?? null,
             option_a: options.get('a'), option_b: options.get('b'), option_c: options.get('c') ?? null, option_d: options.get('d') ?? null,
-            correct_option_id: question.correctOptionId, explanation: question.explanation.trim(), sources };
-    });
+            correct_option_id: question.correctOptionId, explanation: question.explanation.trim(), sources });
+    }
+    if (!questions.length) {
+        if (settings.source_kind === 'module') {
+            return { questions: [], code: settings.question_type === 'coding_syntax' ? 'CODE_SOURCE_REQUIRED' : 'INSUFFICIENT_SOURCE' };
+        }
+        invalid();
+    }
     const targetDifficulty = settings.starting_difficulty || 'medium';
     if (questions.some(question => question.difficulty !== targetDifficulty)) invalid();
     return { questions, code: null };

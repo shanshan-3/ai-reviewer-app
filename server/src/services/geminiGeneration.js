@@ -2,7 +2,7 @@ import { GEMINI_CONFIG } from '../config/ai.js';
 import { quizMessages } from './quizPrompts.js';
 import { validateGeneratedQuestions, quizError } from '../validation/quizValidation.js';
 
-function buildGeminiSchema(questionType, difficulty) {
+function buildGeminiSchema(questionType, difficulty, sourceKind = 'module') {
     const questionProperties = {
         prompt: { type: 'STRING' },
         difficulty: { type: 'STRING', enum: difficulty ? [difficulty] : ['easy', 'medium', 'hard'] },
@@ -19,7 +19,10 @@ function buildGeminiSchema(questionType, difficulty) {
         },
         correctOptionId: { type: 'STRING', enum: questionType === 'true_false' ? ['a', 'b'] : ['a', 'b', 'c', 'd'] },
         explanation: { type: 'STRING' },
-        sources: {
+    };
+
+    if (sourceKind === 'module') {
+        questionProperties.sources = {
             type: 'ARRAY',
             items: {
                 type: 'OBJECT',
@@ -29,8 +32,8 @@ function buildGeminiSchema(questionType, difficulty) {
                 },
                 required: ['sectionId', 'excerpt']
             }
-        }
-    };
+        };
+    }
 
     if (questionType === 'coding_syntax') {
         questionProperties.code = {
@@ -71,7 +74,8 @@ export async function generateQuestionsWithGemini(settings, selected) {
     const messages = quizMessages(settings, selected.context);
     const systemPrompt = messages[0].content;
     const userPrompt = messages[1].content;
-    const schema = buildGeminiSchema(settings.question_type, settings.starting_difficulty);
+    const schema = buildGeminiSchema(settings.question_type, settings.starting_difficulty, settings.source_kind);
+    const maxOutputTokens = Math.min(8192, Math.max(1536, (settings.requested_question_count || 10) * 320));
 
     const url = `${GEMINI_CONFIG.endpoint}/${GEMINI_CONFIG.model}:generateContent?key=${apiKey}`;
 
@@ -87,7 +91,8 @@ export async function generateQuestionsWithGemini(settings, selected) {
         ],
         generationConfig: {
             responseMimeType: 'application/json',
-            responseSchema: schema
+            responseSchema: schema,
+            maxOutputTokens,
         }
     };
 
@@ -121,9 +126,10 @@ export async function generateQuestionsWithGemini(settings, selected) {
         throw quizError(422, 'INVALID_GENERATION', 'Gemini returned invalid JSON.');
     }
 
-    if (settings.question_type !== 'coding_syntax' && Array.isArray(output.questions)) {
+    if (Array.isArray(output.questions)) {
         for (const q of output.questions) {
-            if (!q.code) q.code = null;
+            if (settings.question_type !== 'coding_syntax' && !q.code) q.code = null;
+            if (settings.source_kind === 'topic' && !Array.isArray(q.sources)) q.sources = [];
         }
     }
 

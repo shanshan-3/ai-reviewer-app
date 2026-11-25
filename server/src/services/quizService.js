@@ -21,6 +21,7 @@ let nextProviderAt = 0;
 function isFallbackEligible(error) {
     return (
         error?.status === 429 ||
+        error?.code === 'INVALID_GENERATION' ||
         ['APIConnectionTimeoutError', 'AbortError', 'TimeoutError'].includes(error?.name) ||
         (typeof error?.status === 'number' && error.status >= 500)
     );
@@ -84,8 +85,18 @@ async function runGeneration(admin, row, selected) {
         if (!result.questions.length) await model.finishGeneration(admin, row.owner_id, row.id, 'insufficient_source', result.code);
         else await model.publishQuiz(admin, row.owner_id, row.id, result.questions, providerModel);
     } catch (error) {
+        const failureCode = generationFailure(error);
+        console.error('[Quiz Generation Failed]', {
+            generationId: row.id,
+            sourceKind: row.source_kind,
+            questionType: row.question_type,
+            failureCode,
+            errorCode: error?.code,
+            status: error?.status,
+            message: error?.message,
+        });
         // A lost publish acknowledgement must not turn an already committed quiz into a failure.
-        try { await model.finishGeneration(admin, row.owner_id, row.id, 'failed', generationFailure(error)); }
+        try { await model.finishGeneration(admin, row.owner_id, row.id, 'failed', failureCode); }
         catch { console.error('Quiz generation status could not be saved; restart recovery is required.'); }
     } finally { working = false; }
 }

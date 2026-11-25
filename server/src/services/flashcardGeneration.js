@@ -11,32 +11,39 @@ import { validateGeneratedFlashcards, flashcardError } from '../validation/flash
 
 export function selectFlashcardContext(settings, source) {
     const sections = [];
-    const schema = flashcardSchema();
+    const schema = flashcardSchema(settings.source_kind);
     const context = settings.source_kind === 'topic'
         ? { subject: source.subjects?.name, topic: source.name }
         : { sections };
 
+    const count = settings.card_count || 10;
+    const byteLimit = Math.min(AI_LIMITS.promptBytes, count <= 5 ? 10240 : count <= 10 ? 16384 : 24576);
     const bytes = () =>
         Buffer.byteLength(JSON.stringify(flashcardMessages(settings, context))) +
         Buffer.byteLength(JSON.stringify(schema));
 
     if (settings.source_kind === 'module') {
         for (const item of source) {
-            const selected = { id: item.id, text: '', reference: item.reference };
+            const compact = item.text.replace(/\s+/g, ' ').trim();
+            if (!/[\p{L}\p{N}]/u.test(compact)) continue;
+            const selected = { text: compact };
             sections.push(selected);
-            for (const character of item.text) {
-                selected.text += character;
-                if (bytes() > AI_LIMITS.promptBytes) {
-                    selected.text = selected.text.slice(0, -character.length);
-                    break;
+            if (bytes() > byteLimit) {
+                selected.text = '';
+                for (const character of compact) {
+                    selected.text += character;
+                    if (bytes() > byteLimit) {
+                        selected.text = selected.text.slice(0, -character.length);
+                        break;
+                    }
                 }
             }
             if (!/[\p{L}\p{N}]/u.test(selected.text)) sections.pop();
-            if (bytes() >= AI_LIMITS.promptBytes - 100) break;
+            if (bytes() >= byteLimit - 100) break;
         }
     }
 
-    if (bytes() > AI_LIMITS.promptBytes) {
+    if (bytes() > byteLimit) {
         throw flashcardError(422, 'INSUFFICIENT_SOURCE', 'The selected context exceeds the generation limit.');
     }
 
@@ -48,6 +55,7 @@ async function generateWithGroq(client, settings, selected) {
         return { outcome: 'insufficient_source', cards: [] };
     }
 
+    const maxTokens = Math.min(AI_LIMITS.completionTokens, Math.max(1024, (settings.card_count || 10) * 180));
     const response = await client.chat.completions.create({
         model: AI_LIMITS.model,
         messages: flashcardMessages(settings, selected.context),
@@ -56,10 +64,10 @@ async function generateWithGroq(client, settings, selected) {
             json_schema: {
                 name: 'it_flashcards',
                 strict: true,
-                schema: flashcardSchema(),
+                schema: flashcardSchema(settings.source_kind),
             },
         },
-        max_completion_tokens: AI_LIMITS.completionTokens,
+        max_completion_tokens: maxTokens,
         reasoning_effort: 'low',
         stream: false,
     });
@@ -93,7 +101,8 @@ async function generateWithGemini(settings, selected) {
     const messages = flashcardMessages(settings, selected.context);
     const systemPrompt = messages[0].content;
     const userPrompt = messages[1].content;
-    const schema = buildGeminiFlashcardSchema();
+    const schema = buildGeminiFlashcardSchema(settings.source_kind);
+    const maxOutputTokens = Math.min(4096, Math.max(1024, (settings.card_count || 10) * 180));
 
     const url = `${GEMINI_CONFIG.endpoint}/${GEMINI_CONFIG.model}:generateContent?key=${apiKey}`;
 
@@ -103,6 +112,7 @@ async function generateWithGemini(settings, selected) {
         generationConfig: {
             responseMimeType: 'application/json',
             responseSchema: schema,
+            maxOutputTokens,
         },
     };
 
