@@ -13,6 +13,7 @@ import { useSession } from '@/providers/session-provider';
 
 
 import { useToast } from '@/providers/toast-provider';
+import CardSkeletonList from '@/components/card-skeleton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import IconUpload from '@tabler/icons-react-native/IconUpload';
 import IconSparkles from '@tabler/icons-react-native/IconSparkles';
@@ -37,14 +38,17 @@ export default function DashboardPage() {
     const requestId = useRef(0);
     const working = useRef(false);
     const failedOffset = useRef(0);
+    const hasLoaded = useRef(false);
 
     usePreventRemove(Boolean(deletingId), () => Alert.alert('Deletion in progress', 'Wait for deletion to finish before leaving this screen.'));
 
-    const load = useCallback(async (offset = 0) => {
+    const load = useCallback(async (offset = 0, silent = false) => {
         if (!userId || working.current) return;
         working.current = true;
         const id = ++requestId.current;
-        setLoading(true);
+        if (!hasLoaded.current && !silent) {
+            setLoading(true);
+        }
         setMessage('');
         try {
             const result = await listMaterials(offset);
@@ -52,6 +56,7 @@ export default function DashboardPage() {
             setMaterials(value => offset === 0 ? result.materials
                 : [...value, ...result.materials.filter(item => !value.some(existing => existing.id === item.id))]);
             setNextOffset(result.nextOffset);
+            hasLoaded.current = true;
 
             // Load quizzes for Dashboard metrics and active resume banner
             listUserQuizzes()
@@ -79,10 +84,8 @@ export default function DashboardPage() {
     }, [userId]);
 
     useFocusEffect(useCallback(() => {
-        setMaterials([]);
-        setNextOffset(null);
         setDeletingId(null);
-        void load();
+        void load(0, hasLoaded.current);
         return () => { requestId.current++; working.current = false; };
     }, [load]));
 
@@ -209,14 +212,6 @@ export default function DashboardPage() {
                                 Day Streak
                             </Text>
                         </Pressable>
-                        <View className="flex-1 items-center px-1">
-                            <Text numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }} className="font-geist-bold text-xl text-[#001428]">
-                                {activeQuiz ? '1' : '0'}
-                            </Text>
-                            <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
-                                In Progress
-                            </Text>
-                        </View>
                     </View>
 
                     {/* 7-Day Study Velocity & Consistency Strip (Compact) */}
@@ -421,7 +416,9 @@ export default function DashboardPage() {
                     </View>
 
                 </View>}
-                ListEmptyComponent={!loading && !message ? (
+                ListEmptyComponent={loading && !message ? (
+                    <CardSkeletonList count={3} type="module" />
+                ) : !loading && !message ? (
                     <View
                         className="items-center justify-center rounded-3xl border border-[#E4E8EE] bg-white p-7 text-center shadow-sm"
                         style={{ borderCurve: 'continuous' }}
@@ -462,9 +459,9 @@ export default function DashboardPage() {
                     </View>
                 ) : null}
                 ListFooterComponent={<View className="gap-2">
-                    {loading && <View className="items-center gap-2 py-5" accessibilityLiveRegion="polite">
+                    {loading && materials.length > 0 && <View className="items-center gap-2 py-5" accessibilityLiveRegion="polite">
                         <ActivityIndicator color={THEME.primary} accessibilityLabel="Loading your modules" />
-                        <Text className="font-geist text-sm leading-6 text-[#526071]">Loading your modules…</Text>
+                        <Text className="font-geist text-sm leading-6 text-[#526071]">Loading more modules…</Text>
                     </View>}
                     <AuthMessage message={message} isError />
                     {!loading && Boolean(message) && <AuthButton submitLabel="Retry" disabled={Boolean(deletingId)} onSubmit={() => load(failedOffset.current)} />}

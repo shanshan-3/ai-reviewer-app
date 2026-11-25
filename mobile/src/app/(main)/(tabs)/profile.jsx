@@ -24,6 +24,7 @@ import IconCircleCheck from '@tabler/icons-react-native/IconCircleCheck';
 export default function ProfilePage() {
     const { session } = useSession();
     const pending = useRef(false);
+    const hasLoaded = useRef(false);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [report, setReport] = useState(null);
@@ -37,8 +38,11 @@ export default function ProfilePage() {
     const [selectedSegment, setSelectedSegment] = useState(null);
 
     const loadData = useCallback(async (isRefresh = false) => {
-        if (isRefresh) setRefreshing(true);
-        else setLoading(true);
+        if (isRefresh) {
+            setRefreshing(true);
+        } else if (!hasLoaded.current) {
+            setLoading(true);
+        }
         setMessage('');
 
         try {
@@ -55,6 +59,7 @@ export default function ProfilePage() {
             if (streakRes?.streak) setStreakData(streakRes.streak);
             if (profileRes) setProfile(profileRes);
             if (localAvatar !== undefined) setAvatarUri(localAvatar);
+            hasLoaded.current = true;
         } catch {
             setMessage('Could not refresh performance metrics.');
         } finally {
@@ -118,16 +123,16 @@ export default function ProfilePage() {
         if (accuracy >= 80) {
             return {
                 title: 'Exam Ready',
-                desc: 'Averaging ≥80%. Exceeds the 75% PSU benchmark.',
+                desc: 'Averaging ≥80%. Exceeds the 60% passing benchmark.',
                 dot: 'bg-emerald-500',
                 text: 'text-emerald-700',
                 barColor: 'bg-emerald-600',
             };
         }
-        if (accuracy >= 65) {
+        if (accuracy >= 60) {
             return {
                 title: 'Progressing',
-                desc: 'Averaging 65–79%. Target weak topics to reach 80%.',
+                desc: 'Averaging 60–79%. Target weak topics to reach 80%.',
                 dot: 'bg-blue-500',
                 text: 'text-blue-700',
                 barColor: 'bg-[#001428]',
@@ -135,7 +140,7 @@ export default function ProfilePage() {
         }
         return {
             title: 'Needs Practice',
-            desc: 'Below the 75% PSU benchmark. Focus on weak topics.',
+            desc: 'Below the 60% passing benchmark. Focus on weak topics.',
             dot: 'bg-amber-500',
             text: 'text-amber-700',
             barColor: 'bg-amber-500',
@@ -159,7 +164,7 @@ export default function ProfilePage() {
             const x = padX + (quizScoreTrend.length > 1 ? (i / (quizScoreTrend.length - 1)) * innerW : innerW / 2);
             const clamped = Math.min(100, Math.max(0, score));
             const y = padY + innerH - (clamped / 100) * innerH;
-            const isPassing = score >= 75;
+            const isPassing = score >= 60;
             const prevScore = i > 0 ? quizScoreTrend[i - 1] : null;
             const delta = prevScore !== null ? score - prevScore : null;
 
@@ -373,7 +378,7 @@ export default function ProfilePage() {
                             {/* Benchmark Marker */}
                             <View className="flex-row items-center justify-end mt-1.5 px-0.5">
                                 <Text className="font-geist text-[11px] text-[#94A3B8]">
-                                    Target 75%
+                                    Target 60%
                                 </Text>
                             </View>
                         </View>
@@ -523,9 +528,9 @@ export default function ProfilePage() {
                                             </LinearGradient>
                                         </Defs>
 
-                                        {/* 75% Passing Threshold Line */}
+                                        {/* 60% Passing Threshold Line */}
                                         <Path
-                                            d={`M ${padX} ${padY + innerH * 0.25} L ${chartWidth - padX} ${padY + innerH * 0.25}`}
+                                            d={`M ${padX} ${padY + innerH * 0.4} L ${chartWidth - padX} ${padY + innerH * 0.4}`}
                                             stroke="#CBD5E1"
                                             strokeDasharray="4 4"
                                             strokeWidth="1"
@@ -635,7 +640,7 @@ export default function ProfilePage() {
                                 {/* Benchmark Subtitle */}
                                 <View className="w-full flex-row items-center justify-between mt-2 px-1">
                                     <Text className="font-geist text-[10px] text-[#94A3B8]">
-                                        75% passing target
+                                        60% passing target
                                     </Text>
                                     <Text
                                         style={{ fontVariant: ['tabular-nums'] }}
@@ -689,7 +694,7 @@ export default function ProfilePage() {
                                 </Text>
                             </View>
                             <Text className="font-geist-medium text-xs text-[#526071]">
-                                Target 75%
+                                Target 60%
                             </Text>
                         </View>
 
@@ -769,7 +774,7 @@ export default function ProfilePage() {
                                     {weaknesses.length > 0 ? (
                                         <View className="gap-2.5">
                                             {weaknesses.slice(0, 3).map(topic => {
-                                                const gap = Math.max(0, 75 - topic.accuracy);
+                                                const gap = Math.max(0, 60 - topic.accuracy);
                                                 return (
                                                     <View
                                                         key={topic.topicId}
@@ -802,11 +807,11 @@ export default function ProfilePage() {
                                                             </View>
                                                         </View>
 
-                                                        {/* Progress Bar with 75% Target Marker */}
+                                                        {/* Progress Bar with 60% Target Marker */}
                                                         <View className="relative h-1.5 w-full overflow-hidden rounded-full bg-[#E5E9F0]" style={{ borderCurve: 'continuous' }}>
-                                                            {/* 75% Benchmark Guideline Line */}
+                                                            {/* 60% Benchmark Guideline Line */}
                                                             <View
-                                                                style={{ left: '75%' }}
+                                                                style={{ left: '60%' }}
                                                                 className="absolute top-0 bottom-0 w-0.5 bg-[#475569] z-10"
                                                             />
                                                             {/* Accuracy Fill */}
@@ -852,7 +857,7 @@ export default function ProfilePage() {
                                                 No Urgent Focus Areas
                                             </Text>
                                             <Text className="mt-0.5 text-center font-geist text-[11px] text-[#526071]">
-                                                All tested topics currently meet or exceed 70% accuracy.
+                                                All tested topics currently meet or exceed 60% accuracy.
                                             </Text>
                                         </View>
                                     )}

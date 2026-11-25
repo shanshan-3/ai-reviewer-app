@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -11,6 +11,8 @@ import IconBulb from '@tabler/icons-react-native/IconBulb';
 import { deleteQuiz, listUserQuizzes } from '@/lib/quizzes';
 import { getTopicRecommendations } from '@/lib/progress';
 import { useToast } from '@/providers/toast-provider';
+import CardSkeletonList, { RecommendedFocusSkeleton } from '@/components/card-skeleton';
+import { useAnimatedCount } from '@/hooks/use-animated-count';
 import { THEME } from '@/lib/theme';
 
 export default function QuizzesPage() {
@@ -22,14 +24,19 @@ export default function QuizzesPage() {
     const [refreshing, setRefreshing] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
     const [error, setError] = useState(null);
+    const hasLoaded = useRef(false);
 
     const load = useCallback(async (isRefresh = false) => {
-        if (isRefresh) setRefreshing(true);
-        else setLoading(true);
+        if (isRefresh) {
+            setRefreshing(true);
+        } else if (!hasLoaded.current) {
+            setLoading(true);
+        }
         setError(null);
         try {
             const data = await listUserQuizzes();
             setQuizzes(data.quizzes ?? []);
+            hasLoaded.current = true;
         } catch (err) {
             setError(err.message || 'Could not load quizzes.');
         }
@@ -91,6 +98,9 @@ export default function QuizzesPage() {
         )
         : null;
 
+    const totalQuizzesCount = useAnimatedCount(quizzes.length);
+    const completedQuizzesCount = useAnimatedCount(completedItems.length);
+
     function formatModality(type) {
         if (type === 'true_false') return 'True or False';
         if (type === 'coding_syntax') return 'Coding Syntax';
@@ -127,43 +137,41 @@ export default function QuizzesPage() {
                 </View>
 
                 {/* KPI Summary Strip */}
-                {(completedItems.length > 0 || activeItem) && (
-                    <View
-                        className="flex-row items-center divide-x divide-[#E4E8EE] rounded-2xl border border-[#E4E8EE] bg-white py-3 shadow-sm"
-                        style={{ borderCurve: 'continuous' }}
-                    >
-                        <View className="flex-1 items-center px-1">
-                            <Text numberOfLines={1} className="font-geist-bold text-xl text-[#001428]">
-                                {quizzes.length}
-                            </Text>
-                            <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
-                                Total
-                            </Text>
-                        </View>
-                        <View className="flex-1 items-center px-1">
-                            <Text
-                                numberOfLines={1}
-                                className={`font-geist-bold text-xl ${
-                                    avgScore !== null && avgScore >= 75 ? 'text-emerald-700' : 'text-[#001428]'
-                                }`}
-                            >
-                                {avgScore !== null ? `${avgScore}%` : '--'}
-                            </Text>
-                            <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
-                                Avg Score
-                            </Text>
-                        </View>
-                        <View className="flex-1 items-center px-1">
-                            <Text numberOfLines={1} className="font-geist-bold text-xl text-[#001428]">
-                                {completedItems.length}
-                            </Text>
-                            <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
-                                Completed
-                            </Text>
-                        </View>
-
+                <View
+                    className="flex-row items-center divide-x divide-[#E4E8EE] rounded-2xl border border-[#E4E8EE] bg-white py-3 shadow-sm"
+                    style={{ borderCurve: 'continuous' }}
+                >
+                    <View className="flex-1 items-center px-1">
+                        <Text numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }} className="font-geist-bold text-xl text-[#001428]">
+                            {totalQuizzesCount}
+                        </Text>
+                        <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
+                            Total
+                        </Text>
                     </View>
-                )}
+                    <View className="flex-1 items-center px-1">
+                        <Text
+                            numberOfLines={1}
+                            style={{ fontVariant: ['tabular-nums'] }}
+                            className={`font-geist-bold text-xl ${
+                                avgScore !== null && avgScore >= 60 ? 'text-emerald-700' : 'text-[#001428]'
+                            }`}
+                        >
+                            {avgScore !== null ? `${avgScore}%` : '--'}
+                        </Text>
+                        <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
+                            Avg Score
+                        </Text>
+                    </View>
+                    <View className="flex-1 items-center px-1">
+                        <Text numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }} className="font-geist-bold text-xl text-[#001428]">
+                            {completedQuizzesCount}
+                        </Text>
+                        <Text numberOfLines={1} className="mt-0.5 font-geist-medium text-[11px] text-[#526071]">
+                            Completed
+                        </Text>
+                    </View>
+                </View>
 
                 {/* Error Banner */}
                 {error && (
@@ -172,13 +180,8 @@ export default function QuizzesPage() {
                     </View>
                 )}
 
-                {/* Loading State */}
-                {loading && !refreshing ? (
-                    <View key="loading-state" className="flex-1 items-center justify-center py-12">
-                        <ActivityIndicator size="large" color="#001428" />
-                    </View>
-                ) : (
-                    <View key="content-state" className="gap-5">
+                <View key="content-state" className="gap-5">
+                    {/* Active / In-Progress Quiz Card (Compact Apple-style Capsule) */}
                         {/* Active / In-Progress Quiz Card (Compact Apple-style Capsule) */}
                         {activeItem && (() => {
                             const activeProgress = Math.round((activeItem.session.answeredCount / activeItem.questionCount) * 100);
@@ -276,7 +279,9 @@ export default function QuizzesPage() {
                         })()}
 
                         {/* Weak-Topic Recommendation Capsule (Compact Inline Action) */}
-                        {recommendations.length > 0 && (() => {
+                        {loading && !refreshing ? (
+                            <RecommendedFocusSkeleton />
+                        ) : recommendations.length > 0 ? (() => {
                             const topRec = recommendations[0];
                             return (
                                 <Pressable
@@ -323,7 +328,7 @@ export default function QuizzesPage() {
                                     </View>
                                 </Pressable>
                             );
-                        })()}
+                        })() : null}
 
                         {/* Recent Completed Quizzes */}
                         <View className="gap-3">
@@ -338,7 +343,9 @@ export default function QuizzesPage() {
                                 )}
                             </View>
 
-                            {completedItems.length === 0 && !activeItem ? (
+                            {loading && !refreshing ? (
+                                <CardSkeletonList count={3} type="quiz" />
+                            ) : completedItems.length === 0 && !activeItem ? (
                                 <View
                                     className="items-center justify-center rounded-3xl border border-[#E4E8EE] bg-white p-8 text-center shadow-sm"
                                     style={{ borderCurve: 'continuous' }}
@@ -385,7 +392,7 @@ export default function QuizzesPage() {
                                 completedItems.map(item => {
                                     const percent = Math.round((item.session.correctCount / item.questionCount) * 100);
                                     const isDeleting = deletingId === item.id;
-                                    const isHigh = percent >= 80;
+                                    const isHigh = percent >= 60;
                                     const isMid = percent >= 50;
                                     const percentColor = isHigh ? 'text-emerald-700' : isMid ? 'text-amber-700' : 'text-[#526071]';
 
@@ -473,7 +480,6 @@ export default function QuizzesPage() {
                             )}
                         </View>
                     </View>
-                )}
             </ScrollView>
         </SafeAreaView>
     );

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -11,6 +11,8 @@ import IconClock from '@tabler/icons-react-native/IconClock';
 import IconArrowRight from '@tabler/icons-react-native/IconArrowRight';
 import { listFlashcardDecks, deleteFlashcardDeck } from '@/lib/flashcards';
 import { useToast } from '@/providers/toast-provider';
+import CardSkeletonList from '@/components/card-skeleton';
+import { useAnimatedCount } from '@/hooks/use-animated-count';
 
 function formatRelativeDate(dateString) {
     if (!dateString) return 'New';
@@ -39,14 +41,19 @@ export default function FlashcardsPage() {
     const [deletingId, setDeletingId] = useState(null);
     const [error, setError] = useState(null);
     const [selectedFilter, setSelectedFilter] = useState('all'); // 'all' | 'module' | 'topic'
+    const hasLoaded = useRef(false);
 
     const load = useCallback(async (isRefresh = false) => {
-        if (isRefresh) setRefreshing(true);
-        else setLoading(true);
+        if (isRefresh) {
+            setRefreshing(true);
+        } else if (!hasLoaded.current) {
+            setLoading(true);
+        }
         setError(null);
         try {
             const data = await listFlashcardDecks();
             setDecks(data.sets ?? []);
+            hasLoaded.current = true;
         } catch (err) {
             setError(err.message || 'Could not load flashcard decks.');
         } finally {
@@ -95,6 +102,11 @@ export default function FlashcardsPage() {
     const topicDecks = useMemo(() => decks.filter(d => d.sourceKind !== 'module'), [decks]);
     const totalTerms = useMemo(() => decks.reduce((acc, d) => acc + (d.cardCount || 0), 0), [decks]);
 
+    const allCount = useAnimatedCount(decks.length);
+    const moduleCount = useAnimatedCount(moduleDecks.length);
+    const topicCount = useAnimatedCount(topicDecks.length);
+    const termsCount = useAnimatedCount(totalTerms);
+
     const filteredDecks = useMemo(() => {
         if (selectedFilter === 'module') return moduleDecks;
         if (selectedFilter === 'topic') return topicDecks;
@@ -121,11 +133,9 @@ export default function FlashcardsPage() {
                             <Text accessibilityRole="header" className="font-geist-bold text-lg tracking-tight text-[#001428]">
                                 Study Decks
                             </Text>
-                            {!loading && (
-                                <Text className="mt-0.5 font-geist text-xs text-[#526071]">
-                                    {decks.length} {decks.length === 1 ? 'deck' : 'decks'} • {totalTerms} {totalTerms === 1 ? 'term' : 'terms'}
-                                </Text>
-                            )}
+                            <Text style={{ fontVariant: ['tabular-nums'] }} className="mt-0.5 font-geist text-xs text-[#526071]">
+                                {allCount} {allCount === 1 ? 'deck' : 'decks'} • {termsCount} {termsCount === 1 ? 'term' : 'terms'}
+                            </Text>
                         </View>
 
                         <Pressable
@@ -146,73 +156,83 @@ export default function FlashcardsPage() {
                         </Pressable>
                     </View>
 
-                    {/* Filter */}
-                    {!loading && decks.length > 0 && (
-                        <View
-                            className="flex-row rounded-xl bg-[#EAECEF] p-1"
-                            style={{ borderCurve: 'continuous' }}
+                    {/* Filter Choices */}
+                    <View
+                        className="flex-row rounded-xl bg-[#EAECEF] p-1"
+                        style={{ borderCurve: 'continuous' }}
+                    >
+                        <Pressable
+                            accessibilityRole="tab"
+                            accessibilityLabel={`All decks, ${allCount}`}
+                            accessibilityState={{ selected: selectedFilter === 'all' }}
+                            onPress={() => setSelectedFilter('all')}
+                            className={`flex-1 items-center justify-center rounded-lg py-1.5 ${
+                                selectedFilter === 'all'
+                                    ? 'bg-white'
+                                    : 'bg-transparent'
+                            }`}
+                            style={({ pressed }) => [{ borderCurve: 'continuous', opacity: pressed ? 0.8 : 1 }]}
                         >
-                            <Pressable
-                                onPress={() => setSelectedFilter('all')}
-                                className={`flex-1 items-center justify-center rounded-lg py-1.5 ${
+                            <Text
+                                style={{ fontVariant: ['tabular-nums'] }}
+                                className={`text-xs ${
                                     selectedFilter === 'all'
-                                        ? 'bg-white'
-                                        : 'bg-transparent'
+                                        ? 'font-geist-semibold text-[#001428]'
+                                        : 'font-geist text-[#526071]'
                                 }`}
-                                style={({ pressed }) => [{ borderCurve: 'continuous', opacity: pressed ? 0.8 : 1 }]}
                             >
-                                <Text
-                                    className={`text-xs ${
-                                        selectedFilter === 'all'
-                                            ? 'font-geist-semibold text-[#001428]'
-                                            : 'font-geist text-[#526071]'
-                                    }`}
-                                >
-                                    All ({decks.length})
-                                </Text>
-                            </Pressable>
+                                All ({allCount})
+                            </Text>
+                        </Pressable>
 
-                            <Pressable
-                                onPress={() => setSelectedFilter('module')}
-                                className={`flex-1 items-center justify-center rounded-lg py-1.5 ${
+                        <Pressable
+                            accessibilityRole="tab"
+                            accessibilityLabel={`Module decks, ${moduleCount}`}
+                            accessibilityState={{ selected: selectedFilter === 'module' }}
+                            onPress={() => setSelectedFilter('module')}
+                            className={`flex-1 items-center justify-center rounded-lg py-1.5 ${
+                                selectedFilter === 'module'
+                                    ? 'bg-white'
+                                    : 'bg-transparent'
+                            }`}
+                            style={({ pressed }) => [{ borderCurve: 'continuous', opacity: pressed ? 0.8 : 1 }]}
+                        >
+                            <Text
+                                style={{ fontVariant: ['tabular-nums'] }}
+                                className={`text-xs ${
                                     selectedFilter === 'module'
-                                        ? 'bg-white'
-                                        : 'bg-transparent'
+                                        ? 'font-geist-semibold text-[#001428]'
+                                        : 'font-geist text-[#526071]'
                                 }`}
-                                style={({ pressed }) => [{ borderCurve: 'continuous', opacity: pressed ? 0.8 : 1 }]}
                             >
-                                <Text
-                                    className={`text-xs ${
-                                        selectedFilter === 'module'
-                                            ? 'font-geist-semibold text-[#001428]'
-                                            : 'font-geist text-[#526071]'
-                                    }`}
-                                >
-                                    Modules ({moduleDecks.length})
-                                </Text>
-                            </Pressable>
+                                Modules ({moduleCount})
+                            </Text>
+                        </Pressable>
 
-                            <Pressable
-                                onPress={() => setSelectedFilter('topic')}
-                                className={`flex-1 items-center justify-center rounded-lg py-1.5 ${
+                        <Pressable
+                            accessibilityRole="tab"
+                            accessibilityLabel={`Topic decks, ${topicCount}`}
+                            accessibilityState={{ selected: selectedFilter === 'topic' }}
+                            onPress={() => setSelectedFilter('topic')}
+                            className={`flex-1 items-center justify-center rounded-lg py-1.5 ${
+                                selectedFilter === 'topic'
+                                    ? 'bg-white'
+                                    : 'bg-transparent'
+                            }`}
+                            style={({ pressed }) => [{ borderCurve: 'continuous', opacity: pressed ? 0.8 : 1 }]}
+                        >
+                            <Text
+                                style={{ fontVariant: ['tabular-nums'] }}
+                                className={`text-xs ${
                                     selectedFilter === 'topic'
-                                        ? 'bg-white'
-                                        : 'bg-transparent'
+                                        ? 'font-geist-semibold text-[#001428]'
+                                        : 'font-geist text-[#526071]'
                                 }`}
-                                style={({ pressed }) => [{ borderCurve: 'continuous', opacity: pressed ? 0.8 : 1 }]}
                             >
-                                <Text
-                                    className={`text-xs ${
-                                        selectedFilter === 'topic'
-                                            ? 'font-geist-semibold text-[#001428]'
-                                            : 'font-geist text-[#526071]'
-                                    }`}
-                                >
-                                    Topics ({topicDecks.length})
-                                </Text>
-                            </Pressable>
-                        </View>
-                    )}
+                                Topics ({topicCount})
+                            </Text>
+                        </Pressable>
+                    </View>
                 </View>
 
                 {/* Error */}
@@ -235,10 +255,7 @@ export default function FlashcardsPage() {
 
                 {/* Loading */}
                 {loading && !refreshing && (
-                    <View className="items-center justify-center py-20 gap-3">
-                        <ActivityIndicator size="small" color="#001428" />
-                        <Text className="font-geist text-xs text-[#526071]">Loading...</Text>
-                    </View>
+                    <CardSkeletonList count={3} type="deck" />
                 )}
 
                 {/* Global Empty State */}
