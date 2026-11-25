@@ -32,18 +32,16 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#F8F8FF",
-          "image": "./assets/logo/logo-symbol-white-background-1024.png",
-          "imageWidth": 10,
-          "resizeMode": "contain"
+          "backgroundColor": "#F8F9FB"
         }
       ]
     ],
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "d05c5269-3f45-4311-85e9-038e2186d860"
+        "projectId": "f6f72050-5c43-495c-bd75-d59820920439"
       }
-    }
+    },
+    "owner": "shanshannn03s-team"
   }
 }
