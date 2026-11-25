@@ -37,6 +37,7 @@ export const BSIT_CURRICULUM_SECTIONS = [
             'Elective 1 (Web Systems and Technologies 2)',
             'Elective 2 (Mobile Application Development 2)',
             'Capstone Project 1',
+            'Quantitative Methods'
         ],
     },
     {
