@@ -1,10 +1,10 @@
 import { calculateTopicEstimates } from './progressEstimates.js';
 
-export const RECOMMENDATION_THRESHOLD = 70; // Topics below 70% accuracy are recommended for review
+export const RECOMMENDATION_THRESHOLD = 60; // Topics below 60% accuracy are recommended for review
 
 /**
  * Generates weak-topic recommendations based on eligible practice estimates.
- * Identifies topics with accuracy < 70% (minimum 5 answers) and prioritizes
+ * Identifies topics with accuracy < 60% (minimum 5 answers) and prioritizes
  * the weakest topics first.
  *
  * Rule (from roadmap): Recommendations remain suggestions. Users choose the next topic.

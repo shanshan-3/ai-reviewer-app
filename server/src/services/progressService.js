@@ -46,7 +46,7 @@ export async function getUserReport({ userId, timeZone, client }) {
 
     const eligible = estimates.filter(e => e.eligible);
     const strengths = eligible.filter(e => e.accuracy >= 80).sort((a, b) => b.accuracy - a.accuracy);
-    const weaknesses = eligible.filter(e => e.accuracy < 70).sort((a, b) => a.accuracy - b.accuracy);
+    const weaknesses = eligible.filter(e => e.accuracy < 60).sort((a, b) => a.accuracy - b.accuracy);
 
     const completedSessions = quizSessionsResult?.data || [];
     const totalQuizzesCompleted = quizSessionsResult?.count ?? completedSessions.length;

@@ -316,7 +316,7 @@ export default function PerformanceReportPage() {
                                     <View className="flex-row items-center justify-between rounded-lg bg-amber-50/70 px-2.5 py-1">
                                         <View className="flex-row items-center gap-1.5">
                                             <View className="h-2 w-2 rounded-full bg-amber-600" />
-                                            <Text className="font-geist-medium text-[11px] text-amber-950">Needs Review (&lt;70%)</Text>
+                                            <Text className="font-geist-medium text-[11px] text-amber-950">Needs Review (&lt;60%)</Text>
                                         </View>
                                         <Text style={{ fontVariant: ['tabular-nums'] }} className="font-geist-bold text-[11px] text-amber-950">
                                             {weaknesses.length}
@@ -425,9 +425,9 @@ export default function PerformanceReportPage() {
                                         </LinearGradient>
                                     </Defs>
 
-                                    {/* 75% Passing Threshold Line */}
+                                    {/* 60% Passing Threshold Line */}
                                     <Path
-                                        d={`M ${padX} ${padY + innerH * 0.25} L ${chartWidth - padX} ${padY + innerH * 0.25}`}
+                                        d={`M ${padX} ${padY + innerH * 0.4} L ${chartWidth - padX} ${padY + innerH * 0.4}`}
                                         stroke="#94A3B8"
                                         strokeDasharray="4 4"
                                         strokeWidth="1"
@@ -462,7 +462,7 @@ export default function PerformanceReportPage() {
                                 {/* Benchmark Subtitle */}
                                 <View className="w-full flex-row items-center justify-between mt-2 px-1">
                                     <Text className="font-geist text-[10px] text-[#94A3B8]">
-                                        Dashed line: 75% Passing Target
+                                        Dashed line: 60% Passing Target
                                     </Text>
                                     <Text className="font-geist-medium text-[10px] text-[#526071]">
                                         {trendPoints.length} Completed Sessions
@@ -569,7 +569,7 @@ export default function PerformanceReportPage() {
                             <View className="flex-row items-center gap-2">
                                 <IconBulb size={18} color="#D97706" strokeWidth={2} />
                                 <Text className="font-geist-bold text-sm text-amber-950">
-                                    Focus Areas (&lt;70%)
+                                    Focus Areas (&lt;60%)
                                 </Text>
                             </View>
 
@@ -603,7 +603,7 @@ export default function PerformanceReportPage() {
                             ) : (
                                 <View className="mt-3 rounded-xl border border-amber-200/80 bg-white/70 p-3">
                                     <Text className="font-geist text-xs text-amber-950 leading-relaxed">
-                                        No evaluated topics are currently below 70%. Keep up consistent practice to maintain strong accuracy.
+                                        No evaluated topics are currently below 60%. Keep up consistent practice to maintain strong accuracy.
                                     </Text>
                                 </View>
                             )}
