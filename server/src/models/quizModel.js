@@ -168,7 +168,7 @@ export async function deleteQuiz(admin, ownerId, quizId) {
 
 export async function listUserQuizzes(admin, ownerId) {
     const list = data(await admin.from('quizzes')
-        .select('id, question_count, created_at, generation_id, quiz_generations!inner(source_kind, material_id, subject_id, topic_id, question_type, starting_difficulty, status, materials(title), topics(name)), study_sessions(id, status, answered_count, correct_count, completed_at)')
+        .select('id, question_count, created_at, generation_id, quiz_generations!inner(source_kind, material_id, subject_id, topic_id, question_type, starting_difficulty, status, materials(title), topics(name, subjects(name))), study_sessions(id, status, answered_count, correct_count, completed_at)')
         .eq('owner_id', ownerId)
         .order('created_at', { ascending: false })
         .limit(20));
@@ -176,11 +176,15 @@ export async function listUserQuizzes(admin, ownerId) {
     return list.map(item => {
         const gen = item.quiz_generations;
         const session = item.study_sessions?.[0] ?? null;
+        const subjectName = gen?.topics?.subjects?.name ?? null;
         const topicName = gen?.topics?.name ?? null;
+        const topicDisplay = topicName && topicName !== 'General'
+            ? (subjectName ? `${subjectName} • ${topicName}` : topicName)
+            : (subjectName || topicName);
         const materialTitle = gen?.materials?.title ?? null;
         const resolvedTitle = gen?.source_kind === 'module'
-            ? (materialTitle || topicName)
-            : (topicName || materialTitle);
+            ? (materialTitle || topicDisplay)
+            : (topicDisplay || materialTitle);
 
         return {
             id: item.id,

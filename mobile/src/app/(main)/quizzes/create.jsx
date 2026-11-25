@@ -136,7 +136,14 @@ export default function CreateQuizPage() {
                 if (currentStatus === 'insufficient_source') {
                     const code = statusRes.generation?.errorCode;
                     if (code === 'UNSUPPORTED_TOPIC') {
-                        throw new Error('This subject has no coding syntax questions. Choose Multiple Choice, True or False, or a programming subject.');
+                        if (questionType === 'coding_syntax') {
+                            throw new Error('This subject has no coding syntax questions. Choose Multiple Choice, True or False, or a programming subject.');
+                        }
+                        throw new Error(
+                            sourceKind === 'module'
+                                ? 'This module does not appear to cover an IT or BSIT subject. Choose an IT module or switch to IT Topic.'
+                                : 'This topic could not be used for questions. Choose another IT subject.'
+                        );
                     }
                     if (code === 'CODE_SOURCE_REQUIRED') {
                         throw new Error('This module has no code snippets. Choose Multiple Choice, True or False, or upload notes with code.');

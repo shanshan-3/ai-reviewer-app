@@ -28,6 +28,7 @@ export default function SourcePicker({
     const [topicModalOpen, setTopicModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [savingSubject, setSavingSubject] = useState(null);
+    const [topicError, setTopicError] = useState('');
 
     const readyMaterials = materials.filter(m => m.status === 'ready');
     const selectedMaterial = readyMaterials.find(m => m.id === selectedMaterialId);
@@ -35,7 +36,7 @@ export default function SourcePicker({
     const parentSubject = labels.subjects?.find(s => s.id === selectedTopic?.subject_id);
 
     const displayTopicName = parentSubject
-        ? `${parentSubject.name} • ${selectedTopic?.name}`
+        ? (selectedTopic?.name && selectedTopic.name !== 'General' ? `${parentSubject.name} • ${selectedTopic.name}` : parentSubject.name)
         : (selectedTopic?.name || 'Select an IT topic or BSIT subject');
 
     const filteredSections = useMemo(() => filterCurriculum(searchTerm), [searchTerm]);
@@ -43,6 +44,7 @@ export default function SourcePicker({
     async function handleSelectCurriculumSubject(subjectName) {
         if (savingSubject) return;
         setSavingSubject(subjectName);
+        setTopicError('');
         try {
             let currentLabels = labels;
 
@@ -78,8 +80,9 @@ export default function SourcePicker({
             onSelectTopic(topic.id);
             setTopicModalOpen(false);
             setSearchTerm('');
-        } catch {
-            // non-fatal error fallback
+            setTopicError('');
+        } catch (err) {
+            setTopicError(err?.message || 'Could not select this subject.');
         } finally {
             setSavingSubject(null);
         }
@@ -231,7 +234,7 @@ export default function SourcePicker({
                         <Pressable
                             accessibilityRole="button"
                             accessibilityLabel={`Topic: ${displayTopicName}`}
-                            onPress={() => setTopicModalOpen(true)}
+                            onPress={() => { setTopicError(''); setTopicModalOpen(true); }}
                             className="min-h-14 flex-row items-center justify-between rounded-2xl border border-[#E4E8EE] bg-white px-4 py-3"
                         >
                             <View className="flex-1 pr-2">
@@ -284,7 +287,7 @@ export default function SourcePicker({
                         <View className="flex-row items-center justify-between pb-3">
                             <View>
                                 <Text className="font-geist-semibold text-lg text-[#001428]">Select Topic</Text>
-                                <Text className="font-geist text-xs text-[#526071]">Choose from saved topics or curriculum subjects</Text>
+                                <Text className="font-geist text-xs text-[#526071]">Choose from curriculum subjects</Text>
                             </View>
                             <Pressable onPress={() => setTopicModalOpen(false)} className="p-1">
                                 <IconX size={20} color="#526071" />
@@ -302,38 +305,11 @@ export default function SourcePicker({
                                 className="ml-2 flex-1 font-geist text-sm text-[#001428]"
                             />
                         </View>
+                        {Boolean(topicError) && (
+                            <Text className="mb-2 font-geist text-xs text-[#DC2626]">{topicError}</Text>
+                        )}
 
                         <ScrollView contentContainerStyle={{ gap: 16, paddingBottom: 24 }}>
-                            {/* Saved Topics Section */}
-                            {(labels.topics ?? []).length > 0 && !searchTerm && (
-                                <View className="gap-2">
-                                    <Text className="font-geist-semibold text-xs uppercase tracking-wider text-[#526071]">
-                                        Saved Topics
-                                    </Text>
-                                    {labels.topics.map(t => {
-                                        const sub = labels.subjects?.find(s => s.id === t.subject_id);
-                                        const labelText = sub ? `${sub.name} • ${t.name}` : t.name;
-                                        return (
-                                            <Pressable
-                                                key={t.id}
-                                                onPress={() => {
-                                                    onSelectTopic(t.id);
-                                                    setTopicModalOpen(false);
-                                                }}
-                                                className={`flex-row items-center justify-between rounded-xl p-3 border border-[#E4E8EE] ${
-                                                    selectedTopicId === t.id ? 'bg-[#F1F4F8] border-[#001428]' : 'bg-white active:bg-[#F1F4F8]'
-                                                }`}
-                                            >
-                                                <View className="flex-1 pr-2">
-                                                    <Text className="font-geist-medium text-sm text-[#001428]">{labelText}</Text>
-                                                </View>
-                                                {selectedTopicId === t.id && <IconCheck size={18} color="#001428" />}
-                                            </Pressable>
-                                        );
-                                    })}
-                                </View>
-                            )}
-
                             {/* BSIT Curriculum Subjects Section */}
                             <View className="gap-3">
                                 <Text className="font-geist-semibold text-xs uppercase tracking-wider text-[#526071]">
