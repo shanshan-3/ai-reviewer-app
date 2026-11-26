@@ -1,6 +1,7 @@
 import { AI_LIMITS } from '../config/ai.js';
 import { quizSchema, quizMessages } from './quizPrompts.js';
 import { validateGeneratedQuestions, quizError } from '../validation/quizValidation.js';
+import { getPromptByteBudget, trimTextToByteBudget } from './aiProvider.js';
 
 export function selectQuizContext(settings, source) {
     const sections = [];
@@ -8,7 +9,7 @@ export function selectQuizContext(settings, source) {
     const schema = quizSchema(settings.question_type, settings.starting_difficulty, settings.source_kind);
     const context = settings.source_kind === 'topic' ? { subject: source.subjects?.name, topic: source.name } : { sections: promptSections };
     const count = settings.requested_question_count || 10;
-    const byteLimit = Math.min(AI_LIMITS.promptBytes, count <= 5 ? 10240 : count <= 10 ? 16384 : 24576);
+    const byteLimit = getPromptByteBudget(count);
     const bytes = () => Buffer.byteLength(JSON.stringify(quizMessages(settings, context)))
         + Buffer.byteLength(JSON.stringify(schema));
     if (settings.source_kind === 'module') {
@@ -21,11 +22,10 @@ export function selectQuizContext(settings, source) {
             const entry = { id: item.id, text: compact };
             promptSections.push(entry);
             if (bytes() > byteLimit) {
-                entry.text = '';
-                for (const character of compact) {
-                    entry.text += character;
-                    if (bytes() > byteLimit) { entry.text = entry.text.slice(0, -character.length); break; }
-                }
+                entry.text = trimTextToByteBudget(compact, byteLimit, text => {
+                    entry.text = text;
+                    return bytes();
+                });
             }
             if (!/[\p{L}\p{N}]/u.test(entry.text)) {
                 promptSections.pop();
