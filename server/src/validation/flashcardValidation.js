@@ -1,11 +1,7 @@
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+import { createPublicError, isUuid } from './shared.js';
 
 export function flashcardError(status, code, publicMessage) {
-    const error = new Error(publicMessage);
-    error.status = status;
-    error.code = code;
-    error.publicMessage = publicMessage;
-    return error;
+    return createPublicError(status, code, publicMessage);
 }
 
 export function validateFlashcardGenerationRequest(body) {
@@ -28,12 +24,12 @@ export function validateFlashcardGenerationRequest(body) {
     let topicId = null;
 
     if (sourceKind === 'module') {
-        if (!source.materialId || !UUID_PATTERN.test(String(source.materialId))) {
+        if (!source.materialId || !isUuid(String(source.materialId), { strictVersion: true })) {
             throw flashcardError(400, 'INVALID_MATERIAL_ID', 'Select a valid module.');
         }
         materialId = String(source.materialId).toLowerCase();
     } else {
-        if (!source.topicId || !UUID_PATTERN.test(String(source.topicId))) {
+        if (!source.topicId || !isUuid(String(source.topicId), { strictVersion: true })) {
             throw flashcardError(400, 'INVALID_TOPIC_ID', 'Select a valid topic.');
         }
         topicId = String(source.topicId).toLowerCase();
