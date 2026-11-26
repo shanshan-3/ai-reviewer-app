@@ -1,6 +1,6 @@
-import { GEMINI_CONFIG } from '../config/ai.js';
 import { quizMessages } from './quizPrompts.js';
 import { validateGeneratedQuestions, quizError } from '../validation/quizValidation.js';
+import { callGeminiJson } from './aiProvider.js';
 
 function buildGeminiSchema(questionType, difficulty, sourceKind = 'module') {
     const questionProperties = {
@@ -68,63 +68,17 @@ export async function generateQuestionsWithGemini(settings, selected) {
         return { questions: [], code: settings.question_type === 'coding_syntax' ? 'CODE_SOURCE_REQUIRED' : 'INSUFFICIENT_SOURCE' };
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw quizError(503, 'AI_NOT_CONFIGURED', 'Gemini is not configured on this server.');
-
     const messages = quizMessages(settings, selected.context);
-    const systemPrompt = messages[0].content;
-    const userPrompt = messages[1].content;
     const schema = buildGeminiSchema(settings.question_type, settings.starting_difficulty, settings.source_kind);
     const maxOutputTokens = Math.min(8192, Math.max(1536, (settings.requested_question_count || 10) * 320));
 
-    const url = `${GEMINI_CONFIG.endpoint}/${GEMINI_CONFIG.model}:generateContent?key=${apiKey}`;
-
-    const payload = {
-        systemInstruction: {
-            parts: [{ text: systemPrompt }]
-        },
-        contents: [
-            {
-                role: 'user',
-                parts: [{ text: userPrompt }]
-            }
-        ],
-        generationConfig: {
-            responseMimeType: 'application/json',
-            responseSchema: schema,
-            maxOutputTokens,
-        }
-    };
-
-    const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(GEMINI_CONFIG.timeoutMs)
+    const output = await callGeminiJson({
+        systemPrompt: messages[0].content,
+        userPrompt: messages[1].content,
+        schema,
+        maxOutputTokens,
+        createError: quizError,
     });
-
-    if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        const message = errorData?.error?.message || `HTTP ${res.status}`;
-        if (res.status === 429) throw Object.assign(quizError(429, 'QUOTA_EXCEEDED', 'Gemini quota exceeded.'), { status: 429 });
-        throw quizError(502, 'GEMINI_PROVIDER_ERROR', `Gemini returned ${message}`);
-    }
-
-    const data = await res.json();
-    const candidate = data.candidates?.[0];
-    if (candidate?.finishReason && !['STOP', 'MAX_TOKENS'].includes(candidate.finishReason)) {
-        throw quizError(422, 'PROVIDER_REFUSED', 'Gemini declined this generation request.');
-    }
-
-    const rawText = candidate?.content?.parts?.[0]?.text;
-    if (!rawText) throw quizError(422, 'INVALID_GENERATION', 'Gemini returned an empty response.');
-
-    let output;
-    try {
-        output = JSON.parse(rawText);
-    } catch {
-        throw quizError(422, 'INVALID_GENERATION', 'Gemini returned invalid JSON.');
-    }
 
     if (Array.isArray(output.questions)) {
         for (const q of output.questions) {
