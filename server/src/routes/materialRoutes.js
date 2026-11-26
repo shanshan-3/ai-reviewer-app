@@ -1,5 +1,6 @@
 import express, { Router } from 'express';
 import authMiddleware from '../middleware/authMiddleware.js';
+import { createJsonParser, createRouteErrorHandler } from '../middleware/errorHandler.js';
 import { uploadMaterial, getMaterial, listMaterials, deleteMaterial, approveMaterial } from '../controllers/materialController.js';
 import labelRoutes from './labelRoutes.js';
 import { validateMaterialHeaders, MATERIAL_TYPES } from '../validation/materialValidation.js';
@@ -7,6 +8,13 @@ import { LIMITS, MESSAGES } from '../services/materialExtraction.js';
 
 const router = Router();
 const parseFile = express.raw({ type: Object.keys(MATERIAL_TYPES), limit: LIMITS.fileBytes, inflate: false });
+const parseJson = createJsonParser('512kb');
+const errorHandler = createRouteErrorHandler({
+    tooLargeMessage: req => (req.is('application/json') ? 'The review request is too large.' : MESSAGES.FILE_LIMIT),
+    tooLargeCode: 'FILE_LIMIT',
+    fallbackMessage: 'The module service is unavailable. Try again later.',
+    includeMaterialId: true,
+});
 // shortcut: one import per process; use a shared admission limit before running multiple server instances.
 let importing = false;
 
@@ -22,22 +30,10 @@ router.post('/', authMiddleware, async (req, res, next) => {
     } catch (error) { next(error); }
     finally { importing = false; req.setTimeout(0); }
 });
-const parseJson = express.json({ limit: '512kb' });
 router.get('/', authMiddleware, listMaterials);
 router.use('/labels', labelRoutes);
 router.delete('/:id', authMiddleware, deleteMaterial);
 router.post('/:id/approve', authMiddleware, parseJson, approveMaterial);
 router.get('/:id', authMiddleware, getMaterial);
-router.use((error, _req, res, _next) => {
-    if (res.headersSent) return res.end();
-    const tooLarge = error.type === 'entity.too.large';
-    const encoding = error.type === 'encoding.unsupported';
-    if (error.type === 'entity.parse.failed') return res.status(400).json({ error: 'Provide valid JSON.', code: 'INVALID_JSON' });
-    res.status(tooLarge ? 413 : encoding ? 415 : error.publicMessage ? error.status : 503).json({
-        error: tooLarge ? (_req.is('application/json') ? 'The review request is too large.' : MESSAGES.FILE_LIMIT) : encoding ? 'Compressed request bodies are not supported.'
-            : error.publicMessage ?? 'The module service is unavailable. Try again later.',
-        code: tooLarge ? 'FILE_LIMIT' : encoding ? 'UNSUPPORTED_ENCODING' : error.publicMessage ? error.code : 'SERVICE_UNAVAILABLE',
-        ...(error.materialId && { materialId: error.materialId }),
-    });
-});
+router.use(errorHandler);
 export default router;
