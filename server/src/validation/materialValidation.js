@@ -1,4 +1,5 @@
 import { LIMITS, MESSAGES } from '../services/materialExtractionLimits.js';
+import { createPublicError, isUuid } from './shared.js';
 
 export const MATERIAL_TYPES = {
     'application/pdf': '.pdf',
@@ -6,7 +7,7 @@ export const MATERIAL_TYPES = {
 };
 
 export function materialError(status, code, message) {
-    return Object.assign(new Error(message), { status, code, publicMessage: message });
+    return createPublicError(status, code, message);
 }
 
 export function validateMaterialHeaders(req) {
@@ -36,7 +37,7 @@ export function validateMaterialBytes(bytes, extension) {
 }
 
 export function validateMaterialId(id) {
-    if (typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    if (!isUuid(id)) {
         throw materialError(400, 'INVALID_ID', 'Provide a valid material ID.');
     }
 }
