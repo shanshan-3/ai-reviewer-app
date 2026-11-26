@@ -1,11 +1,6 @@
 import { createSupabaseAdminClient } from '../config/supabase.js';
 import {
-    createGroqClient,
     AI_LIMITS,
-    GEMINI_CONFIG,
-    isGroqConfigured,
-    isGeminiConfigured,
-    getPrimaryProvider,
     isPrimaryAiConfigured,
     getCooldownMs,
 } from '../config/ai.js';
@@ -13,19 +8,11 @@ import * as model from '../models/quizModel.js';
 import { validateGenerationRequest, validateQuizId, sameGenerationInput, quizError } from '../validation/quizValidation.js';
 import { selectQuizContext, generateQuestions, generationFailure } from './quizGeneration.js';
 import { generateQuestionsWithGemini } from './geminiGeneration.js';
+import { runWithAiFallback } from './aiProvider.js';
 
 // shortcut: one active process and one provider attempt per minute; shared admission is required before scaling.
 let working = false;
 let nextProviderAt = 0;
-
-function isFallbackEligible(error) {
-    return (
-        error?.status === 429 ||
-        error?.code === 'INVALID_GENERATION' ||
-        ['APIConnectionTimeoutError', 'AbortError', 'TimeoutError'].includes(error?.name) ||
-        (typeof error?.status === 'number' && error.status >= 500)
-    );
-}
 
 function existingRequest(row, input) {
     if (!sameGenerationInput(row, input)) throw quizError(409, 'REQUEST_CONFLICT', 'This request ID already belongs to different quiz choices.');
@@ -48,39 +35,12 @@ async function sourceFor(admin, ownerId, input) {
 
 async function runGeneration(admin, row, selected) {
     try {
-        let result;
-        let providerModel;
-        const primary = getPrimaryProvider();
-
-        if (primary === 'gemini') {
-            try {
-                result = await generateQuestionsWithGemini(row, selected);
-                providerModel = GEMINI_CONFIG.model;
-            } catch (error) {
-                if (isGroqConfigured() && isFallbackEligible(error)) {
-                    console.warn(`[AI Fallback] Gemini primary attempt failed (${error?.message || error?.name}). Routing to Groq backup...`);
-                    const groqClient = createGroqClient();
-                    result = await generateQuestions(groqClient, row, selected);
-                    providerModel = AI_LIMITS.model;
-                } else {
-                    throw error;
-                }
-            }
-        } else {
-            try {
-                const groqClient = createGroqClient();
-                result = await generateQuestions(groqClient, row, selected);
-                providerModel = AI_LIMITS.model;
-            } catch (error) {
-                if (isGeminiConfigured() && isFallbackEligible(error)) {
-                    console.warn(`[AI Fallback] Groq primary attempt failed (${error?.message || error?.name}). Routing to Gemini backup...`);
-                    result = await generateQuestionsWithGemini(row, selected);
-                    providerModel = GEMINI_CONFIG.model;
-                } else {
-                    throw error;
-                }
-            }
-        }
+        const { result, model: providerModel } = await runWithAiFallback({
+            label: 'AI Fallback',
+            runGemini: () => generateQuestionsWithGemini(row, selected),
+            runGroq: client => generateQuestions(client, row, selected),
+            allowInvalidGenerationFallback: true,
+        });
 
         if (!result.questions.length) await model.finishGeneration(admin, row.owner_id, row.id, 'insufficient_source', result.code);
         else await model.publishQuiz(admin, row.owner_id, row.id, result.questions, providerModel);
