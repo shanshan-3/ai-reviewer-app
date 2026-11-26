@@ -1,9 +1,10 @@
-import express, { Router } from 'express';
+import { Router } from 'express';
 import authMiddleware from '../middleware/authMiddleware.js';
+import { createJsonParser } from '../middleware/errorHandler.js';
 import { getLabels, createSubject, createTopic } from '../controllers/labelController.js';
 
 const router = Router();
-const parseJson = express.json({ limit: '512kb' });
+const parseJson = createJsonParser('512kb');
 
 router.get('/', authMiddleware, getLabels);
 router.post('/subjects', authMiddleware, parseJson, createSubject);
