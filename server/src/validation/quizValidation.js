@@ -1,13 +1,14 @@
+import { createPublicError, isUuid } from './shared.js';
+
 export function quizError(status, code, message) {
-    return Object.assign(new Error(message), { status, code, publicMessage: message });
+    return createPublicError(status, code, message);
 }
-const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const keys = (value, allowed) => plain(value) && Object.keys(value).every(key => allowed.includes(key));
 const nonempty = (value, max) => typeof value === 'string' && value.trim().length > 0 && value.length <= max;
 
 export function validateQuizId(value) {
-    if (typeof value !== 'string' || !uuid.test(value)) throw quizError(400, 'INVALID_QUIZ_REQUEST', 'Provide a valid ID.');
+    if (!isUuid(value)) throw quizError(400, 'INVALID_QUIZ_REQUEST', 'Provide a valid ID.');
     return value.toLowerCase();
 }
 
